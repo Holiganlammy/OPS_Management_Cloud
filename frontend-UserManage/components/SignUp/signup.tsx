@@ -1,0 +1,318 @@
+"use client"
+import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import CustomSelect from "../SelectSection/SelectSearch"
+import { Input } from "@/components/ui/input"
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
+import { z } from "zod"
+import { useEffect, useState } from "react"
+import { CheckCircle2, X } from "lucide-react"
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert"
+
+const signupSchema = z.object({
+  Name: z.string().min(2, "ชื่อ-นามสกุลต้องมีอย่างน้อย 2 ตัวอักษร"),
+  loginname: z.string().min(2, "ชื่อผู้ใช้ต้องมีอย่างน้อย 2 ตัวอักษร"),
+  branchid: z.string().min(1, "ต้องระบุสาขา"),
+  department: z.string().min(1, "ต้องระบุแผนก"),
+  secid: z.string(),
+  positionid: z.string().min(1, "ต้องระบุตำแหน่ง"),
+  empupper: z.string().optional(),
+  email: z.string().email("รูปแบบอีเมลไม่ถูกต้อง"),
+  password: z.string()
+    .min(8, "รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร")
+    .regex(/[!@#$%^&*(),.?":{}|<>]/, "รหัสผ่านต้องมีอักขระพิเศษอย่างน้อย 1 ตัว")
+});
+type SignupForm = z.infer<typeof signupSchema>
+
+export default function Signup({ open, onOpenChange, onUserCreated }: { open?: boolean; onOpenChange?: (open: boolean) => void; onUserCreated: () => void }) {
+  const [fullNameValue, setFullNameValue] = useState("");
+  const [userApi, setUserApi] = useState<UserSignup[]>([]);
+  const [branchApi, setBranchApi] = useState<Branch[]>([]);
+  const [departmentApi, setDepartmentApi] = useState<Department[]>([]);
+  const [sectionApi, setSectionApi] = useState<Section[]>([]);
+  const [positionApi, setPositionApi] = useState<Position[]>([]);
+  const [showSuccessAlert, setShowSuccessAlert] = useState(false);
+  const form = useForm<SignupForm>({
+    resolver: zodResolver(signupSchema),
+    defaultValues: {
+      Name: "",
+      loginname: "",
+      branchid: "",
+      department: "",
+      secid: "",
+      positionid: "",
+      empupper: "",
+      email: "",
+      password: ""
+    }
+  });
+  useEffect(() => {
+    const fetchData = async (url: string, setter: (data: any[]) => void) => {
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setter(data);
+        } else if (data && Array.isArray(data.data)) {
+          setter(data.data);
+        } else {
+          console.warn("API response is not an array:", data);
+          setter([]);
+        }
+      } catch (error) {
+        console.error("Error fetching", url, error);
+      }
+    };
+
+    fetchData("http://localhost:7777/api/user", setUserApi);
+    fetchData("http://localhost:7777/api/branch", setBranchApi);
+    fetchData("http://localhost:7777/api/department", setDepartmentApi);
+    fetchData("http://localhost:7777/api/section", setSectionApi);
+    fetchData("http://localhost:7777/api/position", setPositionApi);
+  }, []);
+  const onSubmit = async (values: SignupForm) => {
+    try {
+      const response = await fetch("http://localhost:7777/api/user/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(values)
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to sign up");
+      } else {
+        setFullNameValue(values.Name);
+        onOpenChange?.(false);
+        setShowSuccessAlert(true);
+        if (onUserCreated) {
+          onUserCreated();
+        }
+        form.reset({
+          Name: "",
+          loginname: "",
+          branchid: "",
+          department: "",
+          secid: "",
+          positionid: "",
+          empupper: "",
+          email: "",
+          password: ""
+        });
+        setTimeout(() => {
+          setShowSuccessAlert(false);
+          // onOpenChange?.(false);
+        }, 5000);
+      }
+    } catch (error) {
+      console.error("Error signing up:", error);
+    }
+  };
+  return (
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-[0px] sm:max-w-[700px]">
+          <DialogHeader>
+            <DialogTitle>สร้างผู้ใช้</DialogTitle>
+            <DialogDescription>
+              "กรอกโปรไฟล์ของคุณที่นี่ คลิก 'บันทึก' เมื่อทำเสร็จแล้ว"
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                {/* Name */}
+                <FormField
+                  control={form.control}
+                  name="Name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>ชื่อ-นามสกุล</FormLabel>
+                      <FormControl>
+                        <Input placeholder="กรุณากรอกชื่อ-นามสกุล" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Username */}
+                <FormField
+                  control={form.control}
+                  name="loginname"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>รหัสผู้ใช้</FormLabel>
+                      <FormControl>
+                        <Input placeholder="กรุณากรอกรหัสผู้ใช้" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Branch ID */}
+                <FormField
+                  control={form.control}
+                  name="branchid"
+                  render={({ field }) => (
+                    <CustomSelect
+                      field={field}
+                      placeholder="เลือกสาขา"
+                      formLabel="สาขา"
+                      options={branchApi.map(branch => ({
+                        value: branch.branchid.toString(),
+                        label: branch.name
+                      }))}
+                    />
+                  )}
+                />
+
+                {/* Department ID */}
+                <FormField
+                  control={form.control}
+                  name="department"
+                  render={({ field }) => (
+                    <CustomSelect
+                      field={field}
+                      placeholder="เลือกฝ่าย"
+                      formLabel="ฝ่าย"
+                      options={departmentApi.map(department => ({
+                        value: department.depid.toString(),
+                        label: department.name
+                      }))}
+                    />
+                  )}
+                />
+
+                {/* Section ID */}
+                <FormField
+                  control={form.control}
+                  name="secid"
+                  render={({ field }) => (
+                    <CustomSelect
+                      field={field}
+                      placeholder="เลือกแผนก (หากมี)"
+                      formLabel="แผนก (หากมี)"
+                      options={sectionApi.filter((section, index, self) =>
+                        index === self.findIndex(s => s.name === section.name)
+                      ).map(section => ({
+                        value: section.secid.toString(),
+                        label: section.codename
+                      }))}
+                    />
+                  )}
+                />
+
+                {/* Position ID */}
+                <FormField
+                  control={form.control}
+                  name="positionid"
+                  render={({ field }) => (
+                    <CustomSelect
+                      field={field}
+                      placeholder="เลือกตำแหน่ง"
+                      formLabel="ตำแหน่ง"
+                      options={positionApi.map(position => ({
+                        value: position.positionid.toString(),
+                        label: position.position
+                      }))}
+                    />
+                  )}
+                />
+
+                {/* Empupper */}
+                <FormField
+                  control={form.control}
+                  name="empupper"
+                  render={({ field }) => (
+                    <CustomSelect
+                      field={field}
+                      placeholder="เลือกหัวหน้า"
+                      formLabel="หัวหน้า"
+                      options={userApi.map(user => ({
+                        value: user.UserID.toString(),
+                        label: user.Fullname
+                      }))}
+                    />
+                  )}
+                />
+
+                {/* Email */}
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>อีเมล</FormLabel>
+                      <FormControl>
+                        <Input placeholder="กรุณากรอกอีเมล" type="email" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Password */}
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>รหัสผ่าน</FormLabel>
+                      <FormControl>
+                        <Input placeholder="กรุณากรอกรหัสผ่าน" type="password" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                      <p className="text-xs text-gray-500 mt-1">
+                        รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษรและมีอักขระพิเศษอย่างน้อย 1 ตัว
+                      </p>
+                    </FormItem>
+                  )}
+                />
+              </div>
+              {/* Footer buttons */}
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button type="button" variant="secondary">
+                    Cancel
+                  </Button>
+                </DialogClose>
+                <Button type="submit">Save changes</Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+      {/* Success Toast Alert */}
+      {showSuccessAlert && (
+        <div className="fixed bottom-4 right-4 z-50 animate-in slide-in-from-right-full duration-300">
+          <Alert className="w-96 bg-green-50 border-green-200 shadow-lg">
+            <CheckCircle2 className="h-4 w-4 text-green-600" />
+            <AlertTitle className="text-green-800">ลบข้อมูลสำเร็จ!</AlertTitle>
+            <AlertDescription className="text-green-700">
+              ลบผู้ใช้ {fullNameValue} เรียบร้อยแล้ว
+            </AlertDescription>
+            <button
+              onClick={() => setShowSuccessAlert(false)}
+              className="absolute top-2 right-2 text-green-600 hover:text-green-800"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </Alert>
+        </div>
+      )}
+    </>
+  )
+}
