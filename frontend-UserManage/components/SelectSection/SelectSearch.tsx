@@ -82,11 +82,11 @@ export default function CustomSelect<T extends FieldValues, K extends FieldPath<
                 </button>
               )}
             </div>
-            <PopoverContent className="w-[200px] max-h-[300px] overflow-auto p-0" align="start">
-              <Command className="max-h-[300px] overflow-y-auto">
+            <PopoverContent className="min-w-[170px] sm:min-w-[220px] w-auto max-w-sm p-0" align="start">
+              <Command className="w-full">
                 <CommandInput placeholder={`ค้นหา ${formLabel}...`} className="h-9" />
                 <CommandEmpty>ไม่พบข้อมูล</CommandEmpty>
-                <CommandGroup>
+                <CommandGroup className="max-h-[300px] overflow-y-auto">
                   {options.map((option) => (
                     <CommandItem
                       key={option.value}
