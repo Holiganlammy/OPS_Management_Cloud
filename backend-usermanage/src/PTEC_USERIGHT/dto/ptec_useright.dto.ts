@@ -67,7 +67,7 @@ export class User {
 
   @IsOptional()
   @IsNumber()
-  PositionID:number;
+  PositionID: number;
 
   @IsOptional()
   @IsString()
