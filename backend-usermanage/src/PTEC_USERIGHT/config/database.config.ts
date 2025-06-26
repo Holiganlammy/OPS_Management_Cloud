@@ -1,7 +1,10 @@
+import * as dotenv from 'dotenv';
+dotenv.config({ path: '.env.local' });
+
 export const databaseConfig = {
-  user: process.env.DB_USER || 'ptec1',
-  password: process.env.DB_PASSWORD || 'Pure@166',
-  server: process.env.DB_SERVER || '10.15.100.227',
-  database: process.env.DB_NAME || 'PTEC_USERSRIGHT',
-  options: { encrypt: false }
+  user: process.env.DB_USER || '',
+  password: process.env.DB_PASSWORD || '',
+  server: process.env.DB_SERVER || '',
+  database: process.env.DB_NAME || '',
+  options: { encrypt: false },
 };

@@ -9,14 +9,14 @@ import * as sql from 'mssql';
 import { LoginDto } from '../dto/Login.dto';
 import { CreateUserDto } from '../dto/CreateUser.dto';
 import { EditUserDto } from '../dto/EditUser.dto';
-
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AppService implements OnModuleInit {
   private pool: sql.ConnectionPool;
   private isConnected: boolean = false;
 
-  constructor() {}
+  constructor(private jwtService: JwtService) {}
 
   async onModuleInit() {
     await this.ConnectionDB();
@@ -42,16 +42,24 @@ export class AppService implements OnModuleInit {
     }
   }
 
+  signToken(user: User): string {
+    const payload = {
+      userId: user.UserID,
+      username: user.UserCode,
+      role: user.PositionCode,
+    };
+    return this.jwtService.sign(payload);
+  }
+
   async getUserLogin(req: LoginDto) {
     try {
       await this.ensureConnection();
-      
-      const result = await this.pool.request()
+      const result = await this.pool
+        .request()
         .input('loginname', sql.VarChar, req.loginname)
         .input('password', sql.VarChar, req.password)
         .execute('dbo.User_Login');
       return result.recordset;
-
     } catch (error) {
       console.error('Login Failed :', error);
       return { success: false };
@@ -61,11 +69,9 @@ export class AppService implements OnModuleInit {
   async getUsersFromProcedure(): Promise<User[]> {
     try {
       await this.ensureConnection();
-      
-      const result = await this.pool.request()
-        .execute('dbo.User_List_II');
-      return result.recordset as User[];
 
+      const result = await this.pool.request().execute('dbo.User_List_II');
+      return result.recordset as User[];
     } catch (error) {
       console.error('Error executing stored procedure:', error);
       throw error;
@@ -73,7 +79,8 @@ export class AppService implements OnModuleInit {
   }
   async createUser(createUser: CreateUserDto) {
     try {
-      const result = await this.pool.request()
+      const result = await this.pool
+        .request()
         .input('Name', sql.VarChar, createUser.Name)
         .input('loginname', sql.VarChar, createUser.loginname)
         .input('branchid', sql.VarChar, createUser.branchid)
@@ -93,7 +100,8 @@ export class AppService implements OnModuleInit {
 
   async editUser(id: string, editUserDto: EditUserDto) {
     try {
-      const request = this.pool.request()
+      const request = this.pool
+        .request()
         .input('Name', sql.VarChar, editUserDto.Name)
         .input('loginname', sql.VarChar, editUserDto.loginname)
         .input('branchid', sql.VarChar, editUserDto.branchid)
@@ -114,7 +122,8 @@ export class AppService implements OnModuleInit {
   }
   async deleteUser(ID: string, Actived: string): Promise<void> {
     try {
-      await this.pool.request()
+      await this.pool
+        .request()
         .input('UserID', sql.VarChar, ID)
         .input('Actived', sql.VarChar, Actived)
         .execute('dbo.User_Delete');
@@ -126,8 +135,7 @@ export class AppService implements OnModuleInit {
 
   async getBranch(): Promise<Branch[]> {
     try {
-      const result = await this.pool.request()
-        .execute('dbo.Branch_ListAll');
+      const result = await this.pool.request().execute('dbo.Branch_ListAll');
       return result.recordset;
     } catch (error) {
       console.error('Error fetching branches:', error);
@@ -137,8 +145,7 @@ export class AppService implements OnModuleInit {
 
   async getDepartment(): Promise<Department[]> {
     try {
-      const result = await this.pool.request()
-        .execute('dbo.Department_List');
+      const result = await this.pool.request().execute('dbo.Department_List');
       return result.recordset;
     } catch (error) {
       console.error('Error fetching departments:', error);
@@ -148,8 +155,7 @@ export class AppService implements OnModuleInit {
 
   async getSection(): Promise<Section[]> {
     try {
-      const result = await this.pool.request()
-        .execute('dbo.Section_List');
+      const result = await this.pool.request().execute('dbo.Section_List');
       return result.recordset;
     } catch (error) {
       console.error('Error fetching sections:', error);
@@ -159,8 +165,7 @@ export class AppService implements OnModuleInit {
 
   async getPosition(): Promise<Position[]> {
     try {
-      const result = await this.pool.request()
-        .execute('dbo.Position_List');
+      const result = await this.pool.request().execute('dbo.Position_List');
       return result.recordset;
     } catch (error) {
       console.error('Error fetching positions:', error);
