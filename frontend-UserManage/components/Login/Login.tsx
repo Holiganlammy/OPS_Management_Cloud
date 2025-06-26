@@ -10,6 +10,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import SuccessDialog from "@/components/SubmitAlert/SuccessDialog/Success";
+import Link from "next/link";
 
 function setSession(userData: UserData) {
     if (typeof window === 'undefined') return
@@ -167,22 +168,12 @@ export default function Login() {
                     )}
                 />
                 <div className="flex justify-end">
-                    <a href="#" className="text-sm font-medium text-primary-600 hover:underline dark:text-primary-500">Forgot password?</a>
+                    <Link href="/password_reset" className="text-sm font-medium text-primary-600 hover:underline dark:text-primary-500">Forgot password?</Link>
                 </div>
                 <Button className="w-full cursor-pointer" type="submit" disabled={isLoading}>
                     {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Login
                 </Button>
-
-                {/* Success Dialog */}
-                <SuccessDialog
-                    open={successDialog}
-                    onOpenChange={setSuccessDialog}
-                    onConfirm={handleSuccessConfirm}
-                    title="Login Successful!"
-                    description="Welcome back! You will be redirected to your dashboard."
-                    buttonText="Continue to Dashboard"
-                />
             </form>
         </Form>
     );

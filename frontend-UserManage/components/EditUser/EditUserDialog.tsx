@@ -16,9 +16,9 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { useEffect, useState } from "react"
-import { Alert, AlertDescription, AlertTitle } from "../ui/alert"
-import { CheckCircle2, X } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
+import SubmitSuccess from "../SubmitAlert/AlertSubmitSuccess/SubmitSuccess"
+import SubmitFailed from "../SubmitAlert/AlertSubmitFailed/SubmitFailed"
 
 const editSchema = z.object({
     Name: z.string().min(2, "ชื่อต้องมีอย่างน้อย 2 ตัวอักษร"),
@@ -49,7 +49,9 @@ export default function EditUserDialog({ user, open, onOpenChange, onUserUpdated
     const [positionApi, setPositionApi] = useState<Position[]>([]);
     const [userApi, setUserApi] = useState<UserEdit[]>([]);
     const [showSuccessAlert, setShowSuccessAlert] = useState(false);
+    const [showErrorAlert, setShowErrorAlert] = useState(false);
     const [isDataLoading, setIsDataLoading] = useState(false)
+    const [fullNameValue, setFullNameValue] = useState("");
 
     const form = useForm<EditForm>({
         resolver: zodResolver(editSchema),
@@ -139,8 +141,15 @@ export default function EditUserDialog({ user, open, onOpenChange, onUserUpdated
             const data = await response.json();
             
             if (!response.ok) {
-                throw new Error(data.message || "Failed to update user");
+                console.error("Failed to update user:", data);
+                setFullNameValue(values.Name);
+                setShowErrorAlert(true);
+                setTimeout(() => {
+                    setShowErrorAlert(false);
+                }, 5000);
+                return;
             }else{
+                setFullNameValue(values.Name);
                 onOpenChange(false);
                 setShowSuccessAlert(true);
                 if (onUserUpdated) {
@@ -369,23 +378,16 @@ export default function EditUserDialog({ user, open, onOpenChange, onUserUpdated
             </DialogContent>
         </Dialog>
         {/* Success Toast Alert */}
-        {showSuccessAlert && (
-            <div className="fixed bottom-4 right-4 z-50 animate-in slide-in-from-right-full duration-300">
-                <Alert className="w-96 bg-green-50 border-green-200 shadow-lg">
-                    <CheckCircle2 className="h-4 w-4 text-green-600" />
-                    <AlertTitle className="text-green-800">บันทึกข้อมูลสำเร็จ!</AlertTitle>
-                    <AlertDescription className="text-green-700">
-                        บันทึกผู้ใช้ {user?.Fullname} เรียบร้อยแล้ว
-                    </AlertDescription>
-                    <button
-                        onClick={() => setShowSuccessAlert(false)}
-                        className="absolute top-2 right-2 text-green-600 hover:text-green-800"
-                    >
-                        <X className="h-4 w-4" />
-                    </button>
-                </Alert>
-            </div>
-        )}
-        </>
+        <SubmitSuccess
+            showSuccessAlert={showSuccessAlert}
+            fullNameValue={user?.Fullname ?? ""}
+            setShowSuccessAlert={setShowSuccessAlert}
+        />
+        <SubmitFailed
+            showErrorAlert={showErrorAlert}
+            fullNameValue={fullNameValue}
+            setShowErrorAlert={setShowErrorAlert}
+        />
+    </>
     )
 }

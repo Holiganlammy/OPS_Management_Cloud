@@ -16,8 +16,8 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { useEffect, useState } from "react"
-import { CheckCircle2, X } from "lucide-react"
-import { Alert, AlertDescription, AlertTitle } from "../ui/alert"
+import SubmitSuccess from "../SubmitAlert/AlertSubmitSuccess/SubmitSuccess"
+import SubmitFailed from "../SubmitAlert/AlertSubmitFailed/SubmitFailed"
 
 const signupSchema = z.object({
   Name: z.string().min(2, "ชื่อ-นามสกุลต้องมีอย่างน้อย 2 ตัวอักษร"),
@@ -42,6 +42,7 @@ export default function Signup({ open, onOpenChange, onUserCreated }: { open?: b
   const [sectionApi, setSectionApi] = useState<Section[]>([]);
   const [positionApi, setPositionApi] = useState<Position[]>([]);
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
+  const [showErrorAlert, setShowErrorAlert] = useState(false);
   const form = useForm<SignupForm>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
@@ -91,7 +92,12 @@ export default function Signup({ open, onOpenChange, onUserCreated }: { open?: b
       });
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.message || "Failed to sign up");
+        console.error("Error creating user:", data);
+        setFullNameValue(values.Name);
+        setShowErrorAlert(true);
+        setTimeout(() => {
+          setShowErrorAlert(false);
+        }, 5000);
       } else {
         setFullNameValue(values.Name);
         onOpenChange?.(false);
@@ -295,24 +301,8 @@ export default function Signup({ open, onOpenChange, onUserCreated }: { open?: b
           </Form>
         </DialogContent>
       </Dialog>
-      {/* Success Toast Alert */}
-      {showSuccessAlert && (
-        <div className="fixed bottom-4 right-4 z-50 animate-in slide-in-from-right-full duration-300">
-          <Alert className="w-96 bg-green-50 border-green-200 shadow-lg">
-            <CheckCircle2 className="h-4 w-4 text-green-600" />
-            <AlertTitle className="text-green-800">ลบข้อมูลสำเร็จ!</AlertTitle>
-            <AlertDescription className="text-green-700">
-              ลบผู้ใช้ {fullNameValue} เรียบร้อยแล้ว
-            </AlertDescription>
-            <button
-              onClick={() => setShowSuccessAlert(false)}
-              className="absolute top-2 right-2 text-green-600 hover:text-green-800"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </Alert>
-        </div>
-      )}
+        <SubmitSuccess showSuccessAlert={showSuccessAlert} setShowSuccessAlert={setShowSuccessAlert} fullNameValue={fullNameValue} />
+        <SubmitFailed showErrorAlert={showErrorAlert} fullNameValue={fullNameValue} setShowErrorAlert={setShowErrorAlert} />
     </>
   )
 }
