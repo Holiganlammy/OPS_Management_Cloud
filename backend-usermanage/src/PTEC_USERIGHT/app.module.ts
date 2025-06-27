@@ -8,6 +8,7 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from '../auth/jwt.strategy';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { DatabaseManagerModule } from 'src/database/database-manager.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
       secret: jwtConstants.secret,
       signOptions: { expiresIn: '1h' },
     }),
+    DatabaseManagerModule,
   ],
   controllers: [AppController],
   providers: [
@@ -30,4 +32,4 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
     },
   ],
 })
-export class AppModule {}
+export class PTEC_USERRIGHT_Module {}
