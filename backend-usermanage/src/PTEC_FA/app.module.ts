@@ -4,9 +4,11 @@ import { PTEC_FA_Service } from './service/PTEC_FA.service';
 import { JwtStrategy } from 'src/auth/jwt.strategy';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { DatabaseManagerModule } from 'src/database/database-manager.module';
 
 @Module({
   controllers: [PTEC_FA_Controller],
+  imports: [DatabaseManagerModule],
   providers: [
     PTEC_FA_Service,
     JwtStrategy,
@@ -16,4 +18,4 @@ import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
     },
   ]
 })
-export class PtecFaControllerModule {}
+export class PTEC_FA_Module {}

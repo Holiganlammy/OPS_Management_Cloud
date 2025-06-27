@@ -89,7 +89,7 @@ export default function EditUserDialog({ user, open, onOpenChange, onUserUpdated
         if (open) {
             setIsDataLoading(true);
             Promise.all([
-                fetchData("http://localhost:7777/api/user", setUserApi),
+                fetchData("http://localhost:7777/api/users", setUserApi),
                 fetchData("http://localhost:7777/api/branch", setBranchApi),
                 fetchData("http://localhost:7777/api/department", setDepartmentApi),
                 fetchData("http://localhost:7777/api/section", setSectionApi),

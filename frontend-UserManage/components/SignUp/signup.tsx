@@ -75,7 +75,7 @@ export default function Signup({ open, onOpenChange, onUserCreated }: { open?: b
       }
     };
 
-    fetchData("http://localhost:7777/api/user", setUserApi);
+    fetchData("http://localhost:7777/api/users", setUserApi);
     fetchData("http://localhost:7777/api/branch", setBranchApi);
     fetchData("http://localhost:7777/api/department", setDepartmentApi);
     fetchData("http://localhost:7777/api/section", setSectionApi);

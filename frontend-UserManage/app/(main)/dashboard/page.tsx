@@ -90,7 +90,7 @@ export default function Dashboard() {
 
   const fetchUsers = useCallback(async () => {
     try {
-      const res = await fetch("http://localhost:7777/api/user", {
+      const res = await fetch("http://localhost:7777/api/users", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
