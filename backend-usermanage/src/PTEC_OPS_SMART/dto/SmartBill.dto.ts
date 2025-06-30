@@ -1,119 +1,196 @@
-import { IsString, IsNotEmpty } from 'class-validator'; // ใช้ class-validator เพื่อตรวจสอบความถูกต้องของข้อมูล
+import {
+  IsString,
+  IsNotEmpty,
+  IsBoolean,
+  IsNumber,
+  IsOptional,
+} from 'class-validator';
 
-export class SmartBillHeaderInput {
+export class SmartBill_Withdraw_SaveInput {
   @IsString()
   @IsNotEmpty()
-  sb_code: string;
+  ownercode: string;
+
+  @IsString()
+  @IsNotEmpty()
+  car_infocode: string;
+
+  @IsString()
+  @IsNotEmpty()
+  typePay: string;
+
+  @IsBoolean()
+  @IsNotEmpty()
+  condition: number;
+}
+
+export class SmartBill_CreateCostInput {
+  @IsNotEmpty()
+  sbwdtl_id: number | string;
+
+  @IsNotEmpty()
+  cost_id: number | string;
+
+  @IsNotEmpty()
+  category_id: number | string;
+
+  @IsString()
+  @IsNotEmpty()
+  usercode: string;
+  amount: number;
+}
+
+export class SmartBill_CreateCostAllowanceInput {
+  @IsNotEmpty()
+  sbwdtl_id: number | string;
+
+  @IsNotEmpty()
+  cost_id: number | string;
+
+  @IsNotEmpty()
+  category_id: number | string;
 
   @IsString()
   @IsNotEmpty()
   usercode: string;
 
-  @IsString()
+  @IsOptional()
   @IsNotEmpty()
-  sb_name: string;
+  amount?: number | string;
+}
+
+export class SmartBill_WithdrawDtl_SaveChangesCategoryInput {
+  @IsNotEmpty()
+  sbwdtl_id: number | string;
+
+  @IsNotEmpty()
+  cost_id: number | string;
+
+  @IsNumber()
+  @IsNotEmpty()
+  id: number;
+
+  @IsNotEmpty()
+  category_id: number | string;
+
+  @IsNumber()
+  @IsNotEmpty()
+  count: number;
 
   @IsString()
   @IsNotEmpty()
-  sb_fristName: string;
+  startdate: string;
 
   @IsString()
   @IsNotEmpty()
-  sb_lastName: string;
-
-  @IsNotEmpty()
-  clean_status: boolean | number;
-
-  @IsNotEmpty()
-  group_status: boolean | number;
+  enddate: string;
 
   @IsString()
   @IsNotEmpty()
-  reamarks: string;
+  sbc_hotelProvince: string;
+
+  @IsString()
+  @IsNotEmpty()
+  sbc_hotelname: string;
+
+  @IsString()
+  usercode?: string;
+
+  @IsNotEmpty()
+  foodStatus: number | string;
+
+  @IsNotEmpty()
+  amount: number | string;
+
+  @IsString()
+  category_name?: string;
+}
+
+export class SmartBill_WithdrawDtl_DeleteCategoryInput {
+  @IsNotEmpty()
+  sbwdtl_id: number | string;
+
+  @IsNotEmpty()
+  cost_id: number | string;
+
+  @IsNumber()
+  @IsNotEmpty()
+  category_id: number;
+
+  @IsNotEmpty()
+  id: number | string;
+
+  @IsString()
+  @IsNotEmpty()
+  usercode: string;
+}
+
+export class SmartBill_Withdraw_AddrowDtlInput {
+  @IsString()
+  @IsNotEmpty()
+  sbw_code: string;
+
+  @IsNotEmpty()
+  sb_operationid?: number | null;
+
+  @IsString()
+  @IsNotEmpty()
+  ownercode: string;
 
   @IsString()
   @IsNotEmpty()
   car_infocode: string;
 
+  @IsString()
   @IsNotEmpty()
-  car_infostatus_companny: boolean | number | string;
-
-  @IsNotEmpty()
-  car_categaryid: boolean | number;
-
-  @IsNotEmpty()
-  car_typeid: boolean | number;
+  remark: string;
 
   @IsString()
   @IsNotEmpty()
-  car_band: string;
+  sbwdtl_operationid_startdate: string;
 
   @IsString()
   @IsNotEmpty()
-  car_tier: string;
+  sbwdtl_operationid_enddate: string;
 
-  @IsString()
+  @IsNumber()
   @IsNotEmpty()
-  car_color: string;
+  sbwdtl_operationid_endmile: number;
 
-  @IsString()
+  @IsNumber()
   @IsNotEmpty()
-  car_remarks: string;
+  sbwdtl_operationid_startmile: number;
 }
 
-export class SmartBillOperationInput {
+export class SmartBill_Withdraw_updateSBWInput {
   @IsString()
   @IsNotEmpty()
-  sb_code: string;
-
-  @IsString()
-  @IsNotEmpty()
-  sb_operationid_startdate: string;
+  sbw_code: string;
 
   @IsNotEmpty()
-  sb_operationid_startmile: number;
+  usercode?: string | null;
 
   @IsNotEmpty()
-  sb_operationid_startoil: number;
-
-  @IsString()
-  @IsNotEmpty()
-  sb_operationid_enddate: string;
+  pure_card?: number | null;
 
   @IsNotEmpty()
-  sb_operationid_endoil: number;
+  condition: number | string;
 
-  @IsNotEmpty()
-  sb_operationid_endmile: number;
-
-  @IsNotEmpty()
-  sb_paystatus: number;
-
-  @IsString()
-  @IsNotEmpty()
-  sb_operationid_location: string;
-}
-
-export class SmartBillAssociateInput {
-  @IsString()
-  @IsNotEmpty()
-  sb_code: string;
-
-  @IsString()
-  @IsNotEmpty()
-  allowance_usercode: string;
-
-  @IsString()
-  @IsNotEmpty()
-  sb_associate_startdate: string;
-
-  @IsString()
-  @IsNotEmpty()
-  sb_associate_enddate: string;
-}
-
-export class SmartBill_CarInfoSearchInput {
   @IsString()
   @IsNotEmpty()
   car_infocode: string;
+
+  @IsNumber()
+  @IsNotEmpty()
+  lock_status?: number;
+
+  @IsString()
+  @IsNotEmpty()
+  typePay: string;
+}
+
+export class SmartBillUploadInput {
+  @IsString()
+  @IsNotEmpty()
+  sb_code: string;
 }
