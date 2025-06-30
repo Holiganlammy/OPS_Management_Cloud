@@ -4,6 +4,10 @@ export class FA_Control_Running_NO_Dto {
   @IsString()
   @IsNotEmpty()
   files: string;
+
+  @IsString()
+  @IsNotEmpty()
+  ATT:string;
 }
 
 export class FA_Control_UpdateDetailCounted_Dto {
@@ -243,4 +247,242 @@ export class FA_Control_Create_Detail_NAC {
   @IsString()
   @MaxLength(255)
   nacdtl_image_2: string;
+}
+
+export class FA_control_update_DTL {
+  @IsString()
+  @MaxLength(10)
+  @IsNotEmpty()
+  usercode: string;
+
+  @IsString()
+  @MaxLength(20)
+  @IsNotEmpty()
+  nac_code: string;
+
+  @IsString()
+  @MaxLength(50)
+  @IsNotEmpty()
+  nacdtl_assetsCode: string;
+
+  @IsString()
+  @MaxLength(200)
+  @IsNotEmpty()
+  nacdtl_assetsName: string;
+
+  @IsString()
+  @MaxLength(50)
+  @IsNotEmpty()
+  nacdtl_assetsSeria: string;
+
+  @IsString()
+  @MaxLength(200)
+  @IsNotEmpty()
+  nacdtl_assetsDtl: string;
+
+  @IsNumber()
+  @IsNotEmpty()
+  nacdtl_assetsPrice: number;
+
+  @IsOptional()
+  @IsString()
+  image_1?: string;
+
+  @IsOptional()
+  @IsString()
+  image_2?: string;
+}
+
+export class stroe_FA_control_Path {
+  @IsString()
+  @MaxLength(20)
+  @IsNotEmpty()
+  nac_code: string;
+
+  @IsString()
+  @MaxLength(10)
+  @IsNotEmpty()
+  usercode: string;
+
+  @IsString()
+  @MaxLength(200)
+  @IsNotEmpty()
+  description: string;
+
+  @IsString()
+  @IsNotEmpty()
+  linkpath: string;
+}
+
+export class FA_Control_New_Assets_Xlsx {
+  @IsOptional()
+  @IsString()
+  UserCode?: string;
+
+  @IsOptional()
+  @IsString()
+  Code?: string;
+
+  @IsOptional()
+  @IsString()
+  Name?: string;
+
+  @IsOptional()
+  @IsInt()
+  BranchID?: number;
+
+  @IsOptional()
+  @IsString()
+  Price?: string;
+
+  @IsOptional()
+  @IsString()
+  OwnerCode?: string;
+
+  @IsOptional()
+  @IsString()
+  Asset_group?: string;
+
+  @IsOptional()
+  @IsString()
+  Group_name?: string;
+
+  @IsOptional()
+  @IsString()
+  SerialNo?: string;
+
+  @IsOptional()
+  @IsString()
+  CreateDate?: string;
+
+  @IsOptional()
+  @IsString()
+  CreateBy?: string;
+
+  @IsOptional()
+  @IsString()
+  Position?: string;
+
+  @IsOptional()
+  @IsString()
+  Details?: string;
+
+  @IsOptional()
+  @IsString()
+  TypeGroup?: string;
+
+  @IsOptional()
+  @IsString()
+  bac_type?: string;
+
+  @IsOptional()
+  @IsString()
+  keyID?: string;
+
+  @IsOptional()
+  @IsString()
+  user_name?: string;
+}
+
+export class UpdateDtlAssetDto {
+  @IsString()
+  @MaxLength(20)
+  Code: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(150)
+  Name?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  Asset_group?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  Group_name?: string;
+
+  @IsOptional()
+  @IsInt()
+  BranchID?: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  OwnerCode?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  Details?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  SerialNo?: string;
+
+  @IsOptional()
+  @IsNumber()
+  Price?: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  Position?: string;
+
+  @IsOptional()
+  @IsString()
+  ImagePath?: string;
+
+  @IsOptional()
+  @IsString()
+  ImagePath_2?: string;
+
+  @IsString()
+  @MaxLength(50)
+  UserCode: string;
+}
+
+export class FAMobileUploadImageDto {
+  @IsString()
+  Code: string;
+
+  @IsInt()
+  index: number;
+
+  @IsOptional()
+  @IsString()
+  imagePath?: string;
+
+  @IsOptional()
+  @IsString()
+  imagePath_2?: string;
+}
+
+export class updateReferenceDto {
+  @IsString()
+  @IsNotEmpty()
+  Reference: string;
+
+  @IsString()
+  @IsNotEmpty()
+  Code: string;
+
+  @IsInt()
+  @IsNotEmpty()
+  RoundID: number;
+
+  @IsInt()
+  @IsNotEmpty()
+  UserID: number;
+
+  @IsInt()
+  @IsNotEmpty()
+  choice: number;
+
+  @IsOptional()
+  @IsString()
+  comment: string;
 }
