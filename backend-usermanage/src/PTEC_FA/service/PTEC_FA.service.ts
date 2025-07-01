@@ -1,63 +1,33 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import * as sql from 'mssql';
+import axios from 'axios';
+import { DatabaseManagerService } from 'src/database/database-manager.service';
 import { databaseConfig } from '../config/database.config';
-import { FA_Control_Create_Detail_NAC} from '../dto/FA_Control.dto';
+import { FA_Control_New_Assets_Xlsx, FA_Control_Running_NO_Dto, FA_control_update_DTL, FAMobileUploadImageDto, stroe_FA_control_Path, UpdateDtlAssetDto, updateReferenceDto } from '../dto/FA_Control.dto';
+import { promises } from 'dns';
 
 @Injectable()
-export class PTEC_FA_Service implements OnModuleInit {
-  private pool: sql.ConnectionPool;
-  private isConnected: boolean = false;
+export class PTEC_FA_Service  {
+constructor(private readonly dbManager: DatabaseManagerService) {}
 
-  async onModuleInit() {
-    this.pool = await sql.connect(databaseConfig);
-    this.isConnected = true;
-  }
-  private async ConnectionDB() {
+  async FA_Control_Running_NO(): Promise<FA_Control_Running_NO_Dto[]> {
     try {
-      if (!this.pool) {
-        this.pool = await sql.connect(databaseConfig);
-        this.isConnected = true;
-        console.log('Database connected successfully');
-      }
+      return await this.dbManager.query(
+        `declare @nac_code varchar(100)
+         declare @date_time datetime = getdate()
+         exec [${databaseConfig.database}].[dbo].[RunningNo] 'ATT', @date_time, @nac_code output
+         select @nac_code as ATT`
+      );
     } catch (error) {
-      console.error('Database connection failed:', error);
-      this.isConnected = false;
-      throw error;
-    }
-  }
-  private async ensureConnection() {
-    if (!this.isConnected || !this.pool) {
-      await this.ConnectionDB();
-    }
-  }
-  async FA_Control_Running_NO(){
-    try {
-      await this.ensureConnection();
-      const result = await this.pool
-        .request()
-        .query(`
-          declare @nac_code varchar(100)
-          declare @date_time datetime = getdate()
-          exec [dbo].[RunningNo] 'ATT', @date_time, @nac_code output
-          select @nac_code as ATT
-      `)
-      //sql.close()
-      return result.recordset;
-    } catch (error) {
-      //sql.close()
       return error.message;
     }
   }
   async FA_Control_Report_All_Counted_by_Description(Report_All_Counted_by_Description: { Description: string }) {
     try {
-      await this.ensureConnection();
-      const result = await this.pool
-        .request()
-        .input('Description', sql.NVarChar(200), Report_All_Counted_by_Description.Description)
-        .query(`
-          exec [dbo].[FA_Control_Report_All_Counted_by_Description]
-        `);
-      return result.recordset;
+      return this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.FA_Control_Report_All_Counted_by_Description`,
+        [{ name: 'Description', type: sql.NVarChar(200), value: Report_All_Counted_by_Description.Description }]
+      );
     } catch (error) {
       console.error('Error in FA_Control_Report_All_Counted_by_Description:', error);
       throw error;
@@ -66,23 +36,21 @@ export class PTEC_FA_Service implements OnModuleInit {
 
   async FA_Control_NAC_Backlog() {
     try {
-      await this.ensureConnection();
-      const result = await this.pool
-        .request()
-        .execute('dbo.FA_Control_NAC_Backlog');
-      return result.recordset;
+      return await this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.FA_Control_NAC_Backlog`,
+        []
+      );
     } catch (error) {
       console.error('Error in FA_Control_NAC_Backlog:', error);
       throw error;
     }
   }
-  async FA_Control_AnnualGraph(TargetYear: string) {
+  async FA_Control_AnnualGraph(TargetYear: number) {
     try {
-      const result = await this.pool
-        .request()
-        .input('TargetYear', sql.Int, TargetYear)
-        .execute('dbo.FA_Control_AnnualGraph');
-      return result.recordset;
+      return await this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.FA_Control_AnnualGraph`,
+        [{ name: 'TargetYear', type: sql.Int(), value: TargetYear }]
+      );
     } catch (error) {
       console.error('Error in FA_Control_AnnualGraph:', error);
       throw error;
@@ -90,32 +58,30 @@ export class PTEC_FA_Service implements OnModuleInit {
   }
   async FA_Control_Fetch_Assets(usercode: string) {
     try {
-      await this.ensureConnection();
-      const result = await this.pool
-        .request()
-        .input('usercode', sql.VarChar(10), usercode)
-        .execute('dbo.FA_Control_Fetch_Assets');
-      return result.recordset;
+      return await this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.FA_Control_Fetch_Assets`,
+        [{ name: 'usercode', type: sql.VarChar(10), value: usercode }]
+      );
     } catch (error) {
       console.error('Error in FA_Control_Fetch_Assets:', error);
       throw error;
     }
   }
-  async FA_Control_UpdateDetailCounted(body: FAControlUpdateDetailCountedInput) {
+  async FA_Control_UpdateDetailCounted(body: FAControlUpdateDetailCountedInput){
     try {
-      await this.ensureConnection();
-      const result = await this.pool
-        .request()
-        .input('roundid', sql.Int, body.roundid)
-        .input('code', sql.NVarChar(20), body.code)
-        .input('status', sql.Int, body.status)
-        .input('comment', sql.NVarChar(255), body.comment)
-        .input('reference', sql.NVarChar(100), body.reference)
-        .input('image_1', sql.NVarChar, body.image_1)
-        .input('image_2', sql.NVarChar, body.image_2)
-        .input('userid', sql.Int, body.userid)
-        .execute('dbo.FA_Control_UpdateDetailCounted');
-      return result.recordset;
+      return await this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.FA_Control_UpdateDetailCounted`,
+        [
+          { name: 'roundid', type: sql.Int(), value: body.roundid },
+          { name: 'code', type: sql.NVarChar(20), value: body.code },
+          { name: 'status', type: sql.Int(), value: body.status },
+          { name: 'comment', type: sql.NVarChar(255), value: body.comment },
+          { name: 'reference', type: sql.NVarChar(100), value: body.reference },
+          { name: 'image_1', type: sql.NVarChar(), value: body.image_1 },
+          { name: 'image_2', type: sql.NVarChar(), value: body.image_2 },
+          { name: 'userid', type: sql.Int(), value: body.userid },
+        ]
+      );
     } catch (error) {
       console.error('Error in FA_Control_UpdateDetailCounted:', error);
       throw error;
@@ -123,11 +89,10 @@ export class PTEC_FA_Service implements OnModuleInit {
   }
   async FA_Control_Assets_TypeGroup(){
     try {
-      await this.ensureConnection();
-      const result = await this.pool
-        .request()
-        .execute('dbo.FA_Control_Assets_TypeGroup');
-      return result.recordset;
+      return await this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.FA_Control_Assets_TypeGroup`,
+        []
+      );
     } catch (error) {
       console.error('Error in FA_Control_Assets_TypeGroup:', error);
       throw error;
@@ -135,40 +100,40 @@ export class PTEC_FA_Service implements OnModuleInit {
   }
   async FA_Control_Create_Document_NAC(body: NacCreateInput){
     try {
-      await this.ensureConnection();
-      const result = await this.pool
-        .request()
-        .input('nac_code', sql.NVarChar(20), body.nac_code)
-        .input('usercode', sql.NVarChar(30), body.usercode)
-        .input('nac_type', sql.Int, body.nac_type)
-        .input('nac_status', sql.Int, body.nac_status)
-        .input('sum_price', sql.Decimal(18, 2), body.sum_price)
-        .input('des_dep_owner', sql.NVarChar(50), body.des_dep_owner)
-        .input('des_bu_owner', sql.NVarChar(50), body.des_bu_owner)
-        .input('des_usercode', sql.NVarChar(10), body.des_usercode)
-        .input('desFristName', sql.NVarChar(50), body.desFristName)
-        .input('desLastName', sql.NVarChar(50), body.desLastName)
-        .input('des_date', sql.DateTime, body.des_date)
-        .input('des_remark', sql.NVarChar(1024), body.des_remark)
-        .input('source_dep_owner', sql.NVarChar(50), body.source_dep_owner)
-        .input('source_bu_owner', sql.NVarChar(50), body.source_bu_owner)
-        .input('source_usercode', sql.NVarChar(10), body.source_usercode)
-        .input('sourceFristName', sql.NVarChar(50), body.sourceFristName)
-        .input('sourceLastName', sql.NVarChar(50), body.sourceLastName)
-        .input('source_date', sql.DateTime, body.source_date)
-        .input('source_remark', sql.NVarChar(1024), body.source_remark)
-        .input('verify_by_userid', sql.Int, body.verify_by_userid)
-        .input('verify_date', sql.DateTime, body.verify_date)
-        .input('source_approve_userid', sql.Int, body.source_approve_userid)
-        .input('source_approve_date', sql.DateTime, body.source_approve_date)
-        .input('account_aprrove_id', sql.Int, body.account_aprrove_id)
-        .input('account_aprrove_date', sql.DateTime, body.account_aprrove_date)
-        .input('finance_aprrove_id', sql.Int, body.finance_aprrove_id)
-        .input('finance_aprrove_date', sql.DateTime, body.finance_aprrove_date)
-        .input('real_price', sql.Decimal(18, 2), body.real_price)
-        .input('realPrice_Date', sql.DateTime, body.realPrice_Date)
-        .execute('dbo.FA_ControlNew_Create_NAC');
-      return result.recordset;
+      return await this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.FA_ControlNew_Create_NAC`,
+        [
+          { name: 'nac_code', type: sql.VarChar(20), value: body.nac_code },
+          { name: 'usercode', type: sql.VarChar(30), value: body.usercode },
+          { name: 'nac_type', type: sql.Int(), value: body.nac_type },
+          { name: 'nac_status', type: sql.Int(), value: body.nac_status },
+          { name: 'sum_price', type: sql.Float(), value: body.sum_price },
+          { name: 'des_dep_owner', type: sql.NVarChar(50), value: body.des_dep_owner },
+          { name: 'des_bu_owner', type: sql.NVarChar(50), value: body.des_bu_owner },
+          { name: 'des_usercode', type: sql.NVarChar(10), value: body.des_usercode ?? null },
+          { name: 'desFristName', type: sql.NVarChar(), value: body.desFristName ?? null },
+          { name: 'desLastName', type: sql.NVarChar(), value: body.desLastName },
+          { name: 'des_date', type: sql.DateTime(), value: body.des_date },
+          { name: 'des_remark', type: sql.NVarChar(1024), value: body.des_remark },
+          { name: 'source_dep_owner', type: sql.NVarChar(50), value: body.source_dep_owner },
+          { name: 'source_bu_owner', type: sql.NVarChar(50), value: body.source_bu_owner ?? null },
+          { name: 'source_usercode', type: sql.NVarChar(10), value: body.source_usercode ?? null },
+          { name: 'sourceFristName', type: sql.NVarChar(), value: body.sourceFristName },
+          { name: 'sourceLastName', type: sql.NVarChar(), value: body.sourceLastName },
+          { name: 'source_date', type: sql.DateTime(), value: body.source_date },
+          { name: 'source_remark', type: sql.NVarChar(1024), value: body.source_remark },
+          { name: 'verify_by_userid', type: sql.Int(), value: body.verify_by_userid ?? null },
+          { name: 'verify_date', type: sql.DateTime(), value: body.verify_date ?? null },
+          { name: 'source_approve_userid', type: sql.Int(), value: body.source_approve_userid ?? null },
+          { name: 'source_approve_date', type: sql.DateTime(), value: body.source_approve_date ?? null },
+          { name: 'account_aprrove_id', type: sql.Int(), value: body.account_aprrove_id ?? null },
+          { name: 'account_aprrove_date', type: sql.DateTime(), value: body.account_aprrove_date ?? null },
+          { name: 'finance_aprrove_id', type: sql.Int(), value: body.finance_aprrove_id ?? null },
+          { name: 'finance_aprrove_date', type: sql.DateTime(), value: body.finance_aprrove_date ?? null },
+          { name: 'real_price', type: sql.Float(), value: body.real_price ?? null },
+          { name: 'realPrice_Date', type: sql.DateTime(), value: body.realPrice_Date ?? null }
+        ]
+      );
     } catch (error) {
       console.error('Error in FA_Control_Create_Document_NAC:', error);
       throw error;
@@ -176,15 +141,16 @@ export class PTEC_FA_Service implements OnModuleInit {
   }
   async store_FA_control_update_table (req: FAControlUpdateInput) {
     try {
-      const result = await this.pool
-        .request()
-        .input('nac_code', sql.VarChar(30), req.nac_code)
-        .input('usercode', sql.VarChar(10), req.usercode)
-        .input('nacdtl_assetsCode', sql.VarChar(50), req.nacdtl_assetsCode)
-        .input('nac_type', sql.Int, req.nac_type)
-        .input('nac_status', sql.Int, req.nac_status)
-        .execute('dbo.FA_Control_Update_Table');
-      return result.recordset;
+      return await this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.FA_Control_Update_Table`,
+        [
+          { name: 'nac_code', type: sql.VarChar(30), value: req.nac_code },
+          { name: 'usercode', type: sql.VarChar(10), value: req.usercode },
+          { name: 'nacdtl_assetsCode', type: sql.VarChar(50), value: req.nacdtl_assetsCode },
+          { name: 'nac_type', type: sql.Int(), value: req.nac_type },
+          { name: 'nac_status', type: sql.Int(), value: req.nac_status },
+        ]
+      );
     } catch (error) {
       console.error('Error in store_FA_control_upadate_table:', error);
       throw error;
@@ -192,13 +158,14 @@ export class PTEC_FA_Service implements OnModuleInit {
   }
   async store_FA_control_comment(req: store_FA_control_comment) {
     try {
-      const result = await this.pool
-        .request()
-        .input('nac_code', sql.VarChar(20), req.nac_code)
-        .input('usercode', sql.NVarChar(20), req.usercode)
-        .input('comment', sql.NVarChar(200), req.comment)
-        .execute('dbo.FA_Control_Comment');
-      return result.recordset;
+      return await this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.FA_Control_NAC_Comment`,
+        [
+          { name: 'nac_code', type: sql.VarChar(20), value: req.nac_code },
+          { name: 'usercode', type: sql.NVarChar(20), value: req.usercode },
+          { name: 'comment', type: sql.NVarChar(200), value: req.comment }
+        ]
+      );
     } catch (error) {
       console.error('Error in store_FA_control_comment:', error);
       throw error;
@@ -206,24 +173,25 @@ export class PTEC_FA_Service implements OnModuleInit {
   }
   async FA_Control_Create_Detail_NAC(req: FAControlCreateDetailNacInput) {
     try {
-      const result = await this.pool
-        .request()
-        .input('usercode', sql.VarChar(20), req.usercode)
-        .input('nac_code', sql.VarChar(20), req.nac_code)
-        .input('nacdtl_row', sql.Int, req.nacdtl_row)
-        .input('nacdtl_assetsCode', sql.NVarChar(20), req.nacdtl_assetsCode)
-        .input('nacdtl_assetsSeria', sql.NVarChar(100), req.nacdtl_assetsSeria ?? null)
-        .input('nacdtl_assetsName', sql.NVarChar(200), req.nacdtl_assetsName ?? null)
-        .input('create_date', sql.DateTime, req.create_date ?? null)
-        .input('OwnerCode', sql.NVarChar(20), req.OwnerCode ?? null)
-        .input('nacdtl_assetsDtl', sql.NVarChar(200), req.nacdtl_assetsDtl ?? null)
-        .input('nacdtl_bookV', sql.Float, req.nacdtl_bookV)
-        .input('nacdtl_PriceSeals', sql.Float, req.nacdtl_PriceSeals)
-        .input('nacdtl_profit', sql.Float, req.nacdtl_profit)
-        .input('nacdtl_image_1', sql.NVarChar(255), req.nacdtl_image_1)
-        .input('nacdtl_image_2', sql.NVarChar(255), req.nacdtl_image_2)
-        .execute('dbo.FA_Control_Create_Detail_NAC');
-      return result.recordset;
+      return await this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.FA_Control_Create_Detail_NAC`,
+        [
+          { name: 'usercode', type: sql.VarChar(20), value: req.usercode },
+          { name: 'nac_code', type: sql.VarChar(20), value: req.nac_code },
+          { name: 'nacdtl_row', type: sql.Int(), value: req.nacdtl_row },
+          { name: 'nacdtl_assetsCode', type: sql.NVarChar(20), value: req.nacdtl_assetsCode },
+          { name: 'nacdtl_assetsSeria', type: sql.NVarChar(100), value: req.nacdtl_assetsSeria ?? null },
+          { name: 'nacdtl_assetsName', type: sql.NVarChar(200), value: req.nacdtl_assetsName ?? null },
+          { name: 'create_date', type: sql.DateTime(), value: req.create_date ?? null },
+          { name: 'OwnerCode', type: sql.NVarChar(20), value: req.OwnerCode ?? null },
+          { name: 'nacdtl_assetsDtl', type: sql.NVarChar(200), value: req.nacdtl_assetsDtl ?? null },
+          { name: 'nacdtl_bookV', type: sql.Float(), value: req.nacdtl_bookV },
+          { name: 'nacdtl_PriceSeals', type: sql.Float(), value: req.nacdtl_PriceSeals },
+          { name: 'nacdtl_profit', type: sql.Float(), value: req.nacdtl_profit },
+          { name: 'nacdtl_image_1', type: sql.NVarChar(255), value: req.nacdtl_image_1 },
+          { name: 'nacdtl_image_2', type: sql.NVarChar(255), value: req.nacdtl_image_2 }
+        ]
+      );
     } catch (error) {
       console.error('Error in FA_Control_Create_Detail_NAC:', error);
       throw error;
@@ -231,11 +199,10 @@ export class PTEC_FA_Service implements OnModuleInit {
   }
   async store_FA_SendMail(req: { nac_code: string}) {
     try {
-      const result = await this.pool
-        .request()
-        .input('nac_code', sql.VarChar(30), req.nac_code)
-        .execute('dbo.FA_Controls_NAC_SendMail');
-      return result.recordset;
+      return await this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.FA_Controls_NAC_SendMail`,
+        [{ name: 'nac_code', type: sql.VarChar(30), value: req.nac_code }]
+      );
     } catch (error) {
       console.error('Error in store_FA_SendMail:', error);
       throw error;
@@ -243,16 +210,384 @@ export class PTEC_FA_Service implements OnModuleInit {
   }
   async AssetsAll_Control(req: { BranchID: number, usercode: string }) {
     try {
-      const result = await this.pool
-        .request()
-        .input('BranchID', sql.Int, req.BranchID)
-        .input('usercode', sql.NVarChar, req.usercode ?? null)
-        .execute('dbo.FA_Mobile_AssetsAll_Control');
-      return result.recordset;
+      return await this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.FA_Mobile_AssetsAll_Control`,
+        [
+          { name: 'BranchID', type: sql.Int(), value: req.BranchID },
+          { name: 'usercode', type: sql.NVarChar(), value: req.usercode ?? null }
+        ]
+      );
     } catch (error) {
       console.error('Error in AssetsAll_Control:', error);
       throw error;
     }
   }
-  
+  async FA_control_select_headers(req: { nac_code: string}) {
+    try {
+      return await this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.FA_Control_select_headers`,
+        [
+          { name: 'nac_code', type: sql.NVarChar(20), value: req.nac_code },
+        ]
+      );
+    } catch (error) {
+      console.error('Error in FA_control_select_headers:', error);
+      throw error;
+    }
+  }
+  async FA_Control_execDocID(req: { usercode: string, nac_code: string }) {
+    try {
+      return await this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.FA_Control_execDocID`,
+        [
+          { name: 'nac_code', type: sql.NVarChar(20), value: req.nac_code },
+          { name: 'usercode', type: sql.VarChar(10), value: req.usercode },
+        ]
+      );
+    } catch (error) {
+      console.error('Error in FA_Control_execDocID:', error);
+      throw error;
+    }
+  }
+  async FA_Control_select_dtl(req: { nac_code: string }) {
+    try {
+      return await this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.FA_Control_select_dtl`,
+        [
+          { name: 'nac_code', type: sql.NVarChar(20), value: req.nac_code },
+        ]
+      );
+    } catch (error) {
+      console.error('Error in FA_Control_select_dtl:', error);
+      throw error;
+    }
+  }
+  async FA_control_update_DTL(req: FA_control_update_DTL){
+    try {
+      return await this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.FA_Control_Update_DTL`,
+        [
+          { name: 'usercode', type: sql.VarChar(10), value: req.usercode },
+          { name: 'nac_code', type: sql.NVarChar(20), value: req.nac_code },
+          { name: 'nacdtl_assetsCode', type: sql.NVarChar(50), value: req.nacdtl_assetsCode },
+          { name: 'nacdtl_assetsName', type: sql.NVarChar(200), value: req.nacdtl_assetsName },
+          { name: 'nacdtl_assetsSeria', type: sql.NVarChar(50), value: req.nacdtl_assetsSeria },
+          { name: 'nacdtl_assetsDtl', type: sql.NVarChar(200), value: req.nacdtl_assetsDtl },
+          { name: 'nacdtl_assetsPrice', type: sql.Float(), value: req.nacdtl_assetsPrice },
+          { name: 'image_1', type: sql.NVarChar(), value: req.image_1 ?? null },
+          { name: 'image_2', type: sql.NVarChar(), value: req.image_2 ?? null }
+        ]
+      );
+    } catch (error) {
+      console.error('Error in FA_control_update_DTL:', error);
+      throw error;
+    }
+  }
+  async FA_Control_CheckAssetCode_Process(req: { nacdtl_assetsCode: string }) {
+    try {
+      return await this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.FA_Control_CheckAssetCode_Process`,
+        [
+          { name: 'nacdtl_assetsCode', type: sql.NVarChar(20), value: req.nacdtl_assetsCode },
+        ]
+      );
+    } catch (error) {
+      console.error('Error in FA_Control_CheckAssetCode_Process:', error);
+      throw error;
+    }
+  }
+  async stroe_FA_control_Path(req: stroe_FA_control_Path) {
+    try {
+      return await this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.FA_Control_NAC_PATH`,
+        [
+          { name: 'nac_code', type: sql.VarChar(20), value: req.nac_code },
+          { name: 'usercode', type: sql.VarChar(10), value: req.usercode },
+          { name: 'description', type: sql.NVarChar(200), value: req.description },
+          { name: 'linkpath', type: sql.NVarChar(200), value: req.linkpath }
+        ]
+      );
+    } catch (error) {
+      console.error('Error in stroe_FA_control_Path:', error);
+      throw error;
+    }
+  }
+  async qureyNAC_comment(req: { nac_code: string }) {
+    try {
+      return await this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.FA_Control_qureyNAC_comment`,
+        [
+          { name: 'nac_code', type: sql.VarChar(20), value: req.nac_code },
+        ]
+      );
+    } catch (error) {
+      console.error('Error in qureyNAC_comment:', error);
+      throw error;
+    }
+  }
+  async qureyNAC_path(req: { nac_code: string }) {
+    try {
+      return await this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.FA_Control_qureyNAC_path`,
+        [
+          { name: 'nac_code', type: sql.VarChar(20), value: req.nac_code },
+        ]
+      );
+    } catch (error) {
+      console.error('Error in qureyNAC_path:', error);
+      throw error;
+    }
+  }
+  async store_FA_control_HistorysAssets(req: { userCode: string }) {
+    try {
+      return await this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.Fix_Assets_Control_HistoryAssets`,
+        [
+          { name: 'userCode', type: sql.VarChar(20), value: req.userCode },
+        ]
+      );
+    } catch (error) {
+      console.error('Error in store_FA_control_HistorysAssets:', error);
+      throw error;
+    }
+  }
+  async FA_Control_BPC_Running_NO(){
+    try {
+      return await this.dbManager.query(
+        `
+          declare @KeyID varchar(100)
+          declare @date_time datetime = getdate()
+          exec [${databaseConfig.database}].[dbo].[RunningNo] 'TAB', @date_time, @KeyID output
+
+          select @KeyID as TAB
+      `
+      );
+    } catch (error) {
+      console.error('Error in FA_Control_BPC_Running_NO:', error);
+      throw error;
+    }
+  }
+  async FA_Control_New_Assets_Xlsx(req: FA_Control_New_Assets_Xlsx) {
+    try {
+      return await this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.FA_Control_Upload_Assets_Xlsx`,
+        [
+          { name: 'UserCode', type: sql.NVarChar(), value: req.UserCode ?? null },
+          { name: 'Code', type: sql.NVarChar(), value: req.Code ?? null },
+          { name: 'Name', type: sql.NVarChar(), value: req.Name ?? null },
+          { name: 'BranchID', type: sql.Int(), value: req.BranchID ?? null },
+          { name: 'Price', type: sql.NVarChar(), value: req.Price ?? null },
+          { name: 'OwnerCode', type: sql.NVarChar(), value: req.OwnerCode ?? null },
+          { name: 'Asset_group', type: sql.NVarChar(), value: req.Asset_group ?? null },
+          { name: 'Group_name', type: sql.NVarChar(), value: req.Group_name ?? null },
+          { name: 'SerialNo', type: sql.NVarChar(), value: req.SerialNo ?? null },
+          { name: 'CreateDate', type: sql.NVarChar(), value: req.CreateDate ?? null },
+          { name: 'CreateBy', type: sql.NVarChar(), value: req.CreateBy ?? null },
+          { name: 'Position', type: sql.NVarChar(), value: req.Position ?? null },
+          { name: 'Details', type: sql.NVarChar(), value: req.Details ?? null },
+          { name: 'TypeGroup', type: sql.NVarChar(), value: req.TypeGroup ?? null },
+          { name: 'bac_type', type: sql.NVarChar(), value: req.bac_type ?? null },
+          { name: 'key', type: sql.NVarChar(), value: req.keyID ?? null },
+          { name: 'user_name', type: sql.NVarChar(), value: req.user_name ?? null }
+        ]
+      );
+    } catch (error) {
+      console.error('Error in FA_Control_New_Assets_Xlsx:', error);
+      throw error;
+    }
+  }
+  async FA_Control_import_dataXLSX_toAssets(req: { count: number, keyID: string }) {
+    try {
+      return await this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.FA_Control_import_dataXLSX_toAssets`,
+        [
+          { name: 'count', type: sql.Int(), value: req.count },
+          { name: 'key', type: sql.NVarChar(), value: req.keyID },
+        ]
+      );
+    } catch (error) {
+      console.error('Error in FA_Control_import_dataXLSX_toAssets:', error);
+      throw error;
+    }
+  }
+  async UpdateDtlAsset(req: UpdateDtlAssetDto) {
+    try {
+      return await this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.UpdateDtlAsset`,
+        [
+          { name: 'Code', type: sql.NVarChar(20), value: req.Code },
+          { name: 'Name', type: sql.NVarChar(150), value: req.Name || null },
+          { name: 'Asset_group', type: sql.NVarChar(50), value: req.Asset_group || null },
+          { name: 'Group_name', type: sql.NVarChar(50), value: req.Group_name || null },
+          { name: 'BranchID', type: sql.Int(), value: req.BranchID || null },
+          { name: 'OwnerCode', type: sql.NVarChar(50), value: req.OwnerCode || null },
+          { name: 'Details', type: sql.NVarChar(255), value: req.Details || null },
+          { name: 'SerialNo', type: sql.NVarChar(100), value: req.SerialNo || null },
+          { name: 'Price', type: sql.Float(), value: req.Price || null },
+          { name: 'Position', type: sql.NVarChar(100), value: req.Position || null },
+          { name: 'ImagePath', type: sql.NVarChar(), value: req.ImagePath || null },
+          { name: 'ImagePath_2', type: sql.NVarChar(), value: req.ImagePath_2 || null },
+          { name: 'UserCode', type: sql.NVarChar(50), value: req.UserCode }
+
+        ]
+      );
+    } catch (error) {
+      console.error('Error in UpdateDtlAsset:', error);
+      throw error;
+    }
+  }
+  async FA_control_updateStatus(req: { usercode: string, nac_code: string, nac_status: number }) {
+    try {
+      return await this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.FA_Control_updateStatus`,
+        [
+          { name: 'usercode', type: sql.NVarChar(10), value: req.usercode },
+          { name: 'nac_code', type: sql.NVarChar(20), value: req.nac_code },
+          { name: 'nac_status', type: sql.Int(), value: req.nac_status }
+        ]
+      );
+    } catch (error) {
+      console.error('Error in FA_control_updateStatus:', error);
+      throw error;
+    }
+  }
+  async store_FA_control_drop_NAC(req: { usercode: string, nac_code: string }) {
+    try {
+      return await this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.FA_Control_Drop_DocumentNAC`,
+        [
+          { name: 'usercode', type: sql.NVarChar(10), value: req.usercode },
+          { name: 'nac_code', type: sql.NVarChar(20), value: req.nac_code }
+        ]
+      );
+    } catch (error) {
+      console.error('Error in store_FA_control_drop_NAC:', error);
+      throw error;
+    }
+  }
+  async FA_Control_Select_MyNAC(req: { userCode: string }) {
+    try {
+      return await this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.FA_Control_Select_MyNAC`,
+        [
+          { name: 'userCode', type: sql.NVarChar(10), value: req.userCode }
+        ]
+      );
+    } catch (error) {
+      console.error('Error in FA_Control_Select_MyNAC:', error);
+      throw error;
+    }
+  }
+  async FA_Control_Select_MyNAC_Approve(req: { usercode: string }) {
+    try {
+      return await this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.FA_Control_Select_MyNAC_Approve`,
+        [
+          { name: 'usercode', type: sql.NVarChar(10), value: req.usercode }
+        ]
+      );
+    } catch (error) {
+      console.error('Error in FA_Control_Select_MyNAC_Approve:', error);
+      throw error;
+    }
+  }
+  async FA_Control_ListStatus(){
+    try {
+      return await this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.FA_Control_ListStatus`,
+        []
+      );
+    } catch (error) {
+      console.error('Error in FA_Control_ListStatus:', error);
+      throw error;
+    }
+  }
+  async check_code_result(req: { Code: string }) {
+    try {
+      return await this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.FA_Mobile_scan_check_result`,
+        [
+          { name: 'Code', type: sql.NVarChar(30), value: req.Code }
+        ]
+      );
+    } catch (error) {
+      console.error('Error in check_code_result:', error);
+      throw error;
+    }
+  }
+  async uploadImage(body: FAMobileUploadImageDto): Promise<FAMobileUploadImageDto[]> {
+    const check = await this.check_code_result({ Code: body.Code });
+
+    if (body.index === 0) {
+      const isValid = await this.checkImageUrl(check[0].ImagePath);
+      if (!isValid) {
+        const dataImg = {
+          code: check[0].Code,
+          imagePath: null,
+          imagePath_2: check[0].imagePath_2,
+        };
+        await this.delete_image_asset(dataImg);
+      }
+    } else {
+      const isValid = await this.checkImageUrl(check[0].ImagePath_2);
+      if (!isValid) {
+        const dataImg = {
+          code: check[0].Code,
+          imagePath: check[0].imagePath,
+          imagePath_2: null,
+        };
+        await this.delete_image_asset(dataImg);
+      }
+    }
+    return await this.dbManager.executeStoredProcedure(
+      `${databaseConfig.database}.dbo.FA_Mobile_UploadImage`,
+      [
+        { name: 'Code', type: sql.NVarChar(30), value: body.Code },
+        { name: 'index', type: sql.Int(), value: body.index },
+        { name: 'imagePath', type: sql.NVarChar(), value: body.imagePath ?? null },
+        { name: 'imagePath_2', type: sql.NVarChar(), value: body.imagePath_2 ?? null }
+      ]
+    );
+  }
+  private async checkImageUrl(url: string): Promise<boolean> {
+    try {
+      const response = await axios.head(url);
+      return response.headers['content-type']?.startsWith('image') ?? false;
+    } catch (error) {
+      console.error('Error checking image URL:', error.message);
+      return false;
+    }
+  }
+  private async delete_image_asset(data: {
+    code: string;
+    imagePath: string | null;
+    imagePath_2: string | null;
+  }) {
+    return await this.dbManager.executeStoredProcedure(
+      `${databaseConfig.database}.[dbo].[FA_Mobile_checkImgUplode]`,
+      [
+        { name: 'code', type: sql.NVarChar(20), value: data.code },
+        { name: 'image_1', type: sql.NVarChar(), value: data.imagePath },
+        { name: 'image_2', type: sql.NVarChar(), value: data.imagePath_2 },
+      ]
+    );
+  }
+  async updateReference(req:updateReferenceDto) {
+    try {
+      return await this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.FA_Mobile_update_reference`,
+        [
+          { name: 'Reference', type: sql.NVarChar(100), value: req.Reference },
+          { name: 'Code', type: sql.NVarChar(30), value: req.Code },
+          { name: 'RoundID', type: sql.BigInt(), value: req.RoundID },
+          { name: 'UserID', type: sql.BigInt(), value: req.UserID },
+          { name: 'choice', type: sql.Int(), value: req.choice ?? 0 },
+          { name: 'comment', type: sql.NVarChar(), value: req.comment ?? null }
+        ]
+      );
+    } catch (error) {
+      console.error('Error in updateReference:', error);
+      throw error;
+    }
+  }
 }
