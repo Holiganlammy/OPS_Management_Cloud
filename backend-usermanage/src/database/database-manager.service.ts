@@ -41,4 +41,10 @@ export class DatabaseManagerService {
     const result = await request.execute(fullyQualifiedProcName);
     return mapOutput ? mapOutput(result) : result.recordset;
   }
+
+  async query<T = any>(sqlQuery: string): Promise<T[]> {
+    const pool = await this.getPool();
+    const result = await pool.request().query(sqlQuery);
+    return result.recordset;
+  }
 }
