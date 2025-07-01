@@ -1,9 +1,9 @@
-interface FA_Control_Running_NO_Entity {
+export interface FA_Control_Running_NO_Entity {
   nac_code: string;
   date_time: Date;
 }
 
-interface FAControlUpdateDetailCountedInput {
+export interface FAControlUpdateDetailCountedInput {
   roundid: number;
   code: string;
   status: number;
@@ -14,7 +14,7 @@ interface FAControlUpdateDetailCountedInput {
   userid: number;
 }
 
-interface NacCreateInput {
+export interface NacCreateInput {
   nac_code: string;
   usercode: string;
   nac_type: number;
@@ -46,7 +46,7 @@ interface NacCreateInput {
   realPrice_Date?: string;
 }
 
-interface FAControlUpdateInput {
+export interface FAControlUpdateInput {
   nac_code: string;
   usercode: string;
   nacdtl_assetsCode: string;
@@ -54,13 +54,13 @@ interface FAControlUpdateInput {
   nac_status: number;
 }
 
-interface store_FA_control_comment {
+export interface store_FA_control_comment {
   nac_code: string;
   usercode: string;
   comment: string;
 }
 
-interface FAControlCreateDetailNacInput {
+export interface FAControlCreateDetailNacInput {
   usercode: string;
   nac_code: string;
   nacdtl_row: number;
@@ -76,7 +76,7 @@ interface FAControlCreateDetailNacInput {
   nacdtl_image_1: string;
   nacdtl_image_2: string;
 }
-interface AssetReportItem {
+export interface AssetReportItem {
   RowID: string;
   AssetID: string;
   Code: string;
@@ -101,7 +101,7 @@ interface AssetReportItem {
   EndDate_Success: string;
 }
 
-interface FA_Control_NAC_Backlog{
+export interface FA_Control_NAC_Backlog {
   source_dep_owner: string;
   add_nac: number;
   tranfer_nac: number;
@@ -109,15 +109,15 @@ interface FA_Control_NAC_Backlog{
   sell_nac: number;
 }
 
-interface FA_Control_AnnualGraph{
-  create_year: number,
-  nac_type: number,
-  create_month: number,
-  nac_count: number
+export interface FA_Control_AnnualGraph {
+  create_year: number;
+  nac_type: number;
+  create_month: number;
+  nac_count: number;
 }
 
-interface FA_Control_Fetch_Assets {
-    AssetID: string;
+export interface FA_Control_Fetch_Assets {
+  AssetID: string;
   Code: string;
   Name: string;
   BranchID: number;
@@ -141,27 +141,27 @@ interface FA_Control_Fetch_Assets {
   Old_UpdateDate: string;
 }
 
-interface FA_Control_Assets_TypeGroup{
-  typeGroupID: string,
-  typeCode: string,
-  typeName: string,
-  typeMenu: number
+export interface FA_Control_Assets_TypeGroup {
+  typeGroupID: string;
+  typeCode: string;
+  typeName: string;
+  typeMenu: number;
 }
 
-interface store_FA_control_comment_entity {
-    nac_code: string,
-    userid: string,
-    comment: string,
-    create_date: string
+export interface store_FA_control_comment_entity {
+  nac_code: string;
+  userid: string;
+  comment: string;
+  create_date: string;
 }
 
-interface FA_Control_Create_Detail_NAC_Entity {
-    nac_code: string,
-    nacdtl_id: number,
-    count_nac: number,
+export interface FA_Control_Create_Detail_NAC_Entity {
+  nac_code: string;
+  nacdtl_id: number;
+  count_nac: number;
 }
 
-interface AssetEntity {
+export interface AssetEntity {
   AssetID: number;
   Code: string;
   Name: string;
@@ -198,7 +198,7 @@ interface AssetEntity {
   BranchName: string;
 }
 
-interface NacHeaderEntity {
+export interface NacHeaderEntity {
   nac_code: string;
   nac_type: number;
   status_name: string;
@@ -241,60 +241,60 @@ interface NacHeaderEntity {
   finance_aprrove_date: string;
 }
 
-interface FA_Control_execDocID_Entity {
-  workflowlevel: number,
-  name: string,
-  approverid: string,
-  limitamount: number,
-  pendingday: number | null,
-  status: number
+export interface FA_Control_execDocID_Entity {
+  workflowlevel: number;
+  name: string;
+  approverid: string;
+  limitamount: number;
+  pendingday: number | null;
+  status: number;
 }
 
-interface FA_Control_select_dtl_Entity {
-  nac_code: string,
-  nacdtl_row: number,
-  nacdtl_assetsCode: string,
-  OwnerCode: string,
-  nacdtl_assetsName: string,
-  nacdtl_assetsSeria: number | null,
-  nacdtl_assetsPrice: number,
-  nacdtl_bookV: number | null,
-  nacdtl_PriceSeals: number | null,
-  nacdtl_profit: number | null,
-  nacdtl_image_1: string,
-  nacdtl_image_2: string
+export interface FA_Control_select_dtl_Entity {
+  nac_code: string;
+  nacdtl_row: number;
+  nacdtl_assetsCode: string;
+  OwnerCode: string;
+  nacdtl_assetsName: string;
+  nacdtl_assetsSeria: number | null;
+  nacdtl_assetsPrice: number;
+  nacdtl_bookV: number | null;
+  nacdtl_PriceSeals: number | null;
+  nacdtl_profit: number | null;
+  nacdtl_image_1: string;
+  nacdtl_image_2: string;
 }
 
-interface FA_control_update_DTL_Entity {
+export interface FA_control_update_DTL_Entity {
   nac_code: string;
   nacdtl_id: number;
   count_row: number;
 }
 
-interface store_control_path{
-  nac_code: string,
-  userid: string,
-  description: string,
-  linkpath: string,
-  create_date: string
+export interface store_control_path {
+  nac_code: string;
+  userid: string;
+  description: string;
+  linkpath: string;
+  create_date: string;
 }
 
-interface QueryNACCommentEntity {
-  userid: string,
-  comment: string,
-  create_date: string
+export interface QueryNACCommentEntity {
+  userid: string;
+  comment: string;
+  create_date: string;
 }
 
-interface QueryNACPath {
-  nac_code: string,
-  description: string,
-  linkpath: string,
-  userid: string,
-  create_by: string,
-  create_date: string
+export interface QueryNACPath {
+  nac_code: string;
+  description: string;
+  linkpath: string;
+  userid: string;
+  create_by: string;
+  create_date: string;
 }
 
-interface HistoryAssets{
+export interface HistoryAssets {
   nacdtl_id: string;
   nac_code: string;
   nacdtl_assetsCode: string;
@@ -314,19 +314,19 @@ interface HistoryAssets{
   typeCode: string;
 }
 
-interface FA_Control_Select_MyNAC_Entity {
-  nac_code: string,
-  nac_status: number,
-  status_name: string,
-  sum_price: number,
-  name: string,
-  workflowtypeid: number,
-  create_date: string,
-  verify_by_userid: number | null,
-  source_approve_userid: string,
-  create_by: string,
-  source_userid: string,
-  des_userid: string,
-  userid_approver: number | null,
-  TypeCode: string
+export interface FA_Control_Select_MyNAC_Entity {
+  nac_code: string;
+  nac_status: number;
+  status_name: string;
+  sum_price: number;
+  name: string;
+  workflowtypeid: number;
+  create_date: string;
+  verify_by_userid: number | null;
+  source_approve_userid: string;
+  create_by: string;
+  source_userid: string;
+  des_userid: string;
+  userid_approver: number | null;
+  TypeCode: string;
 }

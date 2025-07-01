@@ -1,4 +1,12 @@
-import {IsInt , IsString, IsNotEmpty ,IsOptional ,MaxLength ,IsDateString ,IsNumber } from 'class-validator';
+import {
+  IsInt,
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  MaxLength,
+  IsDateString,
+  IsNumber,
+} from 'class-validator';
 
 export class FA_Control_Running_NO_Dto {
   @IsString()
@@ -7,7 +15,7 @@ export class FA_Control_Running_NO_Dto {
 
   @IsString()
   @IsNotEmpty()
-  ATT:string;
+  ATT: string;
 }
 
 export class FA_Control_UpdateDetailCounted_Dto {
@@ -189,7 +197,6 @@ export class store_FA_control_comment {
   @IsInt()
   comment: string;
 }
-
 
 export class FA_Control_Create_Detail_NAC {
   @IsString()
