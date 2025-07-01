@@ -16,20 +16,29 @@ export class DatabaseManagerService {
 
   async executeStoredProcedure<T = any>(
     fullyQualifiedProcName: string,
-    inputs: { name: string; type: sql.ISqlType; value: any }[],
+    params: {
+      name: string;
+      type: sql.ISqlType;
+      value?: any;
+      output?: boolean;
+    }[],
+    mapOutput?: (result: {
+      recordset: T[];
+      output?: Record<string, any>;
+    }) => T[],
   ): Promise<T[]> {
     const pool = await this.getPool();
     const request = pool.request();
-    for (const input of inputs) {
-      request.input(input.name, input.type, input.value);
-    }
-    const result = await request.execute(fullyQualifiedProcName);
-    return result.recordset;
-  }
 
-  async query<T = any>(sqlText: string): Promise<T[]> {
-    const pool = await this.getPool();
-    const result = await pool.request().query(sqlText);
-    return result.recordset;
+    for (const param of params) {
+      if (param.output) {
+        request.output(param.name, param.type);
+      } else {
+        request.input(param.name, param.type, param.value);
+      }
+    }
+
+    const result = await request.execute(fullyQualifiedProcName);
+    return mapOutput ? mapOutput(result) : result.recordset;
   }
 }

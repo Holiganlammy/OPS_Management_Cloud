@@ -10,10 +10,10 @@ import { PTEC_FA_Service } from '../service/PTEC_FA.service';
 import { Response } from 'express';
 import { FA_Control_Create_Detail_NAC, FA_Control_New_Assets_Xlsx, FA_Control_Running_NO_Dto, FA_control_update_DTL, FA_control_update_Dto, FA_Control_UpdateDetailCounted_Dto, FAMobileUploadImageDto, NacCreateDto, store_FA_control_comment, stroe_FA_control_Path, UpdateDtlAssetDto, updateReferenceDto } from '../dto/FA_Control.dto';
 
-@Controller('')
-export class PTEC_FA_Controller {
-    constructor(private readonly PTEC_FA_Service: PTEC_FA_Service) { }
-    
+// @Controller('')
+// export class PTEC_FA_Controller {
+//     constructor(private readonly PTEC_FA_Service: PTEC_FA_Service) { }
+
     @Post('/check_files_NewNAC')
     async getFAControlRunningNO(@Req() req: Request): Promise<{
         message: string;
