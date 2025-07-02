@@ -9,36 +9,14 @@ import { AlertCircleIcon, Eye, EyeOff, Loader2 } from "lucide-react"
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import SuccessDialog from "@/components/SubmitAlert/SuccessDialog/Success";
 import Link from "next/link";
-
-function setSession(userData: UserData) {
-    if (typeof window === 'undefined') return
-    localStorage.setItem('user-session', JSON.stringify(userData))
-}
-
-function isAuthenticated() {
-    if (typeof window === 'undefined') return false
-    try {
-        const session = localStorage.getItem('user-session')
-        return session !== null
-    } catch (error) {
-        return false
-    }
-}
 
 export default function Login() {
     const router = useRouter();
     const [error, setError] = useState<string | null>(null);
-    const [successDialog, setSuccessDialog] = useState(false);
     const [showError, setShowError] = useState(false);
     const [showPassword, setShowPassword] = useState(false)
     const [isLoading, setIsLoading] = useState(false);
-    useEffect(() => {
-        if (isAuthenticated()) {
-            router.push('/dashboard')
-        }
-    }, [router])
 
     useEffect(() => {
         if (error){
@@ -69,7 +47,6 @@ export default function Login() {
     const onSubmit = async (values: FormLogin) => {
         setIsLoading(true);
         setError(null);
-        setSuccessDialog(false);
         setShowError(false);
         try {
             const params = new URLSearchParams({
@@ -84,18 +61,34 @@ export default function Login() {
             });
             const result = await response.json();
             if (result.success) {
-                const userData = {
-                    id: result.user?.id || Date.now(), 
-                    loginname: values.loginname,
-                    name: result.user?.name || values.loginname,
-                    loginTime: new Date().toISOString(),
-                    ...result.user
-                };
-                setSession(userData);
+            await fetch('/api/auth/set-session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    accessToken: result.access_token,
+                    user: {
+                        userid: result.user.userid,
+                        username: result.user.UserCode,
+                        name: result.user.name,
+                        email: result.user.Email,
+                        branchid: result.user.branchid,
+                        depid: result.user.depid,
+                        depcode: result.user.depcode,
+                        depname: result.user.depname,
+                        secid: result.user.secid,
+                        seccode: result.user.seccode,
+                        secname: result.user.secname,
+                        positionid: result.user.positionid,
+                        positioncode: result.user.positioncode,
+                        positionname: result.user.positionname,
+                        img_profile: result.user.img_profile,
+                    }
+                })
+            })
                 router.push("/dashboard");
                 router.refresh();
             } else {
-                setError(result.error || "Please check your credentials.");
+                setError(result.error || "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง กรุณาลองอีกครั้ง");
                 setTimeout(() => setShowError(true), 100);
                 setIsLoading(false); 
             }
@@ -104,12 +97,6 @@ export default function Login() {
             setTimeout(() => setShowError(true), 100);
             setIsLoading(false);
         }
-    };
-
-    const handleSuccessConfirm = () => {
-        setSuccessDialog(false);
-        router.push("/dashboard");
-        router.refresh();
     };
 
     return (
@@ -125,7 +112,7 @@ export default function Login() {
                         }`}
                     >
                         <AlertCircleIcon className="h-4 w-4" />
-                        <AlertTitle>Login Failed</AlertTitle>
+                        <AlertTitle>เข้าสู่ระบบล้มเหลว</AlertTitle>
                         <AlertDescription>
                             {error}
                         </AlertDescription>
