@@ -1,4 +1,4 @@
-import ForgotPasswordComponent from "@/components/Login/ForgetPassword/Forget";
+import ForgotPasswordComponent from "@/app/login/LoginComponents/ForgetPassword/Forget";
 export default function ForgotPassword() {
     return (
         <section className="bg-gray-300 dark:bg-gray-900">

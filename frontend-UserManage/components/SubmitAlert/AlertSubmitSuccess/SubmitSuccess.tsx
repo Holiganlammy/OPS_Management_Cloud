@@ -16,11 +16,11 @@ export default function SubmitSuccess({ showSuccessAlert, setShowSuccessAlert, f
           <button
             onClick={() => setShowSuccessAlert(false)}
             className="absolute top-2 right-2 text-green-600 hover:text-green-800"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </Alert>
-      </div>
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </Alert>
+        </div>
     )
   )
 }

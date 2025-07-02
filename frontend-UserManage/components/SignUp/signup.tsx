@@ -60,7 +60,13 @@ export default function Signup({ open, onOpenChange, onUserCreated }: { open?: b
   useEffect(() => {
     const fetchData = async (url: string, setter: (data: any[]) => void) => {
       try {
-        const res = await fetch(url);
+        const res = await fetch(url, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            // "Authorization": `Bearer ${token}`
+          }
+        });
         const data = await res.json();
         if (Array.isArray(data)) {
           setter(data);
@@ -74,20 +80,17 @@ export default function Signup({ open, onOpenChange, onUserCreated }: { open?: b
         console.error("Error fetching", url, error);
       }
     };
-
-    fetchData("http://localhost:7777/api/user", setUserApi);
-    fetchData("http://localhost:7777/api/branch", setBranchApi);
-    fetchData("http://localhost:7777/api/department", setDepartmentApi);
-    fetchData("http://localhost:7777/api/section", setSectionApi);
-    fetchData("http://localhost:7777/api/position", setPositionApi);
+    fetchData("/api/proxy/users", setUserApi);
+    fetchData("/api/proxy/branch", setBranchApi);
+    fetchData("/api/proxy/department", setDepartmentApi);
+    fetchData("/api/proxy/section", setSectionApi);
+    fetchData("/api/proxy/position", setPositionApi);
   }, []);
+
   const onSubmit = async (values: SignupForm) => {
     try {
-      const response = await fetch("http://localhost:7777/api/user/create", {
+      const response = await fetch("/api/proxy/user/create", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
         body: JSON.stringify(values)
       });
       const data = await response.json();

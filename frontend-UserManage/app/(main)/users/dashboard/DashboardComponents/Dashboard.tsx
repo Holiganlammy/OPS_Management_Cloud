@@ -1,7 +1,7 @@
 // app/dashboard/DashboardClient.tsx
 "use client"
-import { useCallback, useEffect, useMemo, useState } from "react"
-import UserTable from "@/app/(main)/dashboard/UserTable/UserTable"
+import { use, useCallback, useEffect, useMemo, useState } from "react"
+import UserTable from "@/app/(main)/users/dashboard/UserTable/UserTable"
 import {
   Users,
   UserPlus,
@@ -29,20 +29,17 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
 import Signup from "@/components/SignUp/signup"
-import ChartSection from "@/components/Dashboard/Chart"
-import FilterForm from "@/components/Dashboard/FilterForm"
+import ChartSection from "@/app/(main)/users/dashboard/DashboardComponents/Chart"
+import FilterForm from "@/app/(main)/users/dashboard/DashboardComponents/FilterForm"
+import router from "next/dist/shared/lib/router/router"
 
-interface DashboardClientProps {
-  initialUsers: UserData[]
-  token: string
-}
-
-export default function DashboardClient({ token, initialUsers }: DashboardClientProps) {
+export default function DashboardClient() {
   const [selectedPeriod, setSelectedPeriod] = useState("Last 3 months")
+  const [isChecking, setIsChecking] = useState(true)
   const periods = ["Last 3 months", "Last 30 days", "Last 7 days"]
   const [currentTime, setCurrentTime] = useState(new Date())
   const [openCreate, setOpenCreate] = useState(false)
-  const [userFetch, setUserFetch] = useState<UserData[]>(initialUsers)
+  const [userFetch, setUserFetch] = useState<UserData[]>([])
   const [filters, setFilters] = useState({
     position: "",
     department: "",
@@ -52,11 +49,8 @@ export default function DashboardClient({ token, initialUsers }: DashboardClient
 
   const fetchUsers = useCallback(async () => {
     try {
-      const res = await fetch("http://localhost:7777/api/users", {
+      const res = await fetch("/api/proxy/users", {
         method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
         cache: "no-store",
       })
 
@@ -69,6 +63,14 @@ export default function DashboardClient({ token, initialUsers }: DashboardClient
     }
   }, [])
 
+  useEffect(() => {
+    const checkAuth = async () => {
+      setIsChecking(false)
+      await fetchUsers()
+    }
+    checkAuth()
+  }, [fetchUsers, router])
+  
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date())
@@ -163,6 +165,16 @@ export default function DashboardClient({ token, initialUsers }: DashboardClient
       description: "monthly growth"
     }
   ]
+    if (isChecking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <p className="text-gray-600 dark:text-gray-400">Loading Dashboard...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-12">

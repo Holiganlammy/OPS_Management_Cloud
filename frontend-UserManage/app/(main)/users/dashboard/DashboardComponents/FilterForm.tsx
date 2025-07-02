@@ -5,9 +5,9 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Form, FormField } from "@/components/ui/form"
-import Position from "@/app/(main)/dashboard/MultiFilter/Position"
-import Department from "@/app/(main)/dashboard/MultiFilter/Department"
-import Branch from "@/app/(main)/dashboard/MultiFilter/Branch"
+import Position from "@/app/(main)/users/dashboard/MultiFilter/Position"
+import Department from "@/app/(main)/users/dashboard/MultiFilter/Department"
+import Branch from "@/app/(main)/users/dashboard/MultiFilter/Branch"
 
 const SelectSchema = z.object({
   position: z.string(),

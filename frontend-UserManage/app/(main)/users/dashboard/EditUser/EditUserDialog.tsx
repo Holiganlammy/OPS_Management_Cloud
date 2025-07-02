@@ -9,7 +9,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
-import CustomSelect from "../SelectSection/SelectSearch"
+import CustomSelect from "@/components/SelectSection/SelectSearch"
 import { Input } from "@/components/ui/input"
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -17,8 +17,8 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { useEffect, useState } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
-import SubmitSuccess from "../SubmitAlert/AlertSubmitSuccess/SubmitSuccess"
-import SubmitFailed from "../SubmitAlert/AlertSubmitFailed/SubmitFailed"
+import SubmitSuccess from "@/components/SubmitAlert/AlertSubmitSuccess/SubmitSuccess"
+import SubmitFailed from "@/components/SubmitAlert/AlertSubmitFailed/SubmitFailed"
 
 const editSchema = z.object({
     Name: z.string().min(2, "ชื่อต้องมีอย่างน้อย 2 ตัวอักษร"),
@@ -89,11 +89,11 @@ export default function EditUserDialog({ user, open, onOpenChange, onUserUpdated
         if (open) {
             setIsDataLoading(true);
             Promise.all([
-                fetchData("http://localhost:7777/api/user", setUserApi),
-                fetchData("http://localhost:7777/api/branch", setBranchApi),
-                fetchData("http://localhost:7777/api/department", setDepartmentApi),
-                fetchData("http://localhost:7777/api/section", setSectionApi),
-                fetchData("http://localhost:7777/api/position", setPositionApi)
+                fetchData("/api/proxy/users", setUserApi),
+                fetchData("/api/proxy/branch", setBranchApi),
+                fetchData("/api/proxy/department", setDepartmentApi),
+                fetchData("/api/proxy/section", setSectionApi),
+                fetchData("/api/proxy/position", setPositionApi)
             ]).finally(() => {
                 setIsDataLoading(false);
             });
@@ -130,7 +130,7 @@ export default function EditUserDialog({ user, open, onOpenChange, onUserUpdated
                 delete submitData.password;
             }
 
-            const response = await fetch(`http://localhost:7777/api/user/${user.UserID}`, {
+            const response = await fetch(`/api/proxy/user/edit/${user.UserID}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json"
