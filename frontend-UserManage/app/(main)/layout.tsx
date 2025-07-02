@@ -1,5 +1,5 @@
 import SiteHeader from "@/components/site/SiteHeader";
-import { getSessionUser } from "@/lib/server-session";
+import { getSessionToken, getSessionUser } from "@/lib/server-session";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -9,6 +9,7 @@ export const metadata: Metadata = {
 
 export default async function MainLayout({ children }: { children: React.ReactNode }) {
   const userSession = await getSessionUser();
+  const token = await getSessionToken();
   if (!userSession) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -25,7 +26,7 @@ export default async function MainLayout({ children }: { children: React.ReactNo
       <SiteHeader user={userSession} />
       <main>
         <div className="pt-[50px]">
-          {children}
+            {children}
         </div>
       </main>
     </>

@@ -85,7 +85,7 @@ export default function Login() {
                     }
                 })
             })
-                router.push("/dashboard");
+                router.push("/users/dashboard");
                 router.refresh();
             } else {
                 setError(result.error || "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง กรุณาลองอีกครั้ง");

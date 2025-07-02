@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useState, useMemo, useCallback } from "react"
-import { userColumns } from "@/components/DataTable/Column"
+import { useEffect,  useMemo } from "react"
+import { userColumns } from "@/app/(main)/users/dashboard/UserTable/Column"
 import { DataTable } from "@/components/DataTable/DataTable"
 
 export default function UserTable({ data, fetchUsers }: { data: UserData[]; fetchUsers: () => void }) {

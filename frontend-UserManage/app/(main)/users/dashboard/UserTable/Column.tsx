@@ -4,10 +4,10 @@ import { ColumnDef } from "@tanstack/react-table"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
 import { ArrowUpDown } from "lucide-react"
-import SupColumn from "@/components/DataTable/SupColumn/SupColumn"
+import SupColumn from "@/app/(main)/users/dashboard/UserTable/SupColumn/SupColumn"
 import { Badge } from "@/components/ui/badge"
 
-export const userColumns = (fetchUsers: () => void): ColumnDef<UserData>[] => [
+export const userColumns = (fetchUsers: () => void ): ColumnDef<UserData>[] => [
   {
     id: "select",
     header: ({ table }) => (

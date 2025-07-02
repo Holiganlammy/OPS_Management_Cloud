@@ -34,10 +34,11 @@ export default function Position({ field }: PositionProps) {
     const fetchPositions = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch(`http://localhost:7777/api/position`, {
+        const response = await fetch(`/api/proxy/position`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
+            // "Authorization": `Bearer ${token}`
           },
         });
         const data = await response.json();

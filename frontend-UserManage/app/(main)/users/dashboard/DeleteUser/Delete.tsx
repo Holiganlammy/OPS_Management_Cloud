@@ -9,7 +9,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { useState } from "react"
-import { Alert, AlertDescription, AlertTitle } from "../ui/alert"
+import { Alert, AlertDescription, AlertTitle } from "../../../../../components/ui/alert"
 import { AlertCircle, CheckCircle2, X } from "lucide-react"
 
 interface DeleteUserDialogProps {
@@ -29,7 +29,7 @@ export default function DeleteUserDialog({ user, open, onOpenChange, onUserDelet
         if (!user) return;
         setIsLoading(true);
         try {
-            const response = await fetch(`http://localhost:7777/api/user/delete/${user.UserID}`, {
+            const response = await fetch(`/api/proxy/user/delete/${user.UserID}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json"

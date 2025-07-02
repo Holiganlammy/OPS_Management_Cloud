@@ -16,52 +16,49 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { FormControl, FormItem } from "@/components/ui/form";
+import { FormControl, FormItem, FormLabel } from "@/components/ui/form";
 import { ControllerRenderProps } from "react-hook-form";
 
-type SortField = ControllerRenderProps<SelectType, "department">;
+type SortField = ControllerRenderProps<SelectType, "branch">;
 
-interface DepartmentProps {
+interface BranchProps {
   field: SortField;
 }
 
-export default function Department({ field }: DepartmentProps) {
+export default function Branch({ field }: BranchProps) {
   const [open, setOpen] = useState(false);
-  const [departments, setDepartments] = useState<department[]>([]);
+  const [branches, setBranches] = useState<Branch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchDepartments = async () => {
+    const fetchBranches = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch(`http://localhost:7777/api/department`, {
+        const response = await fetch(`/api/proxy/branch`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
+            // "Authorization": `Bearer ${token}`
           },
         });
         const data = await response.json();
-        setDepartments(data.data || []);
+        setBranches(data.data || []);
       } catch (error) {
-        console.error("Error fetching departments:", error);
+        console.error("Error fetching branches:", error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchDepartments();
+    fetchBranches();
   }, []);
 
-  const filteredDepartments = departments.filter(
-    (dep) => dep.depcode.startsWith("101") || dep.depcode.startsWith("201")
+  const selectedBranch = branches.find(
+    (branch) => branch.branchid.toString() === field.value
   );
 
-  const selectedDepartment = filteredDepartments.find(
-    (dep) => dep.depid.toString() === field.value
-  );
-
-  const handleSelect = (depid: string) => {
-    field.onChange(depid === field.value ? "" : depid);
+  const handleSelect = (branchId: string) => {
+    field.onChange(branchId === field.value ? "" : branchId);
     setOpen(false);
   };
 
@@ -74,7 +71,10 @@ export default function Department({ field }: DepartmentProps) {
   return (
     <FormItem>
       <FormControl>
-        <div className="relative mt-5.5">
+        <div className="relative">
+          <FormLabel className="mb-2">
+            Filter
+          </FormLabel>
           <Popover open={open} onOpenChange={setOpen}>
             <div className="relative">
               <PopoverTrigger className="max-w-[140px] sm:max-w-[170px] md:max-w-[220px]" asChild>
@@ -85,7 +85,7 @@ export default function Department({ field }: DepartmentProps) {
                   className="w-[170px] sm:w-[220px] justify-between pr-8 text-left"
                 >
                   <span className="truncate block min-w-0 flex-1">
-                    {selectedDepartment ? selectedDepartment.name : "เลือกฝ่าย"}
+                    {selectedBranch ? selectedBranch.name : "เลือกสาขา"}
                   </span>
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
@@ -102,31 +102,28 @@ export default function Department({ field }: DepartmentProps) {
             </div>
             <PopoverContent className="min-w-[170px] sm:min-w-[220px] w-auto max-w-sm p-0" align="start">
               <Command className="w-full">
-                <CommandInput
-                  placeholder="ค้นหาฝ่าย..."
-                  className="h-9"
-                />
+                <CommandInput placeholder="ค้นหาสาขา..." className="h-9" />
                 <CommandEmpty>
-                  {isLoading ? "กำลังโหลด..." : "ไม่พบฝ่าย"}
+                  {isLoading ? "กำลังโหลด..." : "ไม่พบสาขา"}
                 </CommandEmpty>
                 <CommandGroup className="max-h-[300px] overflow-y-auto">
-                  {filteredDepartments.map((department) => (
+                  {branches.map((branch) => (
                     <CommandItem
-                      key={department.depid}
-                      value={department.name}
-                      onSelect={() => handleSelect(department.depid.toString())}
+                      key={branch.branchid}
+                      value={branch.name}
+                      onSelect={() => handleSelect(branch.branchid.toString())}
                       className="cursor-pointer"
                     >
                       <Check
                         className={cn(
                           "mr-2 h-4 w-4 shrink-0",
-                          field.value === department.depid.toString()
+                          field.value === branch.branchid.toString()
                             ? "opacity-100"
                             : "opacity-0"
                         )}
                       />
-                      <span className="" title={department.name}>
-                        {department.name}
+                      <span className="" title={branch.name}>
+                        {branch.name}
                       </span>
                     </CommandItem>
                   ))}

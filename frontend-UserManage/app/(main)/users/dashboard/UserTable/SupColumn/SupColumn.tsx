@@ -8,8 +8,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { MoreHorizontal } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import EditUserDialog from "../../EditUser/EditUserDialog"
-import DeleteUserDialog from "@/components/DeleteUser/Delete"
+import EditUserDialog from "@/app/(main)/users/dashboard/EditUser/EditUserDialog"
+import DeleteUserDialog from "@/app/(main)/users/dashboard/DeleteUser/Delete"
 import { useState } from "react"
 export default function SupColumn({ user , onUserFetched }: { user: UserData; onUserFetched?: () => void }) {
     const [editOpen, setEditOpen] = useState(false)
