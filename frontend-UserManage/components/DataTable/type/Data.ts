@@ -24,31 +24,26 @@ interface UserData {
   password: string
 }
 
+interface Session {
+  exp:string
+  iat:string
+  user: UserSession
+}
+
 interface UserSession {
-  Email: string
-  UserCode: string
-  ad: string
-  areaid: number
-  branchid: number
-  changepassword: boolean
-  dep: string
-  depcode: string
-  depid: number
-  depname: string
-  fristName: string | null
-  id: number
-  img_profile: string | null
-  lastName: string | null
-  loginTime: string
-  loginname: string
-  manager: string | null
-  name: string
-  password: string | number
-  positioncode: string
-  positionid: number
-  positionname: string
-  seccode: string
-  secid: number
-  secname: string
-  userid: string
+  userid: string,
+  username: string,
+  name: string,
+  email: string,
+  branchid: number,
+  depid: number,
+  depcode: string,
+  depname: string,
+  secid: number,
+  seccode: string,
+  secname: string,
+  positionid: number,
+  positioncode: string,
+  positionname: string,
+  img_profile: string | null, 
 }
