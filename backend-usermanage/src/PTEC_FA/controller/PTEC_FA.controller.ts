@@ -6,9 +6,10 @@ import {
   HttpException,
   HttpStatus,
   Res,
+  Req,
 } from '@nestjs/common';
 import { PTEC_FA_Service } from '../service/PTEC_FA.service';
-import { Response } from 'express';
+import { Response, Request as ExpressRequest } from 'express';
 import {
   FA_Control_Create_Detail_NAC,
   FA_Control_New_Assets_Xlsx,
@@ -27,50 +28,22 @@ import {
 export class PTEC_FA_Controller {
   constructor(private readonly PTEC_FA_Service: PTEC_FA_Service) {}
 
-  // @Post('/check_files_NewNAC')
-  // async getFAControlRunningNO(@Req() req: Request, @Res() res: Response) {
-  //   try {
-  //     const newpath = 'D:/files/NEW_NAC/';
-  //     const file = (req as any).files?.file;
-  //     if (!file) {
-  //       return {
-  //         message: 'No file uploaded',
-  //         code: 400,
-  //       };
-  //     }
-
-  //     const filename = file.name;
-  //     const new_path = await this.PTEC_FA_Service.FA_Control_Running_NO();
-
-  //     const newFileName = `${new_path[0].ATT}.${filename.split('.').pop()}`;
-
-  //     // Wrap file.mv in a Promise to ensure return value
-  //     await new Promise<void>((resolve, reject) => {
-  //       file.mv(`${newpath}${newFileName}`, (err: any) => {
-  //         if (err) {
-  //           console.error('File move error:', err);
-  //           reject(err);
-  //         } else {
-  //           resolve();
-  //         }
-  //       });
-  //     });
-
-  //     return {
-  //       message: 'File Uploaded',
-  //       code: 200,
-  //       attach: new_path,
-  //       extension: filename.split('.').pop(),
-  //       newFileName: newFileName,
-  //       filePath: `${newpath}${newFileName}`,
-  //     };
-  //   } catch (error: unknown) {
-  //     throw new HttpException(
-  //       error instanceof Error ? error.message : 'Unknown error',
-  //       HttpStatus.INTERNAL_SERVER_ERROR,
-  //     );
-  //   }
-  // }
+  @Post('/check_files_NewNAC')
+  async uploadSmartBill(@Req() req: ExpressRequest, @Res() res: Response) {
+    try {
+      const result = await this.PTEC_FA_Service.handleFileUpload(req);
+      res.status(HttpStatus.OK).json(result);
+    } catch (error: unknown) {
+      let errorMessage = 'Unexpected error';
+      if (error && typeof error === 'object' && 'message' in error) {
+        errorMessage =
+          String((error as { message?: unknown }).message) || errorMessage;
+      }
+      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+        message: errorMessage,
+      });
+    }
+  }
 
   @Post('/FA_Control_Report_All_Counted_by_Description')
   async FA_Control_Report_All_Counted_by_Description(

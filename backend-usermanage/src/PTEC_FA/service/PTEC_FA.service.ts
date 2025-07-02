@@ -18,9 +18,16 @@ import {
   FAControlUpdateInput,
   FAControlCreateDetailNacInput,
 } from '../domain/ptec_fa.entity';
+import { Request } from 'express';
+import { UploadedFile } from 'express-fileupload';
+import * as path from 'path';
+import * as fs from 'fs';
 
 @Injectable()
 export class PTEC_FA_Service {
+  private readonly uploadDir = 'D:/files/NEW_NAC/';
+  private readonly baseUrl = 'http://vpnptec.dyndns.org:33080/NEW_NAC/';
+  private readonly usercode = 'SYSTEM';
   constructor(private readonly dbManager: DatabaseManagerService) {}
 
   async FA_Control_Running_NO() {
@@ -896,5 +903,292 @@ export class PTEC_FA_Service {
       console.error('Error in updateReference:', error);
       throw error;
     }
+  }
+
+  //For Period System
+  async period_login(req: { BranchID: number; RoundID: number }) {
+    try {
+      return this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.FA_Period_Time_Login`,
+        [
+          { name: 'BranchID', type: sql.Int(), value: Number(req.BranchID) },
+          { name: 'RoundID', type: sql.Int(), value: Number(req.RoundID) },
+        ],
+      );
+    } catch (error) {
+      console.error('Error in FA_Period_Time_Login:', error);
+      throw error;
+    }
+  }
+
+  async store_check_periodForUpdate(req: { PeriodID: number }) {
+    try {
+      return this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.FA_Period_check_periodForUpdate`,
+        [{ name: 'PeriodID', type: sql.Int(), value: Number(req.PeriodID) }],
+      );
+    } catch (error) {
+      console.error('Error in FA_Period_check_periodForUpdate:', error);
+      throw error;
+    }
+  }
+
+  async getsperiod_round(req: {
+    BranchID: number;
+    depCode: string;
+    personID: number;
+  }) {
+    try {
+      return this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.FA_Period_all_rounds`,
+        [
+          { name: 'BranchID', type: sql.Int(), value: Number(req.BranchID) },
+          { name: 'depCode', type: sql.NVarChar(20), value: req.depCode },
+          { name: 'personID', type: sql.Int(), value: Number(req.personID) },
+        ],
+      );
+    } catch (error) {
+      console.error('Error in FA_Period_all_rounds:', error);
+      throw error;
+    }
+  }
+
+  async faPermissionBranch(req: { userCode: string }) {
+    try {
+      return this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.FA_Permission_Branch`,
+        [{ name: 'userCode', type: sql.NVarChar(10), value: req.userCode }],
+      );
+    } catch (error) {
+      console.error('Error in FA_Permission_Branch:', error);
+      throw error;
+    }
+  }
+
+  async createPeriod(req: {
+    begindate: Date;
+    enddate: Date;
+    branchid: string;
+    description: string;
+    usercode: string;
+    depcode?: string | null;
+    personID?: string | null;
+    keyID?: string | null;
+  }) {
+    try {
+      return this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.FA_Create_Assets_Counted_After_Period`,
+        [
+          { name: 'begindate', type: sql.DateTime(), value: req.begindate },
+          { name: 'enddate', type: sql.DateTime(), value: req.enddate },
+          { name: 'branchid', type: sql.NVarChar(200), value: req.branchid },
+          {
+            name: 'description',
+            type: sql.NVarChar(100),
+            value: req.description,
+          },
+          { name: 'usercode', type: sql.NVarChar(10), value: req.usercode },
+          {
+            name: 'depcode',
+            type: sql.NVarChar(200),
+            value: req.depcode ?? null,
+          },
+          {
+            name: 'personID',
+            type: sql.NVarChar(200),
+            value: req.personID ?? null,
+          },
+          { name: 'keyID', type: sql.NVarChar(100), value: req.keyID ?? null },
+        ],
+      );
+    } catch (error) {
+      console.error('Error in FA_Create_Assets_Counted_After_Period:', error);
+      throw error;
+    }
+  }
+
+  async deletePeriod(req: { PeriodID: number }) {
+    try {
+      return this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.FA_Controls_Delete_Period`,
+        [{ name: 'periodID', type: sql.Int(), value: req.PeriodID }],
+      );
+    } catch (error) {
+      console.error('Error in FA_Controls_Delete_Period:', error);
+      throw error;
+    }
+  }
+
+  async updatePeriod(req: {
+    PeriodID: number;
+    BeginDate: Date;
+    EndDate: Date;
+    BranchID: number;
+    Description: string;
+    usercode: string;
+  }) {
+    try {
+      return this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.FA_Period_update_period`,
+        [
+          { name: 'BranchID', type: sql.Int(), value: req.BranchID },
+          { name: 'BeginDate', type: sql.DateTime(), value: req.BeginDate },
+          { name: 'EndDate', type: sql.DateTime(), value: req.EndDate },
+          {
+            name: 'Description',
+            type: sql.NVarChar(100),
+            value: req.Description,
+          },
+          { name: 'usercode', type: sql.VarChar(10), value: req.usercode },
+          { name: 'PeriodID', type: sql.BigInt(), value: req.PeriodID },
+        ],
+      );
+    } catch (error) {
+      console.error('Error in FA_Period_update_period:', error);
+      throw error;
+    }
+  }
+
+  async checkAssetsInPeriod(req: { PeriodID: number }) {
+    try {
+      return this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.FA_Period_check_assets_in_period`,
+        [{ name: 'PeriodID', type: sql.Int(), value: req.PeriodID }],
+      );
+    } catch (error) {
+      console.error('Error in FA_Period_check_assets_in_period:', error);
+      throw error;
+    }
+  }
+
+  async checkBranchInPeriod(req: { BranchID: number }) {
+    try {
+      return this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.FA_Period_check_branch`,
+        [{ name: 'BranchID', type: sql.Int(), value: req.BranchID }],
+      );
+    } catch (error) {
+      console.error('Error in FA_Period_check_branch:', error);
+      throw error;
+    }
+  }
+
+  async selectPeriod(req: { usercode: string }) {
+    try {
+      return this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.select_callPeriod`,
+        [{ name: 'usercode', type: sql.VarChar(10), value: req.usercode }],
+      );
+    } catch (error) {
+      console.error('Error in select_callPeriod:', error);
+      throw error;
+    }
+  }
+
+  async fetchBranchPeriod(req: { usercode: string }) {
+    try {
+      return this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.FA_Control_Fetch_Branch_Period`,
+        [{ name: 'usercode', type: sql.VarChar(10), value: req.usercode }],
+      );
+    } catch (error) {
+      console.error('Error in FA_Control_Fetch_Branch_Period:', error);
+      throw error;
+    }
+  }
+
+  async getWebsiteRound(req: { BranchID: number }) {
+    try {
+      return this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.FA_Permission_Website`,
+        [{ name: 'BranchID', type: sql.Int(), value: req.BranchID }],
+      );
+    } catch (error) {
+      console.error('Error in FA_Permission_Website:', error);
+      throw error;
+    }
+  }
+
+  async FA_Period_GroupBy() {
+    try {
+      return this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.FA_Period_GroupBy`,
+        [],
+      );
+    } catch (error) {
+      console.error('Error in FA_Permission_Website:', error);
+      throw error;
+    }
+  }
+
+  //Upload Files
+  async FA_Control_Running_NO_Files(
+    attach: string,
+  ): Promise<{ ATT: string }[]> {
+    const params = [
+      { name: 'type_code', type: sql.VarChar(100), value: attach },
+      { name: 'date_time', type: sql.DateTime(), value: new Date() },
+      { name: 'nac_code', type: sql.VarChar(100), output: true },
+    ];
+
+    return this.dbManager.executeStoredProcedure(
+      `${databaseConfig.database}.dbo.RunningNo`,
+      params,
+    );
+  }
+
+  async handleFileUpload(req: Request) {
+    const file = req.files?.file as UploadedFile;
+    const reqBody = req.body as { sb_code?: string };
+    const st_code = reqBody.sb_code;
+    if (!file) {
+      throw new Error('No file uploaded');
+    }
+
+    const filename = file.name;
+    const extension = path.extname(filename);
+    const attach = 'ATT';
+    const newPath = await this.FA_Control_Running_NO_Files(attach);
+
+    if (!newPath || !newPath[0]?.ATT) {
+      throw new Error('Cannot generate running number');
+    }
+
+    const newFileName = `${newPath[0].ATT}${extension}`;
+    const savePath = path.join(this.uploadDir, newFileName);
+    fs.mkdirSync(this.uploadDir, { recursive: true });
+    await file.mv(savePath);
+
+    const attachBody = {
+      nonpocode: st_code ?? '',
+      url: `${this.baseUrl}${newFileName}`,
+      user: this.usercode,
+      description: st_code ?? '',
+    };
+    await this.NonPO_Attatch_Save(attachBody);
+
+    return {
+      message: 'successfully',
+      code: newPath,
+    };
+  }
+
+  async NonPO_Attatch_Save(req: {
+    nonpocode: string;
+    url: string;
+    user: string;
+    description: string;
+  }) {
+    const params = [
+      { name: 'nonpocode', type: sql.NVarChar(255), value: req.nonpocode },
+      { name: 'url', type: sql.NVarChar(255), value: req.url },
+      { name: 'user', type: sql.NVarChar(255), value: req.user },
+      { name: 'description', type: sql.NVarChar(255), value: req.description },
+    ];
+
+    return this.dbManager.executeStoredProcedure(
+      `${databaseConfig.database}.dbo.NonPO_Attatch_Save`,
+      params,
+    );
   }
 }
