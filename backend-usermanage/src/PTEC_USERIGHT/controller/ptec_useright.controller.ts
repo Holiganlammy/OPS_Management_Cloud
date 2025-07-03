@@ -1,13 +1,4 @@
-import {
-  Get,
-  Post,
-  Put,
-  Res,
-  Controller,
-  Query,
-  Body,
-  Param,
-} from '@nestjs/common';
+import { Get, Post, Put, Res, Controller, Body, Param } from '@nestjs/common';
 import { AppService } from '../service/ptec_useright.service';
 import { LoginDto } from '../dto/Login.dto';
 import { CreateUserDto } from '../dto/CreateUser.dto';
@@ -33,10 +24,11 @@ export class AppController {
   }
 
   @Public()
-  @Get('/login')
-  async Login(@Query() loginDto: LoginDto, @Res() res: Response) {
+  @Post('/login')
+  async Login(@Body() loginDto: LoginDto, @Res() res: Response) {
     try {
       const resultLogin = await this.appService.getUserLogin(loginDto);
+      console.log(resultLogin);
       const user = resultLogin[0] as User;
       if (user && user.password === 1) {
         const payload = {
