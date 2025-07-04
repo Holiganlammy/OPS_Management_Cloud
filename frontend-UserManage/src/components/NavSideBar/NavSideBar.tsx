@@ -19,6 +19,7 @@ import dataConfig from "@/config/config";
 import client from "@/lib/axios/interceptors";
 import { buildMenuTree, MenuItem } from '@/type/buildMenuTree';
 import { SidebarMenuItem } from "./SidebarMenuItem";
+import clsx from "clsx";
 
 export default function SiteHeader() {
   const { data: session } = useSession();
@@ -177,34 +178,39 @@ export default function SiteHeader() {
 
       {/* Sidebar */}
       <div
-        className={`fixed top-0 left-0 h-full w-80 bg-primary text-primary-foreground shadow-xs dark:border-gray-700 z-50 transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-          }`}
+        className={clsx(
+          "fixed top-0 left-0 h-full w-80 bg-primary text-primary-foreground shadow-xs dark:border-gray-700 z-50 transform transition-transform duration-300 ease-in-out",
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+        )}
       >
-        {/* Sidebar Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-lg font-semibold">Menu</h2>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={toggleSidebar}
-            className="p-2"
-          >
-            <XIcon className="h-5 w-5" />
-          </Button>
-        </div>
+        <div className="flex flex-col h-full">
+          {/* Sidebar Header */}
+          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 className="text-lg font-semibold">Menu</h2>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleSidebar}
+              className="p-2"
+            >
+              <XIcon className="h-5 w-5" />
+            </Button>
+          </div>
 
-        {/* Sidebar Content */}
-        <div className="p-4 space-y-2">
-          {session && menuTree
-            .sort((a, b) => a.order_no - b.order_no)
-            .map((item) => (
-              <SidebarMenuItem
-                key={item.id}
-                item={item}
-                toggleSidebar={toggleSidebar}
-                activePath={""}
-              />
-            ))}
+          {/* Sidebar Content ที่ Scroll ได้ */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-2">
+            {session &&
+              menuTree
+                .sort((a, b) => a.order_no - b.order_no)
+                .map((item) => (
+                  <SidebarMenuItem
+                    key={item.id}
+                    item={item}
+                    toggleSidebar={toggleSidebar}
+                    activePath={""}
+                  />
+                ))}
+          </div>
         </div>
       </div>
     </>

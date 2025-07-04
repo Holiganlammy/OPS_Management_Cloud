@@ -98,7 +98,7 @@ export default function EditUserDialog({ user, open, onOpenChange, onUserUpdated
       if (!submitData.password || submitData.password.toString() === "") {
         delete submitData.password;
       }
-      const response = await client.put(`/user/edit/${user.UserID}`, submitData, {
+      const response = await client.put(`/user/${user.UserID}`, submitData, {
         headers: dataConfig().header
       });
       const data = await response.data;
