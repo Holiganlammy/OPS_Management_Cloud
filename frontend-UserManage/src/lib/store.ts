@@ -1,7 +1,5 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { useDispatch } from "react-redux";
-// import appReducer from "./slices/appSlice";
-// import { combineReducers } from "@reduxjs/toolkit";
 import userSlice from "./features/userSlice";
 import logger from 'redux-logger'
 

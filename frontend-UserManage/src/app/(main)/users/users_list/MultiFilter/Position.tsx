@@ -20,38 +20,19 @@ import { FormControl, FormItem } from "@/components/ui/form";
 import { ControllerRenderProps } from "react-hook-form";
 import dataConfig from '@/config/config';
 import client from '@/lib/axios/interceptors';
+import { getAutoData } from "../../service/userService";
 
 type SortField = ControllerRenderProps<SelectType, "position">;
 
 interface PositionProps {
   field: SortField;
+  data_position: position[]
 }
 
-export default function Position({ field }: PositionProps) {
+export default function Position({ field, data_position }: PositionProps) {
   const [open, setOpen] = useState(false);
-  const [positions, setPositions] = useState<position[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchPositions = async () => {
-      try {
-        setIsLoading(true);
-        const response = await client.get(`/position`, {
-          headers: dataConfig().header
-        });
-        const data = await response.data;
-        setPositions(data.data || []);
-      } catch (error) {
-        console.error("Error fetching positions:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchPositions();
-  }, []);
-
-  const selectedPosition = positions.find(
+  const selectedPosition = data_position.find(
     (pos) => pos.positionid.toString() === field.value
   );
 
@@ -101,11 +82,8 @@ export default function Position({ field }: PositionProps) {
             >
               <Command className="w-full">
                 <CommandInput placeholder="ค้นหาตำแหน่ง..." className="h-9" />
-                <CommandEmpty>
-                  {isLoading ? "กำลังโหลด..." : "ไม่พบตำแหน่ง"}
-                </CommandEmpty>
                 <CommandGroup className="max-h-[300px] overflow-y-auto">
-                  {positions.map((position) => (
+                  {data_position.map((position) => (
                     <CommandItem
                       key={position.positionid}
                       value={position.position}

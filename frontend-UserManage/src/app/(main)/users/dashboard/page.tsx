@@ -1,6 +1,6 @@
 import DashboardClient from '@/app/(main)/users/dashboard/DashboardComponents/Dashboard'
 
 
-export default async function DashboardPage() {
+export default function DashboardPage() {
   return <DashboardClient />
 }

@@ -8,7 +8,7 @@ import {
   Res,
   Req,
 } from '@nestjs/common';
-import { PTEC_FA_Service } from '../service/PTEC_FA.service';
+import { AppService } from '../service/PTEC_FA.service';
 import { Response, Request as ExpressRequest } from 'express';
 import {
   FA_Control_Create_Detail_NAC,
@@ -25,13 +25,13 @@ import {
 } from '../dto/FA_Control.dto';
 
 @Controller('')
-export class PTEC_FA_Controller {
-  constructor(private readonly PTEC_FA_Service: PTEC_FA_Service) {}
+export class AppController {
+  constructor(private readonly service: AppService) {}
 
   @Post('/check_files_NewNAC')
   async uploadSmartBill(@Req() req: ExpressRequest, @Res() res: Response) {
     try {
-      const result = await this.PTEC_FA_Service.handleFileUpload(req);
+      const result = await this.service.handleFileUpload(req);
       res.status(HttpStatus.OK).json(result);
     } catch (error: unknown) {
       let errorMessage = 'Unexpected error';
@@ -52,9 +52,7 @@ export class PTEC_FA_Controller {
   ) {
     try {
       const result =
-        await this.PTEC_FA_Service.FA_Control_Report_All_Counted_by_Description(
-          body,
-        );
+        await this.service.FA_Control_Report_All_Counted_by_Description(body);
       res.status(200).send(result);
     } catch (error: unknown) {
       throw new HttpException(
@@ -67,7 +65,7 @@ export class PTEC_FA_Controller {
   @Get('/FA_Control_NAC_Backlog')
   async FA_Control_NAC_Backlog(@Res() res: Response) {
     try {
-      const result = await this.PTEC_FA_Service.FA_Control_NAC_Backlog();
+      const result = await this.service.FA_Control_NAC_Backlog();
       if (result.length == 0) {
         return {
           message: 'ไม่พบข้อมูล',
@@ -90,9 +88,7 @@ export class PTEC_FA_Controller {
     @Res() res: Response,
   ) {
     try {
-      const result = await this.PTEC_FA_Service.FA_Control_AnnualGraph(
-        body.TargetYear,
-      );
+      const result = await this.service.FA_Control_AnnualGraph(body.TargetYear);
       res.status(200).send(result);
     } catch (error: unknown) {
       throw new HttpException(
@@ -108,9 +104,7 @@ export class PTEC_FA_Controller {
     @Res() res: Response,
   ) {
     try {
-      const result = await this.PTEC_FA_Service.FA_Control_Fetch_Assets(
-        body.usercode,
-      );
+      const result = await this.service.FA_Control_Fetch_Assets(body.usercode);
       res.status(200).send({
         message: 'Assets fetched successfully',
         code: 200,
@@ -134,8 +128,7 @@ export class PTEC_FA_Controller {
     error?: string;
   }> {
     try {
-      const result =
-        await this.PTEC_FA_Service.FA_Control_UpdateDetailCounted(body);
+      const result = await this.service.FA_Control_UpdateDetailCounted(body);
       return {
         message: 'Detail counted updated successfully',
         code: 200,
@@ -152,7 +145,7 @@ export class PTEC_FA_Controller {
   @Get('/FA_Control_Assets_TypeGroup')
   async FA_Control_Assets_TypeGroup(@Res() res: Response) {
     try {
-      const result = await this.PTEC_FA_Service.FA_Control_Assets_TypeGroup();
+      const result = await this.service.FA_Control_Assets_TypeGroup();
       res.status(200).send(result);
     } catch (error: unknown) {
       throw new HttpException(
@@ -167,8 +160,7 @@ export class PTEC_FA_Controller {
     @Res() res: Response,
   ) {
     try {
-      const result =
-        await this.PTEC_FA_Service.FA_Control_Create_Document_NAC(body);
+      const result = await this.service.FA_Control_Create_Document_NAC(body);
       res.status(200).send(result);
     } catch (error: unknown) {
       throw new HttpException(
@@ -184,8 +176,7 @@ export class PTEC_FA_Controller {
     @Res() res: Response,
   ) {
     try {
-      const result =
-        await this.PTEC_FA_Service.store_FA_control_update_table(body);
+      const result = await this.service.store_FA_control_update_table(body);
       res.status(200).send(result);
     } catch (error: unknown) {
       throw new HttpException(
@@ -201,7 +192,7 @@ export class PTEC_FA_Controller {
     @Res() res: Response,
   ) {
     try {
-      const result = await this.PTEC_FA_Service.store_FA_control_comment(body);
+      const result = await this.service.store_FA_control_comment(body);
       res.status(200).send(result);
     } catch (error: unknown) {
       throw new HttpException(
@@ -217,8 +208,7 @@ export class PTEC_FA_Controller {
     @Res() res: Response,
   ) {
     try {
-      const result =
-        await this.PTEC_FA_Service.FA_Control_Create_Detail_NAC(body);
+      const result = await this.service.FA_Control_Create_Detail_NAC(body);
       res.status(200).send(result);
     } catch (error: unknown) {
       throw new HttpException(
@@ -234,7 +224,7 @@ export class PTEC_FA_Controller {
     @Res() res: Response,
   ) {
     try {
-      const result = await this.PTEC_FA_Service.store_FA_SendMail({
+      const result = await this.service.store_FA_SendMail({
         nac_code: body.nac_code,
       });
       res.status(200).send(result);
@@ -252,7 +242,7 @@ export class PTEC_FA_Controller {
     @Res() res: Response,
   ) {
     try {
-      const result = await this.PTEC_FA_Service.AssetsAll_Control(body);
+      const result = await this.service.AssetsAll_Control(body);
       res.status(200).send(result);
     } catch (error: unknown) {
       throw new HttpException(
@@ -268,7 +258,7 @@ export class PTEC_FA_Controller {
     @Res() res: Response,
   ) {
     try {
-      const result = await this.PTEC_FA_Service.FA_control_select_headers(body);
+      const result = await this.service.FA_control_select_headers(body);
       res.status(200).send(result);
     } catch (error: unknown) {
       throw new HttpException(
@@ -284,7 +274,7 @@ export class PTEC_FA_Controller {
     @Res() res: Response,
   ) {
     try {
-      const result = await this.PTEC_FA_Service.FA_Control_execDocID(body);
+      const result = await this.service.FA_Control_execDocID(body);
       res.status(200).send(result);
     } catch (error: unknown) {
       throw new HttpException(
@@ -300,7 +290,7 @@ export class PTEC_FA_Controller {
     @Res() res: Response,
   ) {
     try {
-      const result = await this.PTEC_FA_Service.FA_Control_select_dtl(body);
+      const result = await this.service.FA_Control_select_dtl(body);
       res.status(200).send(result);
     } catch (error: unknown) {
       throw new HttpException(
@@ -316,7 +306,7 @@ export class PTEC_FA_Controller {
     @Res() res: Response,
   ) {
     try {
-      const result = await this.PTEC_FA_Service.FA_control_update_DTL(body);
+      const result = await this.service.FA_control_update_DTL(body);
       res.status(200).send(result);
     } catch (error: unknown) {
       throw new HttpException(
@@ -332,8 +322,7 @@ export class PTEC_FA_Controller {
     @Res() res: Response,
   ) {
     try {
-      const result =
-        await this.PTEC_FA_Service.FA_Control_CheckAssetCode_Process(body);
+      const result = await this.service.FA_Control_CheckAssetCode_Process(body);
       res.status(200).send(result);
     } catch (error: unknown) {
       throw new HttpException(
@@ -349,7 +338,7 @@ export class PTEC_FA_Controller {
     @Res() res: Response,
   ) {
     try {
-      const result = await this.PTEC_FA_Service.stroe_FA_control_Path(body);
+      const result = await this.service.stroe_FA_control_Path(body);
       res.status(200).send(result);
     } catch (error: unknown) {
       throw new HttpException(
@@ -365,7 +354,7 @@ export class PTEC_FA_Controller {
     @Res() res: Response,
   ) {
     try {
-      const result = await this.PTEC_FA_Service.qureyNAC_comment(body);
+      const result = await this.service.qureyNAC_comment(body);
       res.status(200).send(result);
     } catch (error: unknown) {
       throw new HttpException(
@@ -381,7 +370,7 @@ export class PTEC_FA_Controller {
     @Res() res: Response,
   ) {
     try {
-      const result = await this.PTEC_FA_Service.qureyNAC_path(body);
+      const result = await this.service.qureyNAC_path(body);
       res.status(200).send(result);
     } catch (error: unknown) {
       throw new HttpException(
@@ -397,8 +386,7 @@ export class PTEC_FA_Controller {
     @Res() res: Response,
   ) {
     try {
-      const result =
-        await this.PTEC_FA_Service.store_FA_control_HistorysAssets(body);
+      const result = await this.service.store_FA_control_HistorysAssets(body);
       res.status(200).send(result);
     } catch (error: unknown) {
       throw new HttpException(
@@ -411,7 +399,7 @@ export class PTEC_FA_Controller {
   @Post('/FA_Control_BPC_Running_NO')
   async FA_Control_BPC_Running_NO(@Res() res: Response) {
     try {
-      const result = await this.PTEC_FA_Service.FA_Control_BPC_Running_NO();
+      const result = await this.service.FA_Control_BPC_Running_NO();
       res.status(200).send(result);
     } catch (error: unknown) {
       throw new HttpException(
@@ -427,7 +415,7 @@ export class PTEC_FA_Controller {
     @Res() res: Response,
   ) {
     try {
-      const result = await this.PTEC_FA_Service.FA_Control_New_Assets_Xlsx(req);
+      const result = await this.service.FA_Control_New_Assets_Xlsx(req);
       res.status(200).send(result);
     } catch (error: unknown) {
       throw new HttpException(
@@ -444,7 +432,7 @@ export class PTEC_FA_Controller {
   ) {
     try {
       const result =
-        await this.PTEC_FA_Service.FA_Control_import_dataXLSX_toAssets(req);
+        await this.service.FA_Control_import_dataXLSX_toAssets(req);
       res.status(200).send(result);
     } catch (error: unknown) {
       throw new HttpException(
@@ -457,7 +445,7 @@ export class PTEC_FA_Controller {
   @Post('/UpdateDtlAsset')
   async UpdateDtlAsset(@Body() req: UpdateDtlAssetDto, @Res() res: Response) {
     try {
-      const result = await this.PTEC_FA_Service.UpdateDtlAsset(req);
+      const result = await this.service.UpdateDtlAsset(req);
       res.status(200).send(result);
     } catch (error: unknown) {
       throw new HttpException(
@@ -473,7 +461,7 @@ export class PTEC_FA_Controller {
     @Res() res: Response,
   ) {
     try {
-      const result = await this.PTEC_FA_Service.FA_control_updateStatus(req);
+      const result = await this.service.FA_control_updateStatus(req);
       res.status(200).send(result);
     } catch (error: unknown) {
       throw new HttpException(
@@ -489,7 +477,7 @@ export class PTEC_FA_Controller {
     @Res() res: Response,
   ) {
     try {
-      const result = await this.PTEC_FA_Service.store_FA_control_drop_NAC(req);
+      const result = await this.service.store_FA_control_drop_NAC(req);
       res.status(200).send(result);
     } catch (error: unknown) {
       throw new HttpException(
@@ -505,7 +493,7 @@ export class PTEC_FA_Controller {
     @Res() res: Response,
   ) {
     try {
-      const result = await this.PTEC_FA_Service.FA_Control_Select_MyNAC(req);
+      const result = await this.service.FA_Control_Select_MyNAC(req);
       res.status(200).send(result);
     } catch (error: unknown) {
       throw new HttpException(
@@ -521,8 +509,7 @@ export class PTEC_FA_Controller {
     @Res() res: Response,
   ) {
     try {
-      const result =
-        await this.PTEC_FA_Service.FA_Control_Select_MyNAC_Approve(req);
+      const result = await this.service.FA_Control_Select_MyNAC_Approve(req);
       res.status(200).send(result);
     } catch (error: unknown) {
       throw new HttpException(
@@ -535,7 +522,7 @@ export class PTEC_FA_Controller {
   @Get('/FA_Control_ListStatus')
   async FA_Control_ListStatus(@Res() res: Response) {
     try {
-      const result = await this.PTEC_FA_Service.FA_Control_ListStatus();
+      const result = await this.service.FA_Control_ListStatus();
       res.status(200).send(result);
     } catch (error: unknown) {
       throw new HttpException(
@@ -548,7 +535,7 @@ export class PTEC_FA_Controller {
   @Post('/check_code_result')
   async check_code_result(@Body() req: { Code: string }, @Res() res: Response) {
     try {
-      const result = await this.PTEC_FA_Service.check_code_result({
+      const result = await this.service.check_code_result({
         Code: req.Code,
       });
       res.status(200).send(result);
@@ -566,7 +553,7 @@ export class PTEC_FA_Controller {
     @Res() res: Response,
   ) {
     try {
-      const result = await this.PTEC_FA_Service.uploadImage(body);
+      const result = await this.service.uploadImage(body);
       res.status(200).send(result);
     } catch (error: unknown) {
       throw new HttpException(
@@ -582,7 +569,7 @@ export class PTEC_FA_Controller {
     @Res() res: Response,
   ) {
     try {
-      const result = await this.PTEC_FA_Service.updateReference(body);
+      const result = await this.service.updateReference(body);
       res.status(200).send(result);
     } catch (error: unknown) {
       throw new HttpException(

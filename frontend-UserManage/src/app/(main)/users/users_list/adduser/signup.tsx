@@ -9,15 +9,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import CustomSelect from "../SelectSection/SelectSearch"
 import { Input } from "@/components/ui/input"
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-import { useEffect, useState } from "react"
-import SubmitSuccess from "../SubmitAlert/AlertSubmitSuccess/SubmitSuccess"
-import SubmitFailed from "../SubmitAlert/AlertSubmitFailed/SubmitFailed"
+import { useState } from "react"
+import CustomSelect from "@/components/SelectSection/SelectSearch"
+import SubmitFailed from "@/components/SubmitAlert/AlertSubmitFailed/SubmitFailed"
+import SubmitSuccess from "@/components/SubmitAlert/AlertSubmitSuccess/SubmitSuccess"
+import dataConfig from "@/config/config"
+import client from "@/lib/axios/interceptors"
 
 const signupSchema = z.object({
   Name: z.string().min(2, "ชื่อ-นามสกุลต้องมีอย่างน้อย 2 ตัวอักษร"),
@@ -34,13 +36,28 @@ const signupSchema = z.object({
 });
 type SignupForm = z.infer<typeof signupSchema>
 
-export default function Signup({ open, onOpenChange, onUserCreated }: { open?: boolean; onOpenChange?: (open: boolean) => void; onUserCreated: () => void }) {
+interface Props {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onUserCreated: () => void
+  branches: Branch[]
+  users: UserData[];
+  departments: department[]
+  positions: position[]
+  sections: Section[]
+}
+
+export default function Signup({
+  open,
+  onOpenChange,
+  onUserCreated,
+  branches,
+  users,
+  departments,
+  positions,
+  sections
+}: Props) {
   const [fullNameValue, setFullNameValue] = useState("");
-  const [userApi, setUserApi] = useState<UserSignup[]>([]);
-  const [branchApi, setBranchApi] = useState<Branch[]>([]);
-  const [departmentApi, setDepartmentApi] = useState<Department[]>([]);
-  const [sectionApi, setSectionApi] = useState<Section[]>([]);
-  const [positionApi, setPositionApi] = useState<Position[]>([]);
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
   const [showErrorAlert, setShowErrorAlert] = useState(false);
   const form = useForm<SignupForm>({
@@ -57,51 +74,12 @@ export default function Signup({ open, onOpenChange, onUserCreated }: { open?: b
       password: ""
     }
   });
-  useEffect(() => {
-    const fetchData = async (url: string, setter: (data: any[]) => void) => {
-      try {
-        const res = await fetch(url, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            // "Authorization": `Bearer ${token}`
-          }
-        });
-        const data = await res.json();
-        if (Array.isArray(data)) {
-          setter(data);
-        } else if (data && Array.isArray(data.data)) {
-          setter(data.data);
-        } else {
-          console.warn("API response is not an array:", data);
-          setter([]);
-        }
-      } catch (error) {
-        console.error("Error fetching", url, error);
-      }
-    };
-    // fetchData("/api/proxy/users", setUserApi);
-    // fetchData("/api/proxy/branch", setBranchApi);
-    // fetchData("/api/proxy/department", setDepartmentApi);
-    // fetchData("/api/proxy/section", setSectionApi);
-    // fetchData("/api/proxy/position", setPositionApi);
-  }, []);
 
   const onSubmit = async (values: SignupForm) => {
     try {
-      const response = await fetch("/api/proxy/user/create", {
-        method: "POST",
-        body: JSON.stringify(values)
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        console.error("Error creating user:", data);
-        setFullNameValue(values.Name);
-        setShowErrorAlert(true);
-        setTimeout(() => {
-          setShowErrorAlert(false);
-        }, 5000);
-      } else {
+      const response = await client.post("/user/create", values, { headers: dataConfig().header });
+      const data = await response.data.json();
+      if (!response.status) {
         setFullNameValue(values.Name);
         onOpenChange?.(false);
         setShowSuccessAlert(true);
@@ -122,6 +100,13 @@ export default function Signup({ open, onOpenChange, onUserCreated }: { open?: b
         setTimeout(() => {
           setShowSuccessAlert(false);
           // onOpenChange?.(false);
+        }, 5000);
+      } else {
+        console.error("Error creating user:", data);
+        setFullNameValue(values.Name);
+        setShowErrorAlert(true);
+        setTimeout(() => {
+          setShowErrorAlert(false);
         }, 5000);
       }
     } catch (error) {
@@ -180,7 +165,7 @@ export default function Signup({ open, onOpenChange, onUserCreated }: { open?: b
                       field={field}
                       placeholder="เลือกสาขา"
                       formLabel="สาขา"
-                      options={branchApi.map(branch => ({
+                      options={branches.map(branch => ({
                         value: branch.branchid.toString(),
                         label: branch.name
                       }))}
@@ -197,7 +182,7 @@ export default function Signup({ open, onOpenChange, onUserCreated }: { open?: b
                       field={field}
                       placeholder="เลือกฝ่าย"
                       formLabel="ฝ่าย"
-                      options={departmentApi.map(department => ({
+                      options={departments.map(department => ({
                         value: department.depid.toString(),
                         label: department.name
                       }))}
@@ -214,7 +199,7 @@ export default function Signup({ open, onOpenChange, onUserCreated }: { open?: b
                       field={field}
                       placeholder="เลือกแผนก (หากมี)"
                       formLabel="แผนก (หากมี)"
-                      options={sectionApi.filter((section, index, self) =>
+                      options={sections.filter((section, index, self) =>
                         index === self.findIndex(s => s.name === section.name)
                       ).map(section => ({
                         value: section.secid.toString(),
@@ -233,7 +218,7 @@ export default function Signup({ open, onOpenChange, onUserCreated }: { open?: b
                       field={field}
                       placeholder="เลือกตำแหน่ง"
                       formLabel="ตำแหน่ง"
-                      options={positionApi.map(position => ({
+                      options={positions.map(position => ({
                         value: position.positionid.toString(),
                         label: position.position
                       }))}
@@ -250,7 +235,7 @@ export default function Signup({ open, onOpenChange, onUserCreated }: { open?: b
                       field={field}
                       placeholder="เลือกหัวหน้า"
                       formLabel="หัวหน้า"
-                      options={userApi.map(user => ({
+                      options={users.map(user => ({
                         value: user.UserID.toString(),
                         label: user.Fullname
                       }))}
@@ -304,8 +289,8 @@ export default function Signup({ open, onOpenChange, onUserCreated }: { open?: b
           </Form>
         </DialogContent>
       </Dialog>
-        <SubmitSuccess showSuccessAlert={showSuccessAlert} setShowSuccessAlert={setShowSuccessAlert} fullNameValue={fullNameValue} />
-        <SubmitFailed showErrorAlert={showErrorAlert} fullNameValue={fullNameValue} setShowErrorAlert={setShowErrorAlert} />
+      <SubmitSuccess showSuccessAlert={showSuccessAlert} setShowSuccessAlert={setShowSuccessAlert} fullNameValue={fullNameValue} />
+      <SubmitFailed showErrorAlert={showErrorAlert} fullNameValue={fullNameValue} setShowErrorAlert={setShowErrorAlert} />
     </>
   )
 }

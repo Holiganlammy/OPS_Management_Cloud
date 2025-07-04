@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { AlertCircleIcon, Eye, EyeOff, Loader2 } from "lucide-react"
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import Link from "next/link";
 import { signIn } from 'next-auth/react';
@@ -18,6 +18,8 @@ export default function Login() {
   const [showError, setShowError] = useState(false);
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false);
+  const searchParams = useSearchParams();
+  const redirectPath = searchParams.get('redirect') || '/home';
 
   useEffect(() => {
     if (error) {
@@ -61,7 +63,7 @@ export default function Login() {
         }
         throw new Error('api fail');
       } else {
-        router.push("/users/dashboard");
+        router.push(redirectPath);
       }
     } catch (error) {
       setError("Network error. Please try again.");
@@ -71,67 +73,74 @@ export default function Login() {
   };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        {error && (
-          <Alert
-            variant="destructive"
-            className={`transition-all duration-300 ease-in-out transform ${showError
-              ? 'opacity-100'
-              : 'opacity-0'
-              }`}
-          >
-            <AlertCircleIcon className="h-4 w-4" />
-            <AlertTitle>เข้าสู่ระบบล้มเหลว</AlertTitle>
-            <AlertDescription>
-              {error}
-            </AlertDescription>
-          </Alert>
-        )}
-        <FormField
-          control={form.control}
-          name="loginname"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Username</FormLabel>
-              <FormControl>
-                <Input placeholder="Username" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="password"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Password</FormLabel>
-              <div className="relative">
-                <FormControl>
-                  <Input type={showPassword ? "text" : "password"} placeholder="Password" {...field} />
-                </FormControl>
-                <button
-                  type="button"
-                  className="absolute top-1/2 right-2 -translate-y-1/2 p-1 cursor-pointer"
-                  onClick={() => setShowPassword((prev) => !prev)}
-                  tabIndex={-1}
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <div className="flex justify-end">
-          <Link href="/password_reset" className="text-sm font-medium text-primary-600 hover:underline dark:text-primary-500">Forgot password?</Link>
-        </div>
-        <Button className="w-full cursor-pointer" type="submit" disabled={isLoading}>
-          {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Login
-        </Button>
-      </form>
-    </Form>
+    <div className="p-6 space-y-4 md:space-y-6 sm:p-8">
+      <h1 className="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
+        User Manage Login
+      </h1>
+      <div>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {error && (
+              <Alert
+                variant="destructive"
+                className={`transition-all duration-300 ease-in-out transform ${showError
+                  ? 'opacity-100'
+                  : 'opacity-0'
+                  }`}
+              >
+                <AlertCircleIcon className="h-4 w-4" />
+                <AlertTitle>เข้าสู่ระบบล้มเหลว</AlertTitle>
+                <AlertDescription>
+                  {error}
+                </AlertDescription>
+              </Alert>
+            )}
+            <FormField
+              control={form.control}
+              name="loginname"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Username</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Username" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Password</FormLabel>
+                  <div className="relative">
+                    <FormControl>
+                      <Input type={showPassword ? "text" : "password"} placeholder="Password" {...field} />
+                    </FormControl>
+                    <button
+                      type="button"
+                      className="absolute top-1/2 right-2 -translate-y-1/2 p-1 cursor-pointer"
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      tabIndex={-1}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="flex justify-end">
+              <Link href="/password_reset" className="text-sm font-medium text-primary-600 hover:underline dark:text-primary-500">Forgot password?</Link>
+            </div>
+            <Button className="w-full cursor-pointer" type="submit" disabled={isLoading}>
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Login
+            </Button>
+          </form>
+        </Form>
+      </div>
+    </div>
   );
 }

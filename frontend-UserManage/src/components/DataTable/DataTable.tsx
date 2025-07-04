@@ -1,7 +1,5 @@
 "use client"
-
 import * as React from "react"
-// import Signup from "@/components/SignUp/signup"
 import {
   ColumnDef,
   ColumnFiltersState,

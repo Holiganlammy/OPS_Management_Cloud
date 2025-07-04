@@ -3,7 +3,7 @@ import React from 'react'
 
 export default function PageLoading() {
   return (
-    <div className="h-[80vh] my-4 flex items-center justify-center px-4">
+    <div className="fixed inset-0 flex items-center justify-center px-4">
       <div className="flex flex-row items-center gap-4">
         <div className="animate-spin h-8 w-8 border-4 border-gray-300 border-t-black rounded-full"></div>
         <p className="text-xl">Loading...</p>

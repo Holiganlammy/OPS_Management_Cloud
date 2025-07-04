@@ -5,9 +5,9 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Form, FormField } from "@/components/ui/form"
-import Position from "@/app/(main)/users/dashboard/MultiFilter/Position"
-import Department from "@/app/(main)/users/dashboard/MultiFilter/Department"
-import Branch from "@/app/(main)/users/dashboard/MultiFilter/Branch"
+import Position from "@/app/(main)/users/users_list/MultiFilter/Position"
+import Department from "@/app/(main)/users/users_list/MultiFilter/Department"
+import Branch from "@/app/(main)/users/users_list/MultiFilter/Branch"
 
 const SelectSchema = z.object({
   position: z.string(),
@@ -25,19 +25,23 @@ interface FilterFormProps {
     branch: string
     filter: string
   }
+  branches: Branch[]
+  departments: department[]
+  positions: position[]
   onFiltersChange: (filters: SelectType) => void
+
 }
 
-export default function FilterForm({ filters, onFiltersChange }: FilterFormProps) {
+export default function FilterForm({ filters, onFiltersChange, branches, departments, positions }: FilterFormProps) {
   const form = useForm<SelectType>({
     resolver: zodResolver(SelectSchema),
     defaultValues: filters,
   })
 
   const [watchPosition, watchDepartment, watchBranch, watchFilter] = form.watch([
-    "position", 
-    "department", 
-    "branch", 
+    "position",
+    "department",
+    "branch",
     "filter"
   ])
 
@@ -62,29 +66,29 @@ export default function FilterForm({ filters, onFiltersChange }: FilterFormProps
 
   return (
     <Form {...form}>
-      <form 
-        onSubmit={form.handleSubmit(onSubmit)} 
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
         className="grid grid-cols-2 sm:justify-center gap-x-5 sm:flex sm:gap-x-0 mt-4 space-x-4 justify-end"
       >
-        <FormField 
+        <FormField
           name="branch"
           control={form.control}
           render={({ field }) => (
-            <Branch field={field} />
+            <Branch field={field} data_branch={branches} />
           )}
         />
-        <FormField 
+        <FormField
           name="department"
           control={form.control}
           render={({ field }) => (
-            <Department field={field} />
+            <Department field={field} data_department={departments} />
           )}
         />
-        <FormField 
+        <FormField
           name="position"
           control={form.control}
           render={({ field }) => (
-            <Position field={field} />
+            <Position field={field} data_position={positions} />
           )}
         />
       </form>

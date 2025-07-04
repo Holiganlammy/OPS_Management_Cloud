@@ -22,7 +22,7 @@ import { UploadedFile } from 'express-fileupload';
 import * as path from 'path';
 import * as fs from 'fs';
 @Injectable()
-export class SmartBillService {
+export class AppService {
   private readonly uploadDir = 'D:/files/smartBill/';
   private readonly baseUrl = 'http://vpnptec.dyndns.org:33080/smartBill/';
   private readonly usercode = 'SYSTEM';

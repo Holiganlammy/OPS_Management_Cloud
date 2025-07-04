@@ -1,12 +1,7 @@
-"use client"
-import * as React from 'react';
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import { CustomProvider } from "./SessionProvider";
-import StoreProvider from "./StoreProvider";
-import { CheckSession } from './CheckSession';
-import { usePathname } from 'next/navigation';
 import "./globals.css";
+import { AppWrapper } from "./AppWrapper";
+import { Geist, Geist_Mono } from "next/font/google";
+import type { Metadata } from "next";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,35 +13,22 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+export const metadata: Metadata = {
+  title: "New OPS",
+  description: "New OPS",
+};
+
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
-
-  const pathname = usePathname()
-  const isNotSpecialRoute = !['/forgetPassword', '/login'].includes(pathname);
-
+}) {
   return (
     <html lang="en">
-      <head>
-        <title>New OPS</title>
-        <meta name='new_ops' content='New OPS' />
-      </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <CustomProvider>
-          <StoreProvider>
-            <div id="hero" className="w-full">
-              <CheckSession mustCheck={isNotSpecialRoute}>
-                <React.Suspense fallback={<>Loading...</>}>
-                  {children}
-                </React.Suspense>
-              </CheckSession>
-            </div>
-          </StoreProvider>
-        </CustomProvider>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <AppWrapper>
+          {children}
+        </AppWrapper>
       </body>
     </html>
   );

@@ -1,7 +1,7 @@
 "use client"
 import Link from "next/link"
 import { CircleCheckIcon, CircleHelpIcon, CircleIcon, LockKeyholeOpen, MenuIcon, XIcon } from "lucide-react"
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -13,15 +13,18 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import {
-  NavigationMenuLink,
-} from "@/components/ui/navigation-menu"
 import { Avatar, AvatarImage } from "@/components/ui/avatar"
 import { useSession, signOut } from 'next-auth/react';
+import dataConfig from "@/config/config";
+import client from "@/lib/axios/interceptors";
+import { buildMenuTree, MenuItem } from '@/type/buildMenuTree';
+import { SidebarMenuItem } from "./SidebarMenuItem";
 
 export default function SiteHeader() {
   const { data: session } = useSession();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [menus, setMenu] = useState([]);
+  const menuTree = useMemo(() => buildMenuTree(menus as MenuItem[]), [menus]);
 
   const handleLogout = () => {
     signOut({ callbackUrl: '/login' })
@@ -31,10 +34,33 @@ export default function SiteHeader() {
     setIsSidebarOpen(!isSidebarOpen);
   }
 
+  const fetchMenus = useCallback(async () => {
+    try {
+      const response = await client.post(`/Apps_List_Menu`, { userid: session?.user.userid }, {
+        headers: dataConfig().header
+      });
+      const data = await response.data;
+      if (data.length > 0) {
+        setMenu(data)
+      }
+    } catch (error) {
+      console.error("Error fetching users:", error)
+    }
+  }, [])
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      await fetchMenus()
+    }
+    checkAuth()
+  }, [session])
+
+
+
   return (
     <>
       {/* Header */}
-      <div className="w-full h-[50px] shadow-md z-50 fixed flex items-center bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <div className="w-full h-[50px] shadow-md z-50 fixed flex items-center bg-primary text-primary-foreground shadow-xs dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         {/* Hamburger Menu Button */}
         <Button
           variant="ghost"
@@ -48,7 +74,7 @@ export default function SiteHeader() {
         <span className="flex items-center px-2">
           <Link
             href="/"
-            className="text-lg font-semibold text-gray-900 dark:text-white"
+            className="text-lg font-semibold"
           >
             User Manage
           </Link>
@@ -59,11 +85,8 @@ export default function SiteHeader() {
           <DropdownMenuTrigger asChild>
             <div className="ml-auto flex items-center gap-2 sm:gap-3 pr-2 sm:pr-4 mr-2 rounded-md px-2 sm:px-3 py-1 transition cursor-pointer">
               <div className="hidden sm:flex flex-col items-end min-w-0">
-                <span className="text-sm font-medium text-gray-900 dark:text-white truncate max-w-[120px] lg:max-w-[160px]">
-                  {`${session?.user.UserCode}` || "User visitor"}
-                </span>
-                <span className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[120px] lg:max-w-[160px]">
-                  {`${session?.user.fristName} ${session?.user.lastName}` || "m@example.com"}
+                <span className="text-sm font-medium truncate max-w-[120px] lg:max-w-[160px]">
+                  {`${session?.user.UserCode}` || "Guess"}
                 </span>
               </div>
               <Avatar className="size-8 sm:size-9">
@@ -72,7 +95,7 @@ export default function SiteHeader() {
               {/* Three dots menu icon - แสดงเฉพาะในมือถือ */}
               <div className="flex sm:hidden items-center justify-center w-6 h-6">
                 <svg
-                  className="w-4 h-4 text-gray-500 dark:text-gray-400"
+                  className="w-4 h-4"
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >
@@ -82,13 +105,13 @@ export default function SiteHeader() {
             </div>
           </DropdownMenuTrigger>
 
-          <DropdownMenuContent className="w-52 sm:w-56" align="end">
+          <DropdownMenuContent className="w-52 sm:w-56 bg-primary text-primary-foreground shadow-xs" align="end">
             <DropdownMenuLabel className="pb-2">
-              <div className="flex flex-col space-y-1">
+              <div className="flex flex-col space-y-4">
                 <p className="text-sm font-medium leading-none">
-                  {/* {user?.user.name || "shadcn"} */}
+                  {`${session?.user.fristName} ${session?.user.lastName}` || "-"}
                 </p>
-                <p className="text-xs leading-none text-muted-foreground">
+                <p className="text-xs leading-none">
                   {`${session?.user.Email}` || "m@example.com"}
                 </p>
               </div>
@@ -154,12 +177,12 @@ export default function SiteHeader() {
 
       {/* Sidebar */}
       <div
-        className={`fixed top-0 left-0 h-full w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 z-50 transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        className={`fixed top-0 left-0 h-full w-80 bg-primary text-primary-foreground shadow-xs dark:border-gray-700 z-50 transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
           }`}
       >
         {/* Sidebar Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Menu</h2>
+          <h2 className="text-lg font-semibold">Menu</h2>
           <Button
             variant="ghost"
             size="sm"
@@ -171,92 +194,19 @@ export default function SiteHeader() {
         </div>
 
         {/* Sidebar Content */}
-        <div className="p-4 space-y-4">
-          {/* Home Section */}
-          <div>
-            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-              Home
-            </h3>
-            <div className="space-y-1">
-              <Link
-                href="/docs"
-                className="block px-3 py-2 rounded-md text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                onClick={toggleSidebar}
-              >
-                Introduction
-              </Link>
-              <Link
-                href="/docs/installation"
-                className="block px-3 py-2 rounded-md text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                onClick={toggleSidebar}
-              >
-                Installation
-              </Link>
-              <Link
-                href="/docs/primitives/typography"
-                className="block px-3 py-2 rounded-md text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                onClick={toggleSidebar}
-              >
-                Typography
-              </Link>
-            </div>
-          </div>
-
-
-          {/* Status Section */}
-          <div>
-            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-              Status
-            </h3>
-            <div className="space-y-1">
-              <Link
-                href="#"
-                className="flex items-center gap-2 px-3 py-2 rounded-md text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                onClick={toggleSidebar}
-              >
-                <CircleHelpIcon className="h-4 w-4" />
-                Backlog
-              </Link>
-              <Link
-                href="#"
-                className="flex items-center gap-2 px-3 py-2 rounded-md text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                onClick={toggleSidebar}
-              >
-                <CircleIcon className="h-4 w-4" />
-                To Do
-              </Link>
-              <Link
-                href="#"
-                className="flex items-center gap-2 px-3 py-2 rounded-md text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                onClick={toggleSidebar}
-              >
-                <CircleCheckIcon className="h-4 w-4" />
-                Done
-              </Link>
-            </div>
-          </div>
+        <div className="p-4 space-y-2">
+          {session && menuTree
+            .sort((a, b) => a.order_no - b.order_no)
+            .map((item) => (
+              <SidebarMenuItem
+                key={item.id}
+                item={item}
+                toggleSidebar={toggleSidebar}
+                activePath={""}
+              />
+            ))}
         </div>
       </div>
     </>
-  )
-}
-
-function ListItem({
-  title,
-  children,
-  href,
-  ...props
-}: React.ComponentPropsWithoutRef<"li"> & { href: string }) {
-  return (
-    <li {...props}>
-      <NavigationMenuLink asChild>
-        <Link href={href}>
-          <div className="text-sm leading-none font-medium">{title}</div>
-          <p className="text-muted-foreground line-clamp-2 text-sm leading-snug">
-            {children}
-          </p>
-        </Link>
-      </NavigationMenuLink>
-    </li>
   )
 }

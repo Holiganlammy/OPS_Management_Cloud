@@ -24,7 +24,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 
 @Injectable()
-export class PTEC_FA_Service {
+export class AppService {
   private readonly uploadDir = 'D:/files/NEW_NAC/';
   private readonly baseUrl = 'http://vpnptec.dyndns.org:33080/NEW_NAC/';
   private readonly usercode = 'SYSTEM';

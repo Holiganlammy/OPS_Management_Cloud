@@ -28,14 +28,6 @@ function hadleError(err: any) {
     if (err.response?.status === 401) {
       error401()
     }
-    Swal.fire({
-      icon: 'error',
-      title: 'Error403',
-      timer: 1500,
-      showConfirmButton: false,
-    }).then(() => {
-      error403()
-    });
   } else {
     alert('Sometjing went wrong.')
   }
@@ -63,27 +55,27 @@ const baseRequest = async (config: InternalAxiosRequestConfig) => {
   }
 
   // console.groupCollapsed(`before interceptors : ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
-  console.groupCollapsed(`before interceptors : ${config.method?.toUpperCase()} ${config.url}`);
-  console.groupCollapsed("config");
-  console.log(config);
-  console.groupEnd();
-  console.groupCollapsed("headers");
-  console.log(config.headers);
-  console.log();
-  console.groupEnd();
-  console.groupCollapsed("body");
-  console.log(config.data);
-  console.groupEnd();
-  console.groupEnd();
+  // console.groupCollapsed(`before interceptors : ${config.method?.toUpperCase()} ${config.url}`);
+  // console.groupCollapsed("config");
+  // console.log(config);
+  // console.groupEnd();
+  // console.groupCollapsed("headers");
+  // console.log(config.headers);
+  // console.log();
+  // console.groupEnd();
+  // console.groupCollapsed("body");
+  // console.log(config.data);
+  // console.groupEnd();
+  // console.groupEnd();
 
   return config;
 }
 
 const baseResponse = (response: AxiosResponse) => {
   // console.groupCollapsed(`response: ${response.config.method?.toUpperCase()} ${response.config.baseURL}${response.config.url}`);
-  console.groupCollapsed(`response: ${response.config.method?.toUpperCase()} ${response.config.url}`);
-  console.log(response);
-  console.groupEnd();
+  // console.groupCollapsed(`response: ${response.config.method?.toUpperCase()} ${response.config.url}`);
+  // console.log(response);
+  // console.groupEnd();
 
   return response;
 }
