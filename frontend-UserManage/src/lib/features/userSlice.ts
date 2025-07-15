@@ -25,14 +25,9 @@ const initialValue: UserState = {
 };
 
 export const fetchUser = createAsyncThunk("user/fetchUser", async (params: any, thunkAPI) => {
-  // try {
-  console.log(`params user : ${params} `);
-  console.log(params);
-  // const response = await getUserProfile(params)
   const response = await axios.post(dataConfig().http + '/getUserProfile', params, {
     headers: dataConfig().header,
   }).then(function (response) {
-    console.log(response);
     return response.data;
   }).catch(function (error) {
     console.log(error);

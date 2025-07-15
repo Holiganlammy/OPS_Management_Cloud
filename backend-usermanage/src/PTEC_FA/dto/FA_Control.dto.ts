@@ -163,6 +163,14 @@ export class NacCreateDto {
   @IsOptional()
   @IsDateString()
   realPrice_Date?: string;
+
+  @IsOptional()
+  @IsDateString()
+  update_by?: string;
+
+  @IsOptional()
+  @IsDateString()
+  update_date?: string;
 }
 
 export class FA_control_update_Dto {

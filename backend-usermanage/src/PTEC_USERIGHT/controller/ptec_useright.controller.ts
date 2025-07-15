@@ -28,7 +28,6 @@ export class AppController {
   async Login(@Body() loginDto: LoginDto, @Res() res: Response) {
     try {
       const resultLogin = await this.appService.getUserLogin(loginDto);
-      console.log(resultLogin);
       const user = resultLogin[0] as User;
       if (user && user.password === 1) {
         const payload = {
@@ -183,7 +182,6 @@ export class AppController {
     @Res() res: Response,
   ) {
     try {
-      console.log('Deleting user with ID:', UserID, 'Actived:', Actived);
       await this.appService.deleteUser(UserID, Actived);
       res.status(200).send({
         success: true,

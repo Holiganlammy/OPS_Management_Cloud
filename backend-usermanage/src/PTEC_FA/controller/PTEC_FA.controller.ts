@@ -154,13 +154,14 @@ export class AppController {
       );
     }
   }
-  @Post('FA_Control_Create_Document_NAC')
-  async FA_Control_Create_Document_NAC(
+
+  @Post('/FA_ControlNew_Create_NAC')
+  async FA_ControlNew_Create_NAC(
     @Body() body: NacCreateDto,
     @Res() res: Response,
   ) {
     try {
-      const result = await this.service.FA_Control_Create_Document_NAC(body);
+      const result = await this.service.FA_ControlNew_Create_NAC(body);
       res.status(200).send(result);
     } catch (error: unknown) {
       throw new HttpException(
@@ -355,6 +356,7 @@ export class AppController {
   ) {
     try {
       const result = await this.service.qureyNAC_comment(body);
+      console.log(result);
       res.status(200).send(result);
     } catch (error: unknown) {
       throw new HttpException(

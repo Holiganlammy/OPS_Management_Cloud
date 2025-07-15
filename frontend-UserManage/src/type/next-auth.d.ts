@@ -10,6 +10,7 @@ declare module "next-auth" {
       Email?: string;
       access_token?: string;
       img_profile?: string;
+      role_id?: number;
     };
   }
   interface User {
@@ -20,6 +21,7 @@ declare module "next-auth" {
     Email?: string;
     access_token: string;
     img_profile?: string;
+    role_id?: number;
   }
 
   interface JWT { // แก้จาก JTW เป็น JWT
@@ -30,5 +32,6 @@ declare module "next-auth" {
     Email?: string;
     access_token?: string;
     img_profile?: string;
+    role_id?: number;
   }
 }

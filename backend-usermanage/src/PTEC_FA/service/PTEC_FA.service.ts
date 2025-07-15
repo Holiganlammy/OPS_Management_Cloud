@@ -135,7 +135,7 @@ export class AppService {
       throw error;
     }
   }
-  async FA_Control_Create_Document_NAC(body: NacCreateInput) {
+  async FA_ControlNew_Create_NAC(body: NacCreateInput) {
     try {
       return this.dbManager.executeStoredProcedure(
         `${databaseConfig.database}.dbo.FA_ControlNew_Create_NAC`,
@@ -1124,23 +1124,26 @@ export class AppService {
   //Upload Files
   async FA_Control_Running_NO_Files(
     attach: string,
-  ): Promise<{ ATT: string }[]> {
+  ): Promise<{ docno: string }[]> {
     const params = [
-      { name: 'type_code', type: sql.VarChar(100), value: attach },
-      { name: 'date_time', type: sql.DateTime(), value: new Date() },
-      { name: 'nac_code', type: sql.VarChar(100), output: true },
+      { name: 'code', type: sql.VarChar(100), value: attach },
+      { name: 'date', type: sql.DateTime(), value: new Date() },
+      { name: 'docno', type: sql.VarChar(255), output: true },
     ];
 
     return this.dbManager.executeStoredProcedure(
       `${databaseConfig.database}.dbo.RunningNo`,
       params,
+      (result) => {
+        return [{ docno: (result.output as { docno?: string })?.docno ?? '' }];
+      },
     );
   }
 
   async handleFileUpload(req: Request) {
     const file = req.files?.file as UploadedFile;
-    const reqBody = req.body as { sb_code?: string };
-    const st_code = reqBody.sb_code;
+    const reqBody = req.body as { nac_code?: string };
+    const nac_code = reqBody.nac_code;
     if (!file) {
       throw new Error('No file uploaded');
     }
@@ -1148,29 +1151,32 @@ export class AppService {
     const filename = file.name;
     const extension = path.extname(filename);
     const attach = 'ATT';
-    const newPath = await this.FA_Control_Running_NO_Files(attach);
+    if (nac_code) {
+      const newPath = await this.FA_Control_Running_NO_Files(attach);
 
-    if (!newPath || !newPath[0]?.ATT) {
-      throw new Error('Cannot generate running number');
+      if (!newPath || !newPath[0]?.docno) {
+        throw new Error('Cannot generate running number');
+      }
+
+      const newFileName = `${newPath[0].docno}${extension}`;
+      const savePath = path.join(this.uploadDir, newFileName);
+      fs.mkdirSync(this.uploadDir, { recursive: true });
+      await file.mv(savePath);
+
+      const attachBody = {
+        nonpocode: nac_code ?? '',
+        url: `${this.baseUrl}${newFileName}`,
+        user: this.usercode,
+        description: nac_code ?? '',
+      };
+      await this.NonPO_Attatch_Save(attachBody);
+
+      return {
+        message: 'successfully',
+        code: newPath,
+        url: `${this.baseUrl}${newFileName}`,
+      };
     }
-
-    const newFileName = `${newPath[0].ATT}${extension}`;
-    const savePath = path.join(this.uploadDir, newFileName);
-    fs.mkdirSync(this.uploadDir, { recursive: true });
-    await file.mv(savePath);
-
-    const attachBody = {
-      nonpocode: st_code ?? '',
-      url: `${this.baseUrl}${newFileName}`,
-      user: this.usercode,
-      description: st_code ?? '',
-    };
-    await this.NonPO_Attatch_Save(attachBody);
-
-    return {
-      message: 'successfully',
-      code: newPath,
-    };
   }
 
   async NonPO_Attatch_Save(req: {

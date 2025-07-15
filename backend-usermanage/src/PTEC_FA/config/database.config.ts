@@ -6,5 +6,5 @@ export const databaseConfig = {
   password: process.env.DB_PASSWORD || '',
   server: process.env.DB_SERVER || '',
   database: process.env.DB_NAME_OF_OPS_UAT || '',
-  options: { encrypt: false }
+  options: { encrypt: false },
 };

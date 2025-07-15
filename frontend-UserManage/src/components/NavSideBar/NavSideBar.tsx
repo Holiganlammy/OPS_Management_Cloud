@@ -77,7 +77,7 @@ export default function SiteHeader() {
             href="/"
             className="text-lg font-semibold"
           >
-            User Manage
+            Purethai Energy
           </Link>
         </span>
 

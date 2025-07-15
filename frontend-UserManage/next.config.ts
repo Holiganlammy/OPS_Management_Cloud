@@ -2,7 +2,9 @@
 const nextConfig = {
   reactStrictMode: true,
   output: 'standalone',
-  // middleware: true,
+  images: {
+    domains: ["vpnptec.dyndns.org", "10.15.100.227"],
+  },
 }
 
 module.exports = nextConfig

@@ -43,6 +43,7 @@ export const authOptions: AuthOptions = {
               Email: user.Email,
               access_token: token,
               img_profile: user.img_profile,
+              role_id: user.role_id,
             };
           }
 
@@ -65,6 +66,7 @@ export const authOptions: AuthOptions = {
         token.Email = user.Email;
         token.access_token = user.access_token;
         token.img_profile = user.img_profile;
+        token.role_id = user.role_id;
       }
       return token;
     },
@@ -80,6 +82,7 @@ export const authOptions: AuthOptions = {
           Email: token.Email as string,
           access_token: token.access_token as string,
           img_profile: token.img_profile as string,
+          role_id: token.role_id as number,
         };
       }
       return session;

@@ -113,6 +113,7 @@ export default function Signup({
       console.error("Error signing up:", error);
     }
   };
+  
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>

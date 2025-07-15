@@ -13,11 +13,11 @@ export function AppWrapper({ children }: { children: React.ReactNode }) {
     <CustomProvider>
       <StoreProvider>
         <div id="hero" className="w-full">
-          <CheckSession mustCheck={isNotSpecialRoute}>
-            <React.Suspense fallback={<>Loading...</>}>
+          <React.Suspense fallback={<>Loading...</>}>
+            <CheckSession mustCheck={isNotSpecialRoute}>
               {children}
-            </React.Suspense>
-          </CheckSession>
+            </CheckSession>
+          </React.Suspense>
         </div>
       </StoreProvider>
     </CustomProvider>
