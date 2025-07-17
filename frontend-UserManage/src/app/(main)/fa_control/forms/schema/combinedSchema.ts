@@ -53,22 +53,28 @@ export const getCombinedFormSchema = (nacType: string) =>
   baseNacSchema
     .merge(z.object({ details: nacDtlFormSchema }))
     .superRefine((data, ctx) => {
-      const isTypeRequiredI = nacType === "1" || nacType === "2";
-      const isTypeRequiredII = nacType === "4" || nacType === "5";
-      const hasVerifier = data.verify_by_userid?.trim();
+      const requiresBV = data.nac_status === 11 && (data.nac_type === 4 || data.nac_type === 5);
+      const requiresSealPrice = (data.nac_type === 4 || data.nac_type === 5);
+      const requires = (data.nac_type === 1 || data.nac_type === 2 || data.nac_type === 3);
       const hasApprover = data.source_approve_userid?.trim();
 
-      if (isTypeRequiredII && (hasVerifier || hasApprover)) {
+      if ((requiresSealPrice && data.nac_status === 12) || hasApprover) {
         if (!data.real_price || !data.realPrice_Date) {
           ctx.addIssue({
             path: ["real_price"],
             code: z.ZodIssueCode.custom,
-            message: "ขายจริงและวันที่ขายจริง",
+            message: "ขายจริง",
+          });
+
+          ctx.addIssue({
+            path: ["realPrice_Date"],
+            code: z.ZodIssueCode.custom,
+            message: "วันที่ขายจริง",
           });
         }
       }
 
-      if (isTypeRequiredI) {
+      if (requires) {
         if (!data.des_usercode) {
           ctx.addIssue({
             path: ["des_usercode"],
@@ -102,10 +108,6 @@ export const getCombinedFormSchema = (nacType: string) =>
         }
       }
 
-      const requiresBV = data.nac_status === 11 && (data.nac_type === 4 || data.nac_type === 5);
-      const requiresSealPrice = (data.nac_type === 4 || data.nac_type === 5);
-      const requires = (data.nac_type === 1 || data.nac_type === 2 || data.nac_type === 3);
-
       if (requires && Array.isArray(data.details)) {
         data.details.forEach((item, index) => {
           if (!item.nacdtl_assetsCode) {
@@ -114,7 +116,7 @@ export const getCombinedFormSchema = (nacType: string) =>
               code: z.ZodIssueCode.custom,
               message: "รหัสทรัพย์สิน",
             });
-          } else if (!item.nacdtl_image_1 && data.nac_type === 1) {
+          } else if (!item.nacdtl_image_1 && [1, 2, 3].includes(data.nac_type || 0) && data.nac_status === 4) {
             ctx.addIssue({
               path: ["details", index, "nacdtl_image_1"],
               code: z.ZodIssueCode.custom,
@@ -126,13 +128,21 @@ export const getCombinedFormSchema = (nacType: string) =>
               code: z.ZodIssueCode.custom,
               message: `รูปภาพที่ 2 ${item.nacdtl_assetsCode}`,
             });
-          } else if (!item.nacdtl_image_1) {
+          } else if (!item.nacdtl_image_1 && [4, 5].includes(data.nac_type || 0) && data.nac_status === 1) {
             ctx.addIssue({
               path: ["details", index, "nacdtl_image_1"],
               code: z.ZodIssueCode.custom,
               message: `รูปภาพที่ 1 ${item.nacdtl_assetsCode}`,
             });
           }
+        });
+      }
+
+      if (requiresSealPrice && hasApprover && (!data.realPrice_Date || data.realPrice_Date === "Invalid Date")) {
+        ctx.addIssue({
+          path: ["realPrice_Date"],
+          code: z.ZodIssueCode.custom,
+          message: "วันที่ขายได้",
         });
       }
 
@@ -145,14 +155,36 @@ export const getCombinedFormSchema = (nacType: string) =>
               message: "รหัสทรัพย์สิน",
             });
           }
-        });
-      } else if (requiresBV && Array.isArray(data.details)) {
-        data.details.forEach((item, index) => {
-          if (!item.nacdtl_bookV || item.nacdtl_bookV < 0) {
+
+          if (!item.nacdtl_PriceSeals) {
+            ctx.addIssue({
+              path: ["details", index, "nacdtl_PriceSeals"],
+              code: z.ZodIssueCode.custom,
+              message: `ราคาขาย ของ ${item.nacdtl_assetsCode ?? ""}`,
+            });
+          }
+
+          // if (!item.nacdtl_image_1) {
+          //   ctx.addIssue({
+          //     path: ["details", index, "nacdtl_image_1"],
+          //     code: z.ZodIssueCode.custom,
+          //     message: `รูปภาพที่ 1 ของ ${item.nacdtl_assetsCode ?? ""}`,
+          //   });
+          // }
+
+          // if (!item.nacdtl_image_2) {
+          //   ctx.addIssue({
+          //     path: ["details", index, "nacdtl_image_2"],
+          //     code: z.ZodIssueCode.custom,
+          //     message: `รูปภาพที่ 2 ของ ${item.nacdtl_assetsCode ?? ""}`,
+          //   });
+          // }
+
+          if (!item.nacdtl_bookV && requiresBV) {
             ctx.addIssue({
               path: ["details", index, "nacdtl_bookV"],
               code: z.ZodIssueCode.custom,
-              message: "ราคาของรายการ",
+              message: `Book value ของ ${item.nacdtl_assetsCode ?? ""}`,
             });
           }
         });

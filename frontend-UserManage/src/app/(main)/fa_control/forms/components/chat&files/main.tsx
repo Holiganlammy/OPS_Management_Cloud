@@ -7,8 +7,7 @@ import "dayjs/locale/th";
 import { useEffect, useState } from "react";
 import { CommentItem } from "./commentItem";
 import { FileItem } from "./fileItem";
-import { Comment, FileItemType } from "../../../service/type";
-import { fetchChatAndFiles, uploadImageToCheckAPI } from "../../../service/faService";
+import { fetchChatAndFiles, uploadImageToCheckAPI } from "../../service/faService";
 import Swal from "sweetalert2";
 import { useSession } from "next-auth/react";
 import dataConfig from "@/config/config";
@@ -26,7 +25,7 @@ interface Props {
 export default function ChatAndFiles({ nac_code, nac_status }: Props) {
   const { data: session } = useSession();
   const [fileItem, setFileItem] = useState<FileItemType[]>([]);
-  const [comments, setComments] = useState<Comment[]>([]);
+  const [comments, setComments] = useState<IComment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // ฟังก์ชันส่งข้อความใหม่
@@ -41,10 +40,10 @@ export default function ChatAndFiles({ nac_code, nac_status }: Props) {
       const response = await client.post('/store_FA_control_comment', newPostCommnet, { headers: dataConfig().header });
 
       if (response.status === 200) {
-        const newComment: Comment = {
+        const newComment: IComment = {
           userid: session?.user.UserCode,
-          comment: text,
-          create_date: new Date().toISOString(),
+          comment: text ?? "",
+          create_date: dayjs().format("YYYY-MM-DD HH:mm"),
           img_profile: session?.user.img_profile,
         };
         setComments((prev) => [...prev, newComment]);
@@ -66,7 +65,6 @@ export default function ChatAndFiles({ nac_code, nac_status }: Props) {
 
       // อัปโหลดไฟล์ไปยัง API ภายนอก
       const response = await uploadImageToCheckAPI(file, nac_code, "file");
-      console.log(response);
 
       // เตรียมข้อมูลสำหรับเก็บ path ไฟล์แนบ
       if (response) {
@@ -75,7 +73,7 @@ export default function ChatAndFiles({ nac_code, nac_status }: Props) {
           linkpath: response.url,
           usercode: session.user.UserCode,
           description,
-          create_date: new Date().toISOString(),
+          create_date: dayjs().format("YYYY-MM-DD HH:mm"),
         };
 
         const responsePath = await client.post("/stroe_FA_control_Path", fileMeta, {
@@ -100,7 +98,7 @@ export default function ChatAndFiles({ nac_code, nac_status }: Props) {
       Swal.fire({
         icon: "error",
         title: "อัปโหลดไฟล์ไม่สำเร็จ",
-        text: JSON.stringify(error.response.data.message) || "เกิดข้อผิดพลาด",
+        text: JSON.stringify(error.response) || "เกิดข้อผิดพลาด",
       });
     }
   };
@@ -109,7 +107,7 @@ export default function ChatAndFiles({ nac_code, nac_status }: Props) {
     const init = async () => {
       try {
         const result = await fetchChatAndFiles(nac_code);
-        const comments: Comment[] = result?.chatData?.data ?? [];
+        const comments: IComment[] = result?.chatData?.data ?? [];
         const fileItemss: FileItemType[] = result?.filesData?.data ?? [];
         console.log(fileItemss);
 

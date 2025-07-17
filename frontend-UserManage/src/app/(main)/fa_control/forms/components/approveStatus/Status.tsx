@@ -1,4 +1,3 @@
-import { ApproveList } from "../../../service/type";
 import {
   Breadcrumb,
   BreadcrumbItem,

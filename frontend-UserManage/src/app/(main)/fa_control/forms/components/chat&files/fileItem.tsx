@@ -2,7 +2,6 @@
 
 import { useSession } from "next-auth/react";
 import { useState, ChangeEvent, FormEvent } from "react";
-import { FileItemType } from "../../../service/type";
 import Swal from "sweetalert2";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
@@ -100,14 +99,15 @@ export function FileItem({ fileItem, onUpload }: Props) {
       {/* ฟอร์มอัปโหลดไฟล์ */}
       <form
         onSubmit={handleSubmit}
-        className="border border-gray-300 dark:border-zinc-700 rounded-lg p-4 flex flex-col gap-3 bg-gray-50 dark:bg-zinc-900"
+        className="flex flex-col gap-3"
       >
-        <label className="block font-medium text-gray-700 dark:text-gray-300">
-          เลือกไฟล์
-          <input
-            type="file"
-            onChange={handleFileChange}
-            className="mt-1 block w-full text-sm text-gray-500 dark:text-gray-400
+        <div className="border border-zinc-700 bg-gray-50 rounded-lg p-4 cursor-pointer">
+          <label className="block font-medium text-gray-700 dark:text-gray-300">
+            คลิกที่นี่เพื่อเลือกไฟล์
+            <input
+              type="file"
+              onChange={handleFileChange}
+              className="mt-1 block w-full text-sm text-gray-500 dark:text-gray-400
               file:mr-4 file:py-2 file:px-4
               file:rounded-md file:border-0
               file:text-sm file:font-semibold
@@ -115,12 +115,11 @@ export function FileItem({ fileItem, onUpload }: Props) {
               hover:file:bg-blue-100
               dark:file:bg-zinc-700 dark:file:text-white
               dark:hover:file:bg-zinc-600"
-            accept="*"
-          />
-        </label>
-
-        <label className="block font-medium text-gray-700 dark:text-gray-300">
-          รายละเอียดไฟล์ (ข้อความ)
+              accept="*"
+            />
+          </label>
+        </div>
+        <label className="block font-medium text-gray-700 py-2 dark:text-gray-300">
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}

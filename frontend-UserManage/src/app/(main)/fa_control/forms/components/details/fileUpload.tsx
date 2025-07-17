@@ -1,7 +1,7 @@
 import { Import, Eye, AlertCircle } from "lucide-react";
 import { Dialog, DialogTrigger, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useState } from "react";
-import { uploadImageToCheckAPI } from "@/app/(main)/fa_control/service/faService";
+import { uploadImageToCheckAPI } from "@/app/(main)/fa_control/forms/service/faService";
 import SafeImage from "@/components/errorImage";
 
 export function FilePicker({

@@ -2,7 +2,6 @@ import { FieldArrayWithId, UseFieldArrayAppend, UseFieldArrayRemove, UseFormRetu
 import { CombinedForm } from "@/app/(main)/fa_control/forms/schema/combinedSchema";
 import { Input } from "@/components/ui/input";
 import { useEffect } from "react";
-import { DataAsset } from "../../../service/type";
 
 type Props = {
   nac_code: string;

@@ -3,13 +3,13 @@ import { CombinedForm } from "@/app/(main)/fa_control/forms/schema/combinedSchem
 import { Input } from "@/components/ui/input";
 import { useEffect, useMemo } from "react";
 import debounce from "lodash.debounce";
-import { DataAsset } from "../../../service/type";
 import CustomSelect from "@/components/SelectSection/SelectSearch";
 import { FormField, FormItem, FormControl, FormMessage } from "@/components/ui/form";
 import { useSession } from "next-auth/react";
 import SumDetails from "./SumDetails";
 import { SquarePlus, Trash2 } from "lucide-react";
 import { FilePicker } from "./fileUpload";
+import { validateNumberString } from "../../service/faService";
 
 type Props = {
   nac_code: string;
@@ -49,7 +49,7 @@ export default function AssetTable({ nac_code, form, userFetch, assets, fields, 
 
 
   useEffect(() => {
-    const details = form.watch("details");
+    const details = form.getValues("details");
     if (!details) return;
     details.forEach((item, index) => {
       const matched = assets.find((res: DataAsset) => res.Code === item.nacdtl_assetsCode);
@@ -63,31 +63,30 @@ export default function AssetTable({ nac_code, form, userFetch, assets, fields, 
         form.setValue(`details.${index}.nacdtl_assetsDtl`, matched.Details);
       }
     });
-  }, [form.watch("details"), assets]);
+  }, [form.getValues("details"), assets]);
 
   useEffect(() => {
-    const subscription = form.watch((value, { name }) => {
-      if (!name?.includes("details.")) return;
+    const details = form.watch("details");
+    if (!Array.isArray(details)) return;
 
-      const match = name.match(/details\.(\d+)\.(nacdtl_bookV|nacdtl_PriceSeals)/);
-      if (!match) return;
+    details.forEach((item, index) => {
+      const bookV = parseFloat(item.nacdtl_bookV as any) || 0;
+      const priceSeals = parseFloat(item.nacdtl_PriceSeals as any) || 0;
 
-      const index = parseInt(match[1], 10);
-      const current = value.details?.[index];
-      if (!current) return;
-
-      const bookV = parseFloat(current.nacdtl_bookV as any) || 0;
-      const priceSeals = parseFloat(current.nacdtl_PriceSeals as any) || 0;
-
-      const exVat = priceSeals * (100 / 107); // แปลงรวม VAT 7% → exVAT
+      const exVat = priceSeals * (100 / 107);
       const profit = exVat - bookV;
 
-      form.setValue(`details.${index}.nacdtl_assetsExVat`, +exVat.toFixed(2));
-      form.setValue(`details.${index}.nacdtl_profit`, +profit.toFixed(2));
-    });
+      form.setValue(`details.${index}.nacdtl_assetsExVat`, +exVat.toFixed(2), {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
 
-    return () => subscription.unsubscribe();
-  }, [form]);
+      form.setValue(`details.${index}.nacdtl_profit`, +profit.toFixed(2), {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    });
+  }, [form.watch("details")]);
 
 
   return (
@@ -299,14 +298,21 @@ export default function AssetTable({ nac_code, form, userFetch, assets, fields, 
                       <FormControl>
                         <Input
                           type={dataUser?.BranchID === 901 ? 'text' : 'password'}
-                          readOnly
-                          {...field}
+                          inputMode="decimal"
                           className="text-right cursor-default"
-                          value={(field.value ?? 0).toLocaleString("th-TH", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}
-                          placeholder=""
+                          value={typeof field.value === 'number'
+                            ? field.value.toLocaleString("th-TH", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })
+                            : ''
+                          }
+                          onChange={(e) => {
+                            const raw = e.target.value.replace(/,/g, "");
+                            const parsed = parseFloat(raw);
+                            field.onChange(isNaN(parsed) ? 0 : parsed);
+                          }}
+                          placeholder="0.00"
                         />
                       </FormControl>
                     </FormItem>
@@ -324,13 +330,22 @@ export default function AssetTable({ nac_code, form, userFetch, assets, fields, 
                           <FormControl>
                             <Input
                               type="text"
-                              {...field}
-                              className="text-right cursor-default"
-                              value={(field.value ?? 0).toLocaleString("th-TH", {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              })}
-                              placeholder=""
+                              inputMode="decimal"
+                              step="0.01"
+                              min={0}
+                              className="text-right"
+                              value={field.value ?? ""}
+                              onChange={(e) => {
+                                const raw = e.target.value;
+                                if (/^\d*\.?\d{0,2}$/.test(raw)) {
+                                  field.onChange(raw);
+                                }
+                              }}
+                              onBlur={(e) => {
+                                const validated = validateNumberString(e.target.value);
+                                field.onChange(validated); // แปลง string → number (หรือ null ถ้าไม่ valid)
+                              }}
+                              placeholder="0.00"
                             />
                           </FormControl>
                         </FormItem>
@@ -346,13 +361,22 @@ export default function AssetTable({ nac_code, form, userFetch, assets, fields, 
                           <FormControl>
                             <Input
                               type="text"
-                              {...field}
-                              className="text-right cursor-default"
-                              value={(field.value ?? 0).toLocaleString("th-TH", {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              })}
-                              placeholder=""
+                              inputMode="decimal"
+                              step="0.01"
+                              min={0}
+                              className="text-right"
+                              value={field.value ?? ""}
+                              onChange={(e) => {
+                                const raw = e.target.value;
+                                if (/^\d*\.?\d{0,2}$/.test(raw)) {
+                                  field.onChange(raw);
+                                }
+                              }}
+                              onBlur={(e) => {
+                                const validated = validateNumberString(e.target.value);
+                                field.onChange(validated); // แปลง string → number (หรือ null ถ้าไม่ valid)
+                              }}
+                              placeholder="0.00"
                             />
                           </FormControl>
                         </FormItem>
@@ -367,14 +391,24 @@ export default function AssetTable({ nac_code, form, userFetch, assets, fields, 
                           <FormControl>
                             <Input
                               type="text"
+                              inputMode="decimal"
+                              step="0.01"
+                              min={0}
                               readOnly
-                              {...field}
-                              className="text-right cursor-default"
-                              value={(field.value ?? 0).toLocaleString("th-TH", {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              })}
-                              placeholder="" />
+                              className="text-right"
+                              value={field.value ?? ""}
+                              onChange={(e) => {
+                                const raw = e.target.value;
+                                if (/^\d*\.?\d{0,2}$/.test(raw)) {
+                                  field.onChange(raw);
+                                }
+                              }}
+                              onBlur={(e) => {
+                                const validated = validateNumberString(e.target.value);
+                                field.onChange(validated);
+                              }}
+                              placeholder="0.00"
+                            />
                           </FormControl>
                         </FormItem>
                       )} />
@@ -388,14 +422,23 @@ export default function AssetTable({ nac_code, form, userFetch, assets, fields, 
                           <FormControl>
                             <Input
                               type="text"
+                              inputMode="decimal"
+                              step="0.01"
+                              min={0}
                               readOnly
-                              {...field}
-                              className="text-right cursor-default"
-                              value={(field.value ?? 0).toLocaleString("th-TH", {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              })}
-                              placeholder=""
+                              className="text-right"
+                              value={field.value ?? ""}
+                              onChange={(e) => {
+                                const raw = e.target.value;
+                                if (/^\d*\.?\d{0,2}$/.test(raw)) {
+                                  field.onChange(raw);
+                                }
+                              }}
+                              onBlur={(e) => {
+                                const validated = validateNumberString(e.target.value);
+                                field.onChange(validated); // แปลง string → number (หรือ null ถ้าไม่ valid)
+                              }}
+                              placeholder="0.00"
                             />
                           </FormControl>
                         </FormItem>
@@ -426,23 +469,23 @@ export default function AssetTable({ nac_code, form, userFetch, assets, fields, 
                   />
 
                   {/* {form.watch("nac_type") === 1 && ( */}
-                    <FormField
-                      control={control}
-                      name={`details.${index}.nacdtl_image_2`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <FilePicker
-                              field={field}
-                              idx={index}
-                              type={'nacdtl_image_2'}
-                              nac_code={form.watch("nac_code") || ""}
-                              errorString={form.formState.errors.details?.[index]?.nacdtl_image_2?.message || ""}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
+                  <FormField
+                    control={control}
+                    name={`details.${index}.nacdtl_image_2`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <FilePicker
+                            field={field}
+                            idx={index}
+                            type={'nacdtl_image_2'}
+                            nac_code={form.watch("nac_code") || ""}
+                            errorString={form.formState.errors.details?.[index]?.nacdtl_image_2?.message || ""}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
                   {/* )} */}
                 </div>
               </td>
