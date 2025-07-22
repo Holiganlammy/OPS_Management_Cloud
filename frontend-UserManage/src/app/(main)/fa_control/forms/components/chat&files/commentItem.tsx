@@ -2,7 +2,6 @@
 
 import { useSession } from "next-auth/react";
 import { useState } from "react";
-import { Comment } from "../../../service/type";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
@@ -12,7 +11,7 @@ dayjs.extend(timezone);
 dayjs.tz.setDefault("Asia/Bangkok");
 
 interface Props {
-  comments: Comment[];
+  comments: IComment[];
   onSend?: (text: string) => void; // คุณสามารถส่ง prop มาเพื่อ handle การส่งจริง
 }
 

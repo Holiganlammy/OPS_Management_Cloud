@@ -268,6 +268,7 @@ export class AppService {
       throw error;
     }
   }
+
   async store_FA_control_update_table(req: FAControlUpdateInput) {
     try {
       return this.dbManager.executeStoredProcedure(
@@ -760,11 +761,11 @@ export class AppService {
     }
   }
 
-  async FA_Control_Select_MyNAC(req: { userCode: string }) {
+  async FA_Control_Select_MyNAC(req: { usercode: string }) {
     try {
       return this.dbManager.executeStoredProcedure(
         `${databaseConfig.database}.dbo.FA_Control_Select_MyNAC`,
-        [{ name: 'userCode', type: sql.NVarChar(10), value: req.userCode }],
+        [{ name: 'usercode', type: sql.NVarChar(10), value: req.usercode }],
       );
     } catch (error) {
       console.error('Error in FA_Control_Select_MyNAC:', error);

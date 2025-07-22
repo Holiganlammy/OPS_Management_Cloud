@@ -4,7 +4,6 @@ import { useSearchParams } from "next/navigation";
 import { FieldArrayWithId, UseFieldArrayAppend, UseFieldArrayRemove, UseFormReturn } from "react-hook-form";
 import { CombinedForm } from "@/app/(main)/fa_control/forms/schema/combinedSchema";
 import AssetTable from "./components/details/AssetTable";
-import { DataAsset } from "../service/type";
 
 type Props = {
   nac_code: string;

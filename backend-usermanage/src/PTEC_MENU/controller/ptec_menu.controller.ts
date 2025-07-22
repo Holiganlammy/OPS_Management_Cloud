@@ -18,7 +18,6 @@ export class AppController {
   async Apps_List_Menu(@Body() body: Apps_MenuInput, @Res() res: Response) {
     try {
       const result = await this.service.Apps_List_Menu(body);
-      console.log(body);
       res.status(200).send(result);
     } catch (error: unknown) {
       throw new HttpException(

@@ -1,4 +1,4 @@
-export interface DataAsset {
+interface DataAsset {
     AssetID: string;
     Code: string;
     Name: string;
@@ -35,7 +35,7 @@ export interface DataAsset {
     BranchName: string;
 }
 
-export interface ApproveList {
+interface ApproveList {
     approverid: string;
     limitamount: number;
     pendingday: string;
@@ -43,14 +43,14 @@ export interface ApproveList {
     workflowlevel: number;
 }
 
-export interface Comment {
+interface IComment {
     userid: string | null | undefined;
     comment: string | null | undefined;
     create_date: string | null | undefined;
     img_profile: string | null | undefined;
 }
 
-export interface FileItemType {
+interface FileItemType {
     nac_code: string | null | undefined;
     description: string | null | undefined;
     linkpath: string | null | undefined;

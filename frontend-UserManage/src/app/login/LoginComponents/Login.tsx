@@ -33,8 +33,8 @@ export default function Login() {
   }, [error])
 
   const formSchema = z.object({
-    loginname: z.string().min(2, "Username must be 2+ characters"),
-    password: z.string().min(8, "Password must be 8+ characters")
+    loginname: z.string().min(1, "Username must be 2+ characters"),
+    password: z.string().min(1, "Password must be 8+ characters")
   });
 
   type FormLogin = z.infer<typeof formSchema>;

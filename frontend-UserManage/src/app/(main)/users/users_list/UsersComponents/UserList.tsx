@@ -222,7 +222,7 @@ export default function UserListClient() {
           </CardHeader>
 
           <CardContent className="p-0">
-            <div className="border-t border-gray-200 dark:border-gray-700">
+            <div className="border-t border-gray-200 dark:border-gray-700 p-4">
               <UserTable
                 data={filteredUsers}
                 fetchUsers={fetchUsers}

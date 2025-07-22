@@ -42,7 +42,8 @@ export const userColumns = (
       header: ({ column }) => {
         return (
           <Button
-            variant="ghost"
+            // variant="ghost"
+            className="bg-zinc-700 hover:bg-zinc-700 cursor-pointer"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
             รหัสผู้ใช้
@@ -62,7 +63,8 @@ export const userColumns = (
       header: ({ column }) => {
         return (
           <Button
-            variant="ghost"
+            // variant="ghost"
+            className="bg-zinc-700 hover:bg-zinc-700 cursor-pointer"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
             ชื่อ-นามสกุล
@@ -85,7 +87,8 @@ export const userColumns = (
       header: ({ column }) => {
         return (
           <Button
-            variant="ghost"
+            // variant="ghost"
+            className="bg-zinc-700 hover:bg-zinc-700 cursor-pointer"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
             อีเมล

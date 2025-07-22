@@ -162,6 +162,7 @@ export class AppController {
   ) {
     try {
       const result = await this.service.FA_ControlNew_Create_NAC(body);
+      console.log(result);
       res.status(200).send(result);
     } catch (error: unknown) {
       throw new HttpException(
@@ -356,7 +357,6 @@ export class AppController {
   ) {
     try {
       const result = await this.service.qureyNAC_comment(body);
-      console.log(result);
       res.status(200).send(result);
     } catch (error: unknown) {
       throw new HttpException(
@@ -491,7 +491,7 @@ export class AppController {
 
   @Post('/FA_Control_Select_MyNAC')
   async FA_Control_Select_MyNAC(
-    @Body() req: { userCode: string },
+    @Body() req: { usercode: string },
     @Res() res: Response,
   ) {
     try {
