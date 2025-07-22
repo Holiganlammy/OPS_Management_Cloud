@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import { CheckSession } from './CheckSession';
 import { CustomProvider } from "./SessionProvider";
 import StoreProvider from "./StoreProvider";
+import PageLoading from '@/components/PageLoading';
 
 export function AppWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -13,7 +14,7 @@ export function AppWrapper({ children }: { children: React.ReactNode }) {
     <CustomProvider>
       <StoreProvider>
         <div id="hero" className="w-full">
-          <React.Suspense fallback={<>Loading...</>}>
+          <React.Suspense fallback={<PageLoading />}>
             <CheckSession mustCheck={isNotSpecialRoute}>
               {children}
             </CheckSession>

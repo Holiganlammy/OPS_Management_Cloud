@@ -66,7 +66,7 @@ export default function Login() {
         router.push(redirectPath);
       }
     } catch (error) {
-      setError("Network error. Please try again.");
+      setError("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง");
       setTimeout(() => setShowError(true), 100);
       setIsLoading(false);
     }

@@ -1,6 +1,6 @@
 "use client"
 import Link from "next/link"
-import { CircleCheckIcon, CircleHelpIcon, CircleIcon, LockKeyholeOpen, MenuIcon, XIcon } from "lucide-react"
+import { CircleCheckIcon, CircleHelpIcon, CircleIcon, LockKeyholeOpen, MenuIcon, User, XIcon } from "lucide-react"
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from '@/components/ui/button'
 import {
@@ -13,7 +13,7 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { useSession, signOut } from 'next-auth/react';
 import dataConfig from "@/config/config";
 import client from "@/lib/axios/interceptors";
@@ -61,7 +61,7 @@ export default function SiteHeader() {
   return (
     <>
       {/* Header */}
-      <div className="w-full h-[50px] shadow-md z-50 fixed flex items-center bg-primary text-primary-foreground shadow-xs dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <div className="w-full h-[50px] shadow-md z-50 fixed flex items-center bg-primary text-primary-foreground dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         {/* Hamburger Menu Button */}
         <Button
           variant="ghost"
@@ -92,6 +92,9 @@ export default function SiteHeader() {
               </div>
               <Avatar className="size-8 sm:size-9">
                 <AvatarImage src={session?.user.img_profile} alt="User Avatar" />
+                <AvatarFallback className="bg-gray-600 text-white text-sm font-medium">
+                  <User className="w-4 h-4" />
+                </AvatarFallback>
               </Avatar>
               {/* Three dots menu icon - แสดงเฉพาะในมือถือ */}
               <div className="flex sm:hidden items-center justify-center w-6 h-6">
