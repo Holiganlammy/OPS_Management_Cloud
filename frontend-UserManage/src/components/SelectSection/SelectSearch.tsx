@@ -48,6 +48,7 @@ interface CustomSelectProps<T extends FieldValues, K extends FieldPath<T>> {
   options?: Option[]
   loadOptions?: (input: string) => Promise<Option[]>
   errorString?: boolean
+  isMulti?: boolean;
 }
 
 export default function CustomSelect<T extends FieldValues, K extends FieldPath<T>>({
@@ -57,11 +58,12 @@ export default function CustomSelect<T extends FieldValues, K extends FieldPath<
   options = [],
   loadOptions,
   errorString,
+  isMulti,
 }: CustomSelectProps<T, K>) {
   const [open, setOpen] = useState(false)
   const [searchValue, setSearchValue] = useState("")
   const [filteredOptions, setFilteredOptions] = useState<Option[]>([])
-  const [selectedOption, setSelectedOption] = useState<Option | undefined>(undefined)
+  const [selectedOption, setSelectedOption] = useState<Option | Option[] | undefined>(undefined);
   const triggerRef = useRef<HTMLButtonElement>(null)
   const [triggerWidth, setTriggerWidth] = useState<number | undefined>(undefined)
   const [isLoading, setIsLoading] = useState(true)
@@ -106,36 +108,71 @@ export default function CustomSelect<T extends FieldValues, K extends FieldPath<
     }
   }, [open])
 
-  // 🔍 แก้ตรงนี้: auto set selectedOption จาก value
   useEffect(() => {
+    const valueList: string[] = Array.isArray(field.value)
+      ? field.value
+      : typeof field.value === "string"
+        ? (field.value as string).split(", ")
+        : [];
+
     const syncSet = () => {
-      const matched = options.find((opt) => opt.value === field.value)
-      if (matched) setSelectedOption(matched)
-    }
+      const matched = options.filter((opt) => valueList.includes(opt.value));
+      if (matched.length > 0) setSelectedOption(isMulti ? matched : matched[0]);
+    };
 
     const asyncSet = async () => {
       if (loadOptions) {
-        const opts = await loadOptions("")
-        const matched = opts.find((opt) => opt.value === field.value)
-        if (matched) setSelectedOption(matched)
+        const opts = await loadOptions("");
+        const matched = opts.filter((opt) => valueList.includes(opt.value));
+        if (matched.length > 0) setSelectedOption(isMulti ? matched : matched[0]);
       }
-    }
+    };
 
     if (field.value && !selectedOption) {
-      isAsync ? asyncSet() : syncSet()
+      isAsync ? asyncSet() : syncSet();
     }
-  }, [field.value, options, selectedOption, isAsync, loadOptions])
+  }, [field.value, options, selectedOption, isAsync, loadOptions, isMulti]);
 
   const handleSelect = (optionValue: string) => {
-    const newOption =
-      filteredOptions.find((opt) => opt.value === optionValue) ??
-      options.find((opt) => opt.value === optionValue)
+    if (!optionValue) return;
 
-    field.onChange(optionValue === field.value ? "" : optionValue)
-    setSearchValue(optionValue === field.value ? "" : optionValue)
-    setSelectedOption(optionValue === field.value ? undefined : newOption)
-    setOpen(optionValue === field.value)
-  }
+    const selected = options.find((opt) => opt.value === optionValue);
+    if (!selected) return;
+
+    if (isMulti) {
+      let newSelectedOption: Option[] = [];
+
+      if (Array.isArray(selectedOption)) {
+        const exists = selectedOption.some((opt) => opt.value === optionValue);
+
+        // ❌ ถ้ามีอยู่แล้ว → เอาออก
+        if (exists) {
+          newSelectedOption = selectedOption.filter((opt) => opt.value !== optionValue);
+        }
+        // ✅ ถ้ายังไม่มี → เพิ่มเข้าไป
+        else {
+          newSelectedOption = [...selectedOption, selected];
+        }
+      } else {
+        // ยังไม่มีค่าเลย → เพิ่มค่าใหม่
+        newSelectedOption = [selected];
+      }
+
+      setSelectedOption(newSelectedOption);
+
+      // update field.value โดยเอา value ของแต่ละ option มา join
+      const newValue = newSelectedOption.map((opt) => opt.value).join(",");
+      field.onChange(newValue);
+
+      setSearchValue("");
+    } else {
+      const newValue = field.value === optionValue ? "" : optionValue;
+      setSelectedOption(field.value === optionValue ? undefined : selected);
+      field.onChange(newValue);
+      setOpen(field.value === optionValue);
+      setSearchValue("");
+    }
+  };
 
   const handleClear = (e: MouseEvent) => {
     e.preventDefault()
@@ -167,7 +204,13 @@ export default function CustomSelect<T extends FieldValues, K extends FieldPath<
                   )}
                 >
                   <span className={cn("truncate block min-w-0 flex-1", errorString && "text-red-600")}>
-                    {selectedOption ? selectedOption.label : placeholder}
+                    {isMulti
+                      ? Array.isArray(selectedOption)
+                        ? selectedOption.map((o: Option) => o.label).join(", ")
+                        : placeholder
+                      : !Array.isArray(selectedOption) && selectedOption
+                        ? selectedOption.label
+                        : placeholder}
                   </span>
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
@@ -209,14 +252,15 @@ export default function CustomSelect<T extends FieldValues, K extends FieldPath<
                   {filteredOptions.map((option) => (
                     <CommandItem
                       key={option.value}
-                      value={option.label}
-                      onSelect={() => handleSelect(option.value)}
+                      value={option.value}
+                      onSelect={handleSelect}
                       className="cursor-pointer"
                     >
                       <Check
                         className={cn(
                           "mr-2 h-4 w-4 shrink-0",
-                          field.value === option.value
+                          (isMulti && Array.isArray(selectedOption) && selectedOption.some((s) => s.value === option.value)) ||
+                            (!isMulti && field.value === option.value)
                             ? "opacity-100"
                             : "opacity-0"
                         )}

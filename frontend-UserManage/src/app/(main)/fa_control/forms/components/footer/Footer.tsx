@@ -113,7 +113,7 @@ export default function Footer({ nac_code, form, userFetch, nac_type }: Props) {
           ].map(({ label, user, date }, index) => (
             <div
               key={index}
-              className="border rounded overflow-hidden flex flex-col min-h-[80px]"
+              className="border rounded overflow-hidden flex flex-col min-h-[40px]"
             >
               <div className="bg-zinc-700 text-white text-left p-2 font-semibold h-full flex items-center">
                 {label}: {user}{" "}

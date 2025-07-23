@@ -6,7 +6,6 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Command,
-  CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
@@ -19,20 +18,20 @@ import {
 import { FormControl, FormItem, FormLabel } from "@/components/ui/form";
 import { ControllerRenderProps } from "react-hook-form";
 
-type SortField = ControllerRenderProps<SelectTypeNAC>;
+type SortField = ControllerRenderProps<SelectTypePeriod>;
 
 interface Props {
   field: SortField;
-  nacFetch: List_NAC[];
+  periodFetch: Period[];
   fieldName: string;
-  fieldID: keyof List_NAC;
+  fieldID: keyof Period;
 }
 
-export default function FilterForms({ field, nacFetch, fieldName, fieldID }: Props) {
+export default function FilterForms({ field, periodFetch, fieldName, fieldID }: Props) {
   const [open, setOpen] = useState(false);
 
 
-  const selectedItem = nacFetch.find(
+  const selectedItem = periodFetch.find(
     (res) => res[fieldID]?.toString() === field.value
   );
 
@@ -48,7 +47,7 @@ export default function FilterForms({ field, nacFetch, fieldName, fieldID }: Pro
   };
 
   const uniqueValues = new Set<string>();
-  const uniqueItems = nacFetch.filter((res) => {
+  const uniqueItems = periodFetch.filter((res) => {
     const val = res[fieldID]?.toString() ?? "";
     if (uniqueValues.has(val)) {
       return false; // ถ้าค่าซ้ำ ให้ตัดออก

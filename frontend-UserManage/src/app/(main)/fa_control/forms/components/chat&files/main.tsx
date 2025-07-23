@@ -133,15 +133,15 @@ export default function ChatAndFiles({ nac_code, nac_status }: Props) {
       {isLoading ? (
         <p className="text-gray-500 text-center">กำลังโหลดข้อมูล...</p>
       ) : (
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+        <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
           {/* ฝั่งซ้าย: Chat/Comment */}
-          <div className="bg-white dark:bg-zinc-800 p-4 rounded-lg shadow">
+          <div className="border bg-white dark:bg-zinc-800 p-4 rounded-lg shadow">
             <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-2 border-b border-gray-300 dark:border-zinc-700 pb-2">ไฟล์แนบ</h2>
             <FileItem fileItem={fileItem} onUpload={handleUploadFile} />
           </div>
 
           {/* ฝั่งขวา: Files */}
-          <div className="bg-white dark:bg-zinc-800 p-4 rounded-lg shadow">
+          <div className="border bg-white dark:bg-zinc-800 p-4 rounded-lg shadow">
             {/* หัวข้อมีกรอบด้านล่างแยกกับ body */}
             <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-2 border-b border-gray-300 dark:border-zinc-700 pb-2">
               แชต/ความคิดเห็น
