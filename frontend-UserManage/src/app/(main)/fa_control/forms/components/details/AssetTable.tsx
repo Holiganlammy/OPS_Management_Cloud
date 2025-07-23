@@ -448,7 +448,7 @@ export default function AssetTable({ nac_code, form, userFetch, assets, fields, 
                 </>
               }
               <td className="p-2">
-                <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex flex-col md:flex-row gap-4 justify-center">
                   {/* ---------- Image 1 ---------- */}
                   <FormField
                     control={control}

@@ -5,19 +5,19 @@ import { DataTable } from "@/components/DataTable/DataTable"
 import { nacColumns } from "./Column";
 
 interface Props {
-  data: List_NAC[];
-  fetchNac: () => void
+  data: Period[];
+  fetchPeriod: () => void
 }
 
-export default function NacTable({ data, fetchNac }: Props) {
+export default function NacTable({ data, fetchPeriod }: Props) {
   const columns = useMemo(
-    () => nacColumns(fetchNac, data),
-    [fetchNac, data]
+    () => nacColumns(fetchPeriod, data),
+    [fetchPeriod, data]
   )
 
   useEffect(() => {
-    fetchNac()
-  }, [fetchNac])
+    fetchPeriod()
+  }, [fetchPeriod])
 
   return (
     <div>
