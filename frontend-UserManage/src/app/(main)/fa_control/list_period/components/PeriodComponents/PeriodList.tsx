@@ -19,6 +19,7 @@ import UserTable from "../../PeriodTable/PeriodTable";
 import FilterForm from "./FilterForm";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
+import { exportToExcel } from "../../service/export";
 
 
 export default function PeriodListClient() {
@@ -105,12 +106,17 @@ export default function PeriodListClient() {
               </div>
 
               <div className="flex flex-wrap gap-2 justify-end">
-                <Button variant="outline" size="sm" className="text-xs sm:text-sm">
+                <Button 
+                variant="outline" 
+                size="sm" 
+                className="text-xs sm:text-sm cursor-pointer"
+                onClick={() => exportToExcel(filteredPeriod)}
+                >
                   <Download className="h-4 w-4 mr-2" /> Export
                 </Button>
 
                 <Button
-                  className="text-xs sm:text-sm"
+                  className="text-xs sm:text-sm cursor-pointer"
                   variant="outline"
                   size="sm"
                   onClick={fetchPeriod}

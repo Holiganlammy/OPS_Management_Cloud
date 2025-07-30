@@ -127,10 +127,7 @@ export default function AssetCreatePage() {
         });
         return;
       }
-
-      console.log(data);
-
-
+      
       const responses = await client.post(dataConfig().http + "/createPeriod", data, {
         headers: dataConfig().header,
       });
@@ -362,16 +359,17 @@ export default function AssetCreatePage() {
                           field={{
                             ...field,
                             value: Array.isArray(field.value)
-                              ? field.value
+                              ? field.value.map((v: string) => v.trim())
                               : typeof field.value === "string"
-                                ? field.value.split(", ").filter(Boolean)
+                                ? field.value
+                                  .split(",")
+                                  .map((v) => v.trim())
+                                  .filter(Boolean)
                                 : [],
-                            onChange: (values: string) => {
-                              if (values) {
-                                field.onChange(values)
-                              } else {
-                                field.onChange("")
-                              }
+                            onChange: (values: string[] | string) => {
+                              const arr = Array.isArray(values) ? values : values.split(",").filter(Boolean);
+                              const formatted = arr.map((v) => v.trim()).join(", ");
+                              field.onChange(formatted);
                             },
                           }}
                           placeholder="เลือกสาขา"
@@ -399,12 +397,17 @@ export default function AssetCreatePage() {
                           field={{
                             ...field,
                             value: Array.isArray(field.value)
-                              ? field.value
+                              ? field.value.map((v: string) => v.trim())
                               : typeof field.value === "string"
-                                ? field.value.split(", ").filter(Boolean)
+                                ? field.value
+                                  .split(",")
+                                  .map((v) => v.trim())
+                                  .filter(Boolean)
                                 : [],
-                            onChange: (values: string) => {
-                              field.onChange(values)
+                            onChange: (values: string[] | string) => {
+                              const arr = Array.isArray(values) ? values : values.split(",").filter(Boolean);
+                              const formatted = arr.map((v) => v.trim()).join(", ");
+                              field.onChange(formatted);
                             },
                           }}
                           placeholder="เลือก"

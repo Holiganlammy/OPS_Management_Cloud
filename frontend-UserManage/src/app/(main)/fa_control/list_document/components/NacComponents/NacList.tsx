@@ -25,6 +25,7 @@ import {
   RadioGroup,
   RadioGroupItem,
 } from "@/components/ui/radio-group"
+import { exportToExcel } from "../../service/export";
 
 
 export default function NacListClient() {
@@ -32,7 +33,7 @@ export default function NacListClient() {
   const searchParams = useSearchParams();
   const nac_type = searchParams.get("type") || "user";
 
-  const [isChecking, setIsChecking] = useState(true);
+  const [isChecking, setIsChecking] = useState<boolean>(true);
   const [typeGroup, setTypeGroup] = useState<Assets_TypeGroup[]>([]);
   const [nacStatus, setNacStatus] = useState<{ nac_status_id: number; status_name: string; }[]>([]);
   const [typeString, setTypeString] = useState<string | null>('PTEC');
@@ -62,27 +63,25 @@ export default function NacListClient() {
   });
 
   const fetchNac = useCallback(async () => {
-    if (session) {
+    if (session && nac_type) {
       try {
         const dataOther = await getAutoData()
         setTypeGroup(dataOther?.find((d) => d.key === "typeGroup")?.data || [])
         setNacStatus(dataOther?.find((d) => d.key === "nacStatus")?.data || [])
         const dataNAC = await getAutoDataNAC(session.user.UserCode);
-        const list =
-          nac_type === "user"
-            ? dataNAC?.find((d) => d.key === "user")?.data || []
-            : dataNAC?.find((d) => d.key === "admin")?.data || [];
+        const list = dataNAC?.find((d) => d.key === nac_type)?.data || []
         setNacFetch(list);
+        setIsChecking(false);
       } catch (error) {
         console.error("Error fetching NAC:", error);
       }
     }
-    setIsChecking(false);
   }, [session, nac_type]);
 
   useEffect(() => {
+    setIsChecking(true);
     fetchNac();
-  }, [fetchNac]);
+  }, [fetchNac, nac_type]);
 
   const filteredNac = useMemo(() => {
     return nacFetch.filter((nac) => {
@@ -121,12 +120,17 @@ export default function NacListClient() {
               </div>
 
               <div className="flex flex-wrap gap-2 justify-end">
-                <Button variant="outline" size="sm" className="text-xs sm:text-sm">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs sm:text-sm cursor-pointer"
+                  onClick={() => exportToExcel(filteredNac)}
+                >
                   <Download className="h-4 w-4 mr-2" /> Export
                 </Button>
 
                 <Button
-                  className="text-xs sm:text-sm"
+                  className="text-xs sm:text-sm cursor-pointer"
                   variant="outline"
                   size="sm"
                   onClick={fetchNac}
@@ -164,7 +168,7 @@ export default function NacListClient() {
                   ))}
                 </RadioGroup>
               </div>
-              <UserTable data={filteredNac} fetchNac={fetchNac} nacStatus={nacStatus}/>
+              <UserTable data={filteredNac} fetchNac={fetchNac} nacStatus={nacStatus} />
             </div>
           </CardContent>
         </Card>
