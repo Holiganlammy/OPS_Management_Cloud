@@ -1,41 +1,102 @@
 "use client"
 
-import { ColumnDef } from "@tanstack/react-table"
-import { Badge } from "@/components/ui/badge"
-import { Save, Trash2 } from "lucide-react"
-import dayjs from "dayjs"
-import { useSession } from "next-auth/react"
-import dataConfig from "@/config/config"
-import client from "@/lib/axios/interceptors"
-import Swal from "sweetalert2"
-import { useState } from "react"
+import { ColumnDef } from "@tanstack/react-table";
+import { Badge } from "@/components/ui/badge";
+import { Edit, Save, Trash2 } from "lucide-react";
+import dayjs from "dayjs";
+import { useSession } from "next-auth/react";
+import dataConfig from "@/config/config";
+import client from "@/lib/axios/interceptors";
+import Swal from "sweetalert2";
+import { useState } from "react";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
 
 export const nacColumns = (
-  fetchPeriod: () => void, data: Period[]
-): ColumnDef<Period>[] => [
+  fetchPeriod: () => void,
+  data: Period[],
+  editingRowId: number | null,
+  setEditingRowId: React.Dispatch<React.SetStateAction<number | null>>,
+  draftRows: Record<number, Partial<Period>>,
+  setDraftRows: React.Dispatch<React.SetStateAction<Record<number, Partial<Period>>>>
+): ColumnDef<Period>[] => {
+
+  const handleFieldChange = (
+    rowId: number,
+    field: keyof Period,
+    value: any
+  ) => {
+    setDraftRows(prev => ({
+      ...prev,
+      [rowId]: {
+        ...prev[rowId],
+        [field]: value
+      }
+    }));
+  };
+
+  return [
     {
       accessorKey: "PeriodID",
       header: () => <div className="text-center whitespace-nowrap px-1">ID</div>,
+      cell: ({ row }) => <div className="flex justify-center items-center">{row.original.PeriodID}</div>,
+    },
+    {
+      accessorKey: "Description",
+      header: "หัวข้อรายการ",
       cell: ({ row }) => {
-        return (
-          <div className="flex justify-center items-center">
-            {row.original.PeriodID}
+        const rowId = row.original.PeriodID;
+        const isEditing = editingRowId === rowId;
+        const value = editingRowId !== null ? draftRows[editingRowId]?.Description ?? row.original.Description : row.original.Description;
+
+        return isEditing ? (
+          <input
+            type="text"
+            value={value ?? ""}
+            onChange={(e) => {
+              if (rowId !== null) {
+                handleFieldChange(rowId, "Description", e.target.value)
+              }
+            }}
+            autoFocus
+            className="border rounded px-2 py-1 w-full"
+          />
+        ) : (
+          <div>
+            {value}
           </div>
         );
       },
     },
     {
-      accessorKey: "Description",
-      header: "หัวข้อรายการ",
-      cell: ({ row }) => row.original.Description,
-    },
-    {
       accessorKey: "BeginDate",
       header: () => <div className="text-center whitespace-nowrap px-1">วันที่เริ่มต้น</div>,
       cell: ({ row }) => {
-        return (
+        const rowId = row.original.PeriodID;
+        const isEditing = editingRowId === rowId;
+        const value = editingRowId !== null ? draftRows[editingRowId]?.BeginDate ?? row.original.BeginDate : row.original.BeginDate;
+
+        return isEditing ? (
+          <input
+            type="datetime-local"
+            value={dayjs(value).format("YYYY-MM-DDTHH:mm")}
+            onChange={(e) => {
+              if (rowId !== null) {
+                handleFieldChange(rowId, "BeginDate", new Date(e.target.value))
+              }
+            }}
+            className="border rounded px-2 py-1 w-full"
+          />
+        ) : (
           <div className="flex justify-center items-center">
-            {dayjs(row.original.BeginDate).format('DD/MM/YYYY HH:mm')}
+            {dayjs(value).format("DD/MM/YYYY HH:mm")}
           </div>
         );
       },
@@ -44,9 +105,24 @@ export const nacColumns = (
       accessorKey: "EndDate",
       header: () => <div className="text-center whitespace-nowrap px-1">วันที่สิ้นสุด</div>,
       cell: ({ row }) => {
-        return (
+        const rowId = row.original.PeriodID;
+        const isEditing = editingRowId === rowId;
+        const value = editingRowId !== null ? draftRows[editingRowId]?.EndDate ?? row.original.EndDate : row.original.EndDate;
+
+        return isEditing ? (
+          <input
+            type="datetime-local"
+            value={dayjs(value).format("YYYY-MM-DDTHH:mm")}
+            onChange={(e) => {
+              if (rowId !== null) {
+                handleFieldChange(rowId, "EndDate", new Date(e.target.value))
+              }
+            }}
+            className="border rounded px-2 py-1 w-full"
+          />
+        ) : (
           <div className="flex justify-center items-center">
-            {dayjs(row.original.EndDate).format('DD/MM/YYYY HH:mm')}
+            {dayjs(value).format("DD/MM/YYYY HH:mm")}
           </div>
         );
       },
@@ -54,53 +130,40 @@ export const nacColumns = (
     {
       accessorKey: "BranchID",
       header: () => <div className="text-center whitespace-nowrap px-1">หน่วยงาน</div>,
-      cell: ({ row }) => {
-        return (
-          <div className="flex justify-center items-center">
-            {Number(row.original.BranchID) === 901 ? "HO" : "CO"}
-          </div>
-        );
-      },
+      cell: ({ row }) => (
+        <div className="flex justify-center items-center">
+          {Number(row.original.BranchID) === 901 ? "HO" : "CO"}
+        </div>
+      ),
     },
     {
       accessorKey: "personID",
       header: () => <div className="text-center whitespace-nowrap px-1">Location NAC</div>,
       cell: ({ row }) => {
-        if (Number(row.original.BranchID) === 901) {
-          if (row.original.personID && row.original.DepCode) {
-            return (
-              <div className="flex justify-center items-center">
-                {row.original.personID}
-              </div>
-            );
-          } else if (row.original.DepCode && !row.original.personID) {
-            return (
-              <div className="flex justify-center items-center">
-                {row.original.DepCode}
-              </div>
-            );
-          }
-        } else if (Number(row.original.BranchID) !== 901 && !row.original.DepCode && !row.original.personID) {
+        const { BranchID, personID, DepCode, Code } = row.original;
+        if (Number(BranchID) === 901) {
           return (
             <div className="flex justify-center items-center">
-              {row.original.Code}
+              {DepCode || "-"}
             </div>
-          );;
+          );
         }
+        return (
+          <div className="flex justify-center items-center">
+            {Code || "-"}
+          </div>
+        );
       },
     },
     {
       accessorKey: "status",
       header: () => <div className="text-center whitespace-nowrap px-1">Status</div>,
       cell: ({ row }) => {
-        const nac = row.original;
-        const isClosed = dayjs(nac.EndDate).isBefore(dayjs());
-        const statusText = isClosed ? 'ปิดการใช้งานแล้ว' : 'เปิดการใช้งาน';
-        const statusColor = isClosed ? 'red' : 'green';
+        const isClosed = dayjs(row.original.EndDate).isBefore(dayjs());
         return (
           <div className="flex justify-center items-center">
-            <Badge style={{ backgroundColor: statusColor }}>
-              {statusText}
+            <Badge style={{ backgroundColor: isClosed ? "red" : "green" }}>
+              {isClosed ? "ปิดการใช้งาน" : "เปิดการใช้งาน"}
             </Badge>
           </div>
         );
@@ -110,106 +173,144 @@ export const nacColumns = (
       id: "Actions",
       header: () => <div className="text-center whitespace-nowrap px-1">Action</div>,
       cell: ({ row }) => {
-        const data = row.original;
         const { data: session } = useSession();
-        const [editing, setEditing] = useState(false);
+        const [open, setOpen] = useState(false);
+        const [loading, setLoading] = useState(false);
+        const [localDraft, setLocalDraft] = useState<Partial<Period>>(row.original);
 
-        const handleView = async () => {
-          setEditing(true);
-          try {
-            const rowEdit = {
-              PeriodID: data.PeriodID,
-              Description: data.Description,
-              BeginDate: data.BeginDate,
-              EndDate: data.EndDate,
-              BranchID: data.BranchID,
-              DepCode: data.DepCode,
-              personID: data.personID,
-              Code: data.Code,
-              usercode: session?.user.UserCode,
-            };
-
-            const response = await client.post(
-              "/FA_Period_update_period",
-              rowEdit,
-              { headers: dataConfig().header }
-            );
-
-            if (response.status === 200) {
-              Swal.fire({
-                icon: "success",
-                title: "สำเร็จ",
-                text: "แก้ไขข้อมูลเรียบร้อยแล้ว",
-              });
-              fetchPeriod(); // รีเฟรชตาราง
-              setEditing(false);
-            }
-          } catch (error: any) {
-            Swal.fire({
-              icon: "error",
-              title: "เกิดข้อผิดพลาด",
-              text: JSON.stringify(error.response),
-            });
-          }
+        const handleFieldChange = (field: keyof Period, value: any) => {
+          setLocalDraft(prev => ({ ...prev, [field]: value }));
         };
 
         const handleDelete = async () => {
-          const result = await Swal.fire({
+          const confirm = await Swal.fire({
             title: "แจ้งเตือน",
-            text: `คุณกำลังยกเลิก ${data.Description}`,
+            text: `คุณกำลังลบ ${row.original.Description}`,
             icon: "warning",
             showCancelButton: true,
-            confirmButtonColor: "#3085d6",
-            cancelButtonColor: "#d33",
-            confirmButtonText: "ทำต่อ",
-            cancelButtonText: "ยกเลิก",
+            confirmButtonText: "ใช่",
+            cancelButtonText: "ไม่ใช่",
           });
 
-          if (result.isConfirmed) {
+          if (confirm.isConfirmed && row.original.PeriodID) {
             try {
-              const response = await client.post(
-                "/deletePeriod",
-                { PeriodID: data.PeriodID },
-                { headers: dataConfig().header }
-              );
-              if (response.status === 200) {
-                Swal.fire({
-                  icon: "success",
-                  title: "สำเร็จ",
-                  text: "ลบข้อมูลเรียบร้อยแล้ว",
-                });
+              const res = await client.post("/deletePeriod", { PeriodID: row.original.PeriodID }, {
+                headers: dataConfig().header,
+              });
+              if (res.status === 200) {
+                Swal.fire({ icon: "success", title: "ลบแล้ว", showConfirmButton: false, timer: 1500 });
                 fetchPeriod();
               }
             } catch (error: any) {
-              Swal.fire({
-                icon: "error",
-                title: "เกิดข้อผิดพลาด",
-                text: JSON.stringify(error.response.data.message),
-              });
+              Swal.fire({ icon: "error", title: "ผิดพลาด", text: JSON.stringify(error.response.data.message) });
             }
+          }
+        };
+
+        const handleSave = async () => {
+          setLoading(true);
+          try {
+            const isChanged = (original: Period, draft: Partial<Period>) => {
+              for (const key in draft) {
+                const typedKey = key as keyof Period;
+                if (draft[typedKey] !== undefined && draft[typedKey] !== original[typedKey]) {
+                  return true;
+                }
+              }
+              return false;
+            };
+
+            const original = row.original;
+            const draft = localDraft;
+
+            if (!isChanged(original, draft)) {
+              setOpen(false);
+              setLoading(false);
+              return;
+            }
+
+            const payload = {
+              ...original,
+              ...draft,
+              usercode: session?.user.UserCode,
+            };
+
+            const response = await client.post("/FA_Period_update_period", payload, {
+              headers: dataConfig().header,
+            });
+
+            if (response.status === 200) {
+              Swal.fire({ icon: "success", title: "สำเร็จ", text: "แก้ไขข้อมูลเรียบร้อยแล้ว" });
+              fetchPeriod();
+              setOpen(false);
+            }
+          } catch (error: any) {
+            Swal.fire({ icon: "error", title: "ผิดพลาด", text: JSON.stringify(error.response) });
+          } finally {
+            setLoading(false);
           }
         };
 
         return (
-          <div className="flex items-center justify-center gap-4">
-            <button
-              className="bg-orange cursor-pointer"
-              onClick={handleView}
-              title="Edit"
-              disabled={editing}
-            >
-              <Save className="h-4 w-4 text-blue-700" />
-            </button>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <div className="flex justify-center gap-4">
+              <DialogTrigger asChild>
+                <button className="cursor-pointer">
+                  <Edit className="w-4 h-4 text-zinc-700" />
+                </button>
+              </DialogTrigger>
+              <button onClick={handleDelete} disabled={loading} className="cursor-pointer">
+                <Trash2 className="w-4 h-4 text-red-700" />
+              </button>
+            </div>
 
-            <button
-              className="cursor-pointer"
-              onClick={handleDelete}
-              title="Cancel"
-            >
-              <Trash2 className="h-4 w-4 text-red-700" />
-            </button>
-          </div>
+            <DialogContent className="sm:max-w-[500px]">
+              <DialogHeader>
+                <DialogTitle>แก้ไขรายการ</DialogTitle>
+              </DialogHeader>
+
+              <div className="space-y-4 mt-2">
+                <div>
+                  <label className="font-medium">หัวข้อรายการ</label>
+                  <input
+                    className="border rounded px-2 py-1 w-full"
+                    value={localDraft.Description ?? ""}
+                    onChange={(e) => handleFieldChange("Description", e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label className="font-medium">วันที่เริ่มต้น</label>
+                  <input
+                    type="datetime-local"
+                    className="border rounded px-2 py-1 w-full"
+                    value={dayjs(localDraft.BeginDate).format("YYYY-MM-DDTHH:mm")}
+                    onChange={(e) => handleFieldChange("BeginDate", new Date(e.target.value))}
+                  />
+                </div>
+                <div>
+                  <label className="font-medium">วันที่สิ้นสุด</label>
+                  <input
+                    type="datetime-local"
+                    className="border rounded px-2 py-1 w-full"
+                    value={dayjs(localDraft.EndDate).format("YYYY-MM-DDTHH:mm")}
+                    onChange={(e) => handleFieldChange("EndDate", new Date(e.target.value))}
+                  />
+                </div>
+              </div>
+
+              <DialogFooter className="mt-4">
+                <Button disabled={loading} onClick={handleSave}>
+                  บันทึก
+                </Button>
+                <Button variant="outline" onClick={() => setOpen(false)}>
+                  ยกเลิก
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         );
-      }
+      },
     }
-  ]
+  ];
+};

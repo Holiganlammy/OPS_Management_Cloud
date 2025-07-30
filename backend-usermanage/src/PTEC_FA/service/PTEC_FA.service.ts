@@ -977,7 +977,6 @@ export class AppService {
     keyID?: string | null;
   }) {
     try {
-      console.log(req);
       return this.dbManager.executeStoredProcedure(
         `${databaseConfig.database}.dbo.FA_Create_Assets_Counted_After_Period`,
         [

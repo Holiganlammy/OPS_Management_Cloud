@@ -51,6 +51,7 @@ export class AppController {
     @Res() res: Response,
   ) {
     try {
+      console.log('Request body:', body);
       const result =
         await this.service.FA_Control_Report_All_Counted_by_Description(body);
       res.status(200).send(result);
@@ -162,7 +163,6 @@ export class AppController {
   ) {
     try {
       const result = await this.service.FA_ControlNew_Create_NAC(body);
-      console.log(result);
       res.status(200).send(result);
     } catch (error: unknown) {
       throw new HttpException(
