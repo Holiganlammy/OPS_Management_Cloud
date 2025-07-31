@@ -1020,7 +1020,7 @@ export class AppService {
     }
   }
 
-  async updatePeriod(req: {
+  async FA_Period_update_period(req: {
     PeriodID: number;
     BeginDate: Date;
     EndDate: Date;
@@ -1197,5 +1197,18 @@ export class AppService {
       `${databaseConfig.database}.dbo.NonPO_Attatch_Save`,
       params,
     );
+  }
+
+  //Period
+  async FA_Control_Fetch_Branch_Period(req: { usercode: string }) {
+    try {
+      return this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.FA_Control_Fetch_Branch_Period`,
+        [{ name: 'usercode', type: sql.NVarChar(), value: req.usercode }],
+      );
+    } catch (error) {
+      console.error('Error in FA_Control_Fetch_Branch_Period:', error);
+      throw error;
+    }
   }
 }

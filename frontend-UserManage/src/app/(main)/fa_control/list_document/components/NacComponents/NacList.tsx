@@ -14,26 +14,29 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
 import PageLoading from "@/components/PageLoading";
-import { getAutoDataNAC } from "../../service/userService";
-import UserTable from "../../nac_list/NacTable/NacTable";
+import { getAutoDataNAC, getAutoData } from "../../service/documentService";
+import UserTable from "../../NacTable/NacTable";
 import FilterForm from "./FilterForm";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
+import { Label } from "@/components/ui/label"
+import {
+  RadioGroup,
+  RadioGroupItem,
+} from "@/components/ui/radio-group"
+import { exportToExcel } from "../../service/export";
+
 
 export default function NacListClient() {
   const { data: session } = useSession();
   const searchParams = useSearchParams();
   const nac_type = searchParams.get("type") || "user";
 
-  const [isChecking, setIsChecking] = useState(true);
+  const [isChecking, setIsChecking] = useState<boolean>(true);
+  const [typeGroup, setTypeGroup] = useState<Assets_TypeGroup[]>([]);
+  const [nacStatus, setNacStatus] = useState<{ nac_status_id: number; status_name: string; }[]>([]);
+  const [typeString, setTypeString] = useState<string | null>('PTEC');
   const [nacFetch, setNacFetch] = useState<List_NAC[]>([]);
   const [filters, setFilters] = useState(() => {
     if (typeof window !== "undefined") {
@@ -60,27 +63,29 @@ export default function NacListClient() {
   });
 
   const fetchNac = useCallback(async () => {
-    if (session) {
+    if (session && nac_type) {
       try {
+        const dataOther = await getAutoData()
+        setTypeGroup(dataOther?.find((d) => d.key === "typeGroup")?.data || [])
+        setNacStatus(dataOther?.find((d) => d.key === "nacStatus")?.data || [])
         const dataNAC = await getAutoDataNAC(session.user.UserCode);
-        const list =
-          nac_type === "user"
-            ? dataNAC?.find((d) => d.key === "user")?.data || []
-            : dataNAC?.find((d) => d.key === "admin")?.data || [];
+        const list = dataNAC?.find((d) => d.key === nac_type)?.data || []
         setNacFetch(list);
+        setIsChecking(false);
       } catch (error) {
         console.error("Error fetching NAC:", error);
       }
     }
-    setIsChecking(false);
   }, [session, nac_type]);
 
   useEffect(() => {
+    setIsChecking(true);
     fetchNac();
-  }, [fetchNac]);
+  }, [fetchNac, nac_type]);
 
   const filteredNac = useMemo(() => {
     return nacFetch.filter((nac) => {
+      if (typeString && nac.TypeCode !== typeString) return false;
       if (filters.nac_code && nac.nac_code?.toString() !== filters.nac_code) return false;
       if (filters.name && nac.name?.toString() !== filters.name) return false;
       if (filters.source_userid && nac.source_userid?.toString() !== filters.source_userid) return false;
@@ -88,15 +93,7 @@ export default function NacListClient() {
       if (filters.status_name && nac.status_name?.toString() !== filters.status_name) return false;
       return true;
     });
-  }, [nacFetch, filters]);
-
-  const handleFilterSelect = useCallback((filterType: string) => {
-    setFilters((prev: FilterTypeNac) => {
-      const newFilters = { ...prev, filter: filterType };
-      localStorage.setItem("nac_filters", JSON.stringify(newFilters));
-      return newFilters;
-    });
-  }, []);
+  }, [nacFetch, filters, typeString]);
 
   const handleFiltersChange = useCallback((newFilters: typeof filters) => {
     setFilters(newFilters);
@@ -114,7 +111,7 @@ export default function NacListClient() {
           <CardHeader>
             <div className="flex flex-col gap-4">
               <div>
-                <CardTitle className="text-xl font-bold text-gray-900 dark:text-white">
+                <CardTitle className="text-xl font-bold text-primary dark:text-white">
                   FA Control Document
                 </CardTitle>
                 <CardDescription>
@@ -123,36 +120,17 @@ export default function NacListClient() {
               </div>
 
               <div className="flex flex-wrap gap-2 justify-end">
-                <DropdownMenu>
-                  <DropdownMenuTrigger className="text-xs sm:text-sm" asChild>
-                    <Button variant="outline" size="sm">
-                      <Filter className="h-4 w-4 mr-2" />
-                      Filter
-                      {filters.filter && (
-                        <Badge variant="secondary" className="ml-2 h-4 px-1 text-xs">
-                          {filters.filter === "active"
-                            ? "Active"
-                            : filters.filter === "inactive"
-                              ? "Inactive"
-                              : ""}
-                        </Badge>
-                      )}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleFilterSelect("")}>All Users</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleFilterSelect("active")}>Active Users</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleFilterSelect("inactive")}>Inactive Users</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleFilterSelect("new")}>New Users</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                <Button variant="outline" size="sm" className="text-xs sm:text-sm">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs sm:text-sm cursor-pointer"
+                  onClick={() => exportToExcel(filteredNac)}
+                >
                   <Download className="h-4 w-4 mr-2" /> Export
                 </Button>
 
                 <Button
-                  className="text-xs sm:text-sm"
+                  className="text-xs sm:text-sm cursor-pointer"
                   variant="outline"
                   size="sm"
                   onClick={fetchNac}
@@ -168,12 +146,29 @@ export default function NacListClient() {
                   onFiltersChange={handleFiltersChange}
                 />
               </div>
+
             </div>
           </CardHeader>
 
           <CardContent className="p-0">
             <div className="border-t border-gray-200 dark:border-gray-700 p-4">
-              <UserTable data={filteredNac} fetchNac={fetchNac} />
+              <div className="flex flex-wrap gap-2 justify-start">
+                <RadioGroup
+                  value={typeString ?? ""}
+                  onValueChange={(value) => setTypeString(value)}
+                  className="flex flex-wrap gap-3"
+                >
+                  {typeGroup.map((type) => (
+                    <div key={type.typeGroupID} className="flex items-center gap-2">
+                      <RadioGroupItem value={type.typeCode} id={`radio-${type.typeCode}`} />
+                      <Label htmlFor={`radio-${type.typeCode}`} className="px-2">
+                        {type.typeCode} : {type.typeName}
+                      </Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+              </div>
+              <UserTable data={filteredNac} fetchNac={fetchNac} nacStatus={nacStatus} />
             </div>
           </CardContent>
         </Card>

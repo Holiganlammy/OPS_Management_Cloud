@@ -5,26 +5,26 @@ import { DataTable } from "@/components/DataTable/DataTable"
 import { nacColumns } from "./Column";
 
 interface Props {
-  data: List_NAC[];
-  fetchNac: () => void
+  data: CountAssetRow[];
+  fetchAssetsCounted: () => void
 }
 
-export default function NacTable({ data, fetchNac }: Props) {
+export default function AssetsCountedTable({ data, fetchAssetsCounted }: Props) {
   const columns = useMemo(
-    () => nacColumns(fetchNac, data),
-    [fetchNac, data]
+    () => nacColumns(fetchAssetsCounted, data),
+    [fetchAssetsCounted, data]
   )
 
   useEffect(() => {
-    fetchNac()
-  }, [fetchNac])
+    fetchAssetsCounted()
+  }, [fetchAssetsCounted])
 
   return (
     <div>
       <DataTable
         columns={columns}
         data={data}
-        searchKeys={["nac_code", "name", "source_userid", "des_userid", "status_name"]}
+        searchKeys={["Code", "Name", "BranchID", "OwnerID", "Position", "typeCode",]}
         searchPlaceholder="ค้นหา..."
       />
     </div>

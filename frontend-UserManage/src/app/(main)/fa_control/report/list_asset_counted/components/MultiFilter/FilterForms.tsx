@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useEffect, MouseEvent } from "react";
+import { useState, MouseEvent } from "react";
 import { Check, ChevronsUpDown, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Command,
-  CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
@@ -16,23 +15,23 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { FormControl, FormItem, FormLabel } from "@/components/ui/form";
+import { FormControl, FormItem } from "@/components/ui/form";
 import { ControllerRenderProps } from "react-hook-form";
 
-type SortField = ControllerRenderProps<SelectTypeNAC>;
+type SortField = ControllerRenderProps<SelectTypeAssetRow>;
 
 interface Props {
   field: SortField;
-  nacFetch: List_NAC[];
+  filteredAssets: CountAssetRow[];
   fieldName: string;
-  fieldID: keyof List_NAC;
+  fieldID: keyof CountAssetRow;
 }
 
-export default function FilterForms({ field, nacFetch, fieldName, fieldID }: Props) {
+export default function FilterForms({ field, filteredAssets, fieldName, fieldID }: Props) {
   const [open, setOpen] = useState(false);
 
 
-  const selectedItem = nacFetch.find(
+  const selectedItem = filteredAssets.find(
     (res) => res[fieldID]?.toString() === field.value
   );
 
@@ -48,7 +47,7 @@ export default function FilterForms({ field, nacFetch, fieldName, fieldID }: Pro
   };
 
   const uniqueValues = new Set<string>();
-  const uniqueItems = nacFetch.filter((res) => {
+  const uniqueItems = filteredAssets.filter((res) => {
     const val = res[fieldID]?.toString() ?? "";
     if (uniqueValues.has(val)) {
       return false; // ถ้าค่าซ้ำ ให้ตัดออก

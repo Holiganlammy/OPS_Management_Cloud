@@ -51,6 +51,7 @@ export class AppController {
     @Res() res: Response,
   ) {
     try {
+      console.log('Request body:', body);
       const result =
         await this.service.FA_Control_Report_All_Counted_by_Description(body);
       res.status(200).send(result);
@@ -162,7 +163,6 @@ export class AppController {
   ) {
     try {
       const result = await this.service.FA_ControlNew_Create_NAC(body);
-      console.log(result);
       res.status(200).send(result);
     } catch (error: unknown) {
       throw new HttpException(
@@ -572,6 +572,92 @@ export class AppController {
   ) {
     try {
       const result = await this.service.updateReference(body);
+      res.status(200).send(result);
+    } catch (error: unknown) {
+      throw new HttpException(
+        error instanceof Error ? error.message : 'Unknown error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  // Period
+  @Post('/FA_Control_Fetch_Branch_Period')
+  async FA_Control_Fetch_Branch_Period(
+    @Body() req: { usercode: string },
+    @Res() res: Response,
+  ) {
+    try {
+      const result = await this.service.FA_Control_Fetch_Branch_Period({
+        usercode: req.usercode,
+      });
+      res.status(200).send(result);
+    } catch (error: unknown) {
+      throw new HttpException(
+        error instanceof Error ? error.message : 'Unknown error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Post('/FA_Period_update_period')
+  async FA_Period_update_period(
+    @Body()
+    req: {
+      PeriodID: number;
+      BeginDate: Date;
+      EndDate: Date;
+      BranchID: number;
+      Description: string;
+      usercode: string;
+    },
+    @Res() res: Response,
+  ) {
+    try {
+      const result = await this.service.FA_Period_update_period(req);
+      res.status(200).send(result);
+    } catch (error: unknown) {
+      throw new HttpException(
+        error instanceof Error ? error.message : 'Unknown error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Post('/deletePeriod')
+  async deletePeriod(
+    @Body()
+    req: { PeriodID: number },
+    @Res() res: Response,
+  ) {
+    try {
+      const result = await this.service.deletePeriod(req);
+      res.status(200).send(result);
+    } catch (error: unknown) {
+      throw new HttpException(
+        error instanceof Error ? error.message : 'Unknown error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Post('/createPeriod')
+  async createPeriod(
+    @Body()
+    req: {
+      begindate: Date;
+      enddate: Date;
+      branchid: string;
+      description: string;
+      usercode: string;
+      depcode?: string | null;
+      personID?: string | null;
+      keyID?: string | null;
+    },
+    @Res() res: Response,
+  ) {
+    try {
+      const result = await this.service.createPeriod(req);
       res.status(200).send(result);
     } catch (error: unknown) {
       throw new HttpException(

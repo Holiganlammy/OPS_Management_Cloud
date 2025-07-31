@@ -7,7 +7,7 @@ import PageLoading from "@/components/PageLoading";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { getAutoData as FetchData } from "../../users/service/userService";
-import { getAutoData as FetchAsset, fetchFormData, validateDateString, validateNumberString } from "./service/faService";
+import { getAutoData as FetchAsset, fetchFormData, validateDateString } from "./service/faService";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -264,10 +264,12 @@ export default function AssetCreatePage() {
         setAssets(assets);
 
         if (nac_codeParam && session?.user?.UserCode) {
-          // รีเซ็ตฟอร์มก่อนโหลดข้อมูลใหม่
+          // โหลดข้อมูล NAC
+          await fetchFormData(nac_codeParam, session.user.UserCode, form, Number(nac_type), setApprove);
+        } else {
           form.reset({
-            ...form.getValues(), // ดึงค่าที่ไม่ใช่ default เช่น dayjs().format(...) มาใส่ใหม่
-            usercode: session.user.UserCode,
+            ...form.getValues(),
+            usercode: session?.user.UserCode,
             nac_code: undefined,
             nac_type: Number(nac_type),
             status_name: undefined,
@@ -328,9 +330,6 @@ export default function AssetCreatePage() {
               },
             ],
           });
-
-          // โหลดข้อมูล NAC
-          await fetchFormData(nac_codeParam, session.user.UserCode, form, Number(nac_type), setApprove);
         }
 
       } catch (error: any) {

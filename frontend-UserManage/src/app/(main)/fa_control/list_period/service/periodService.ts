@@ -3,11 +3,8 @@ import client from '@/lib/axios/interceptors';
 
 export async function getAutoData() {
   const urls = {
-    users: '/users',
-    branch: '/branch',
-    department: '/department',
-    position: '/position',
-    section: '/section'
+    typeGroup: '/FA_Control_Assets_TypeGroup',
+    nacStatus: '/FA_Control_ListStatus',
   };
 
   const fetchMultipleUrls = async (urls: { [key: string]: string }) => {
@@ -26,11 +23,10 @@ export async function getAutoData() {
   return fetchMultipleUrls(urls);
 }
 
-export async function getAutoDataNAC(usercode: string) {
+export async function getAutoDataPeriod(usercode: string) {
 
   const urls = {
-    user: '/FA_Control_Select_MyNAC',
-    admin: '/FA_Control_Select_MyNAC_Approve',
+    period: '/FA_Control_Fetch_Branch_Period',
   };
 
   const fetchMultipleUrls = async (urls: { [key: string]: string }) => {
@@ -38,9 +34,11 @@ export async function getAutoDataNAC(usercode: string) {
       const response = Object.entries(urls).map(async ([key, url]) => {
         const response = await client.post(dataConfig().http + url, { usercode }, { method: 'POST', headers: dataConfig().header });
         const data = await response.data;
+        console.log(data);
+        
         return { key, data };
       });
-      
+
       return await Promise.all(response);
     } catch (error) {
       console.error('ข้อผิดพลาด:', error);
