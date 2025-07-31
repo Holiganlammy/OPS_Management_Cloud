@@ -3,5 +3,5 @@ import { IsInt, IsNotEmpty } from 'class-validator';
 export class Apps_MenuInput {
   @IsInt()
   @IsNotEmpty()
-  userid: number;
+  UserID: number;
 }

@@ -87,16 +87,29 @@ export class AppController {
       if (!req || !req.car_infoid) {
         return res.status(400).send({ message: 'Missing required fields' });
       }
-      console.log('Adjusted Start Date:', req.reservation_date_start);
-      console.log('Adjusted End Date:', req.reservation_date_end);
+
       const result = await this.service.Reservation_Create_Booking(req);
+
       return res.status(200).send(result);
-    } catch (error: unknown) {
+    } catch (error: any) {
       console.error('Error in Reservation_Create_Booking:', error);
-      throw new HttpException(
-        error instanceof Error ? error.message : 'Unknown error',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+
+      const msg =
+        typeof error === 'object' && error !== null && 'message' in error
+          ? String((error as { message?: unknown }).message)
+          : '';
+
+      if (msg.includes('ช่วงเวลานี้ถูกจองไปแล้ว')) {
+        return res.status(409).send({
+          message: 'ช่วงเวลานี้ถูกจองไปแล้ว',
+          errorCode: 'CONFLICT_RESERVATION',
+        });
+      }
+
+      return res.status(500).send({
+        message: 'เกิดข้อผิดพลาดภายในระบบ',
+        errorCode: 'INTERNAL_ERROR',
+      });
     }
   }
 
@@ -119,6 +132,44 @@ export class AppController {
       return res.status(200).send(result);
     } catch (error: unknown) {
       console.error('Error in Reservation_Add_Attendees:', error);
+      throw new HttpException(
+        error instanceof Error ? error.message : 'Unknown error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get('/reservation_get_billing')
+  async Reservation_Get_Billing(
+    @Query('reservation_id') reservation_id: number,
+    @Res() res: Response,
+  ): Promise<Response> {
+    try {
+      if (!reservation_id) {
+        return res
+          .status(400)
+          .send({ message: 'Missing reservation ID in query' });
+      }
+      const result = await this.service.Reservation_Get_Billing(reservation_id);
+      return res.status(200).send(result);
+    } catch (error: unknown) {
+      console.error('Error in Reservation_Get_Billing:', error);
+      throw new HttpException(
+        error instanceof Error ? error.message : 'Unknown error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get('/reservation_get_booking_bill_on_calendar')
+  async Reservation_GetBookingBillOnCalendar(
+    @Res() res: Response,
+  ): Promise<Response> {
+    try {
+      const result = await this.service.Reservation_GetBookingBillOnCalendar();
+      return res.status(200).send(result);
+    } catch (error: unknown) {
+      console.error('Error in Reservation_GetBookingBillOnCalendar:', error);
       throw new HttpException(
         error instanceof Error ? error.message : 'Unknown error',
         HttpStatus.INTERNAL_SERVER_ERROR,
