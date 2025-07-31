@@ -1,9 +1,22 @@
-import { Get, Post, Put, Res, Controller, Body, Param } from '@nestjs/common';
+import {
+  Get,
+  Post,
+  Res,
+  Controller,
+  Body,
+  Query,
+  Inject,
+  HttpException,
+  HttpStatus,
+  Put,
+  Param,
+  Req,
+} from '@nestjs/common';
+import { Request, Response } from 'express';
 import { AppService } from '../service/ptec_useright.service';
-import { LoginDto } from '../dto/Login.dto';
+import { LoginDto, VerifyOtpDto } from '../dto/Login.dto';
 import { CreateUserDto } from '../dto/CreateUser.dto';
 import { EditUserDto } from '../dto/EditUser.dto';
-import { Response } from 'express';
 import { Public } from '../../auth/decorators/public.decorator';
 import {
   Department,
@@ -11,46 +24,191 @@ import {
   Section,
   User,
 } from '../domain/model/ptec_useright.entity';
+import { Redis } from 'ioredis';
+import { sendOtpEmail } from 'src/utils/email';
 
 @Controller('')
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(
+    private readonly appService: AppService,
+    @Inject('REDIS') private readonly redis: Redis,
+  ) {}
 
   @Get('/users')
-  async getUser() {
-    const users = await this.appService.getUsersFromProcedure();
+  async getUser(@Query('usercode') usercode?: string | null) {
+    const users = await this.appService.getUsersFromProcedure(usercode || null);
     const filterOutUsers = users.map(({ ...user }) => user);
     return filterOutUsers;
   }
 
   @Public()
   @Post('/login')
-  async Login(@Body() loginDto: LoginDto, @Res() res: Response) {
+  async login(
+    @Body() loginDto: LoginDto,
+    @Req() req: Request,
+    @Res() res: Response,
+  ): Promise<Response> {
     try {
       const resultLogin = await this.appService.getUserLogin(loginDto);
       const user = resultLogin[0] as User;
-      if (user && user.password === 1) {
-        const payload = {
-          userId: user.UserID,
-          username: user.UserCode,
-          role: user.PositionCode,
-        };
-        const token = this.appService['jwtService'].sign(payload);
-        res.status(200).send({
-          success: true,
-          access_token: token,
-          user,
-        });
-      } else {
-        res.status(400).send({
-          success: false,
-          message: 'Login failed. Please check your username and password.',
-        });
+
+      if (!user || user.password !== 1) {
+        return res
+          .status(401)
+          .json({ success: false, message: 'Invalid credentials' });
       }
-    } catch (error) {
-      console.error('Error executing stored procedure:', error);
-      throw error;
+
+      const cookies = req.cookies as Record<string, string> | undefined;
+      const trustedId = cookies?.trusted_device;
+      if (trustedId) {
+        const userAgent = req.headers['user-agent'] || 'unknown';
+        const ipAddress =
+          req.ip ||
+          (req.headers['x-forwarded-for'] as string | undefined)?.split(
+            ',',
+          )[0] ||
+          'unknown';
+
+        const isTrusted = await this.appService.checkTrustedDevice({
+          userCode: user.UserCode,
+          deviceId: trustedId,
+          userAgent,
+          ipAddress,
+        });
+
+        if (isTrusted) {
+          const payload = {
+            userId: user.UserID,
+            username: user.UserCode,
+            role: user.PositionCode,
+          };
+
+          const token = this.appService['jwtService'].sign(payload);
+
+          return res.status(200).json({
+            success: true,
+            access_token: token,
+            user,
+          });
+        }
+      }
+
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      const key = `mfa:${user.UserCode}`;
+      const ttl = 300; // 5 นาที
+
+      await this.redis.setex(key, ttl, otp);
+      await sendOtpEmail(user.Email, user, otp);
+
+      const expiresAt = Date.now() + ttl * 1000;
+
+      return res.status(200).json({
+        success: true,
+        error: 'MFA_REQUIRED',
+        userCode: user.UserCode,
+        message: 'OTP sent to your email',
+        expiresAt,
+      });
+    } catch (error: unknown) {
+      throw new HttpException(
+        error instanceof Error ? error.message : 'Unknown error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
+  }
+
+  @Public()
+  @Post('/resend-otp')
+  async resendOtp(@Body() body: { usercode: string }, @Res() res: Response) {
+    const usercode = body.usercode;
+
+    const resultLogin = await this.appService.getUsersFromProcedure(usercode);
+    const user = resultLogin[0];
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: 'User not found' });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const ttl = 300; // 5 minutes
+    const key = `mfa:${usercode}`;
+    await this.redis.setex(key, ttl, otp);
+    await sendOtpEmail(user.Email, user, otp);
+
+    return res.status(200).json({
+      success: true,
+      message: 'OTP resent',
+      expiresAt: Date.now() + ttl * 1000,
+    });
+  }
+
+  @Public()
+  @Post('/verify-otp')
+  async verifyOtp(
+    @Body() body: VerifyOtpDto,
+    @Res() res: Response,
+    @Req() req: Request,
+  ) {
+    const { usercode, otpCode, trustDevice } = body;
+    const key = `mfa:${usercode}`;
+
+    const storedOtp = await this.redis.get(key);
+    console.log(
+      `Stored OTP for ${usercode}: ${storedOtp} vs Provided OTP: ${otpCode}`,
+    );
+    if (!storedOtp || storedOtp !== otpCode) {
+      return res.status(401).json({
+        success: false,
+        error: 'OTP_INVALID',
+        message: 'Invalid or expired OTP',
+      });
+    }
+
+    await this.redis.del(key);
+
+    const resultLogin: User[] =
+      await this.appService.getUsersFromProcedure(usercode);
+    const user = resultLogin[0];
+    const payload = {
+      userId: user.UserID,
+      username: user.UserCode,
+      role: user.PositionCode,
+    };
+    console.log(trustDevice);
+
+    const token = this.appService['jwtService'].sign(payload);
+    if (trustDevice === true || trustDevice === 'true') {
+      console.log('Trusting device for user:', user.UserCode);
+      const trustedId = crypto.randomUUID();
+      console.log('User-Agent:', req.headers['user-agent']);
+      const userAgent = req.headers['user-agent'] || 'unknown';
+      const ipAddress =
+        req.ip ||
+        (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0] ||
+        'unknown';
+      console.log(
+        `Saving trusted device for user ${user.UserCode}: ${trustedId}, User Agent: ${userAgent}, IP Address: ${ipAddress}`,
+      );
+      // await this.appService.saveTrustedDevice({
+      //   userCode: user.UserCode,
+      //   deviceId: trustedId,
+      //   userAgent,
+      //   ipAddress,
+      // });
+      // res.cookie('trusted_device', trustedId, {
+      //   httpOnly: true,
+      //   secure: process.env.NODE_ENV === 'production',
+      //   sameSite: 'strict',
+      //   maxAge: 30 * 24 * 60 * 60 * 1000,
+      // });
+    }
+    return res.status(200).json({
+      success: true,
+      access_token: token,
+      user,
+    });
   }
 
   @Post('/user/create')

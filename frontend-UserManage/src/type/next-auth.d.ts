@@ -3,7 +3,7 @@ import NextAuth from "next-auth";
 declare module "next-auth" {
   interface Session {
     user: {
-      userid: number;
+      UserID: number;
       UserCode: string;
       fristName?: string;
       lastName?: string;
@@ -14,7 +14,7 @@ declare module "next-auth" {
     };
   }
   interface User {
-    userid: number;
+    UserID: number;
     UserCode: string;
     fristName?: string;
     lastName?: string;
@@ -24,8 +24,8 @@ declare module "next-auth" {
     role_id?: number;
   }
 
-  interface JWT { // แก้จาก JTW เป็น JWT
-    userid: number;
+  interface JWT { 
+    UserID: number;
     UserCode: string;
     fristName?: string;
     lastName?: string;

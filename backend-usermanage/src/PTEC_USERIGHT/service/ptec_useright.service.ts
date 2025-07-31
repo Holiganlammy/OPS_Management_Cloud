@@ -6,7 +6,7 @@ import { Section } from '../domain/model/ptec_useright.entity';
 import { Position } from '../domain/model/ptec_useright.entity';
 import { databaseConfig } from '../config/database.config';
 import * as sql from 'mssql';
-import { LoginDto } from '../dto/Login.dto';
+import { LoginDto, TrustDeviceDto } from '../dto/Login.dto';
 import { CreateUserDto } from '../dto/CreateUser.dto';
 import { EditUserDto } from '../dto/EditUser.dto';
 import { JwtService } from '@nestjs/jwt';
@@ -16,6 +16,7 @@ import { DatabaseManagerService } from 'src/database/database-manager.service';
 export class AppService {
   constructor(
     private jwtService: JwtService,
+    // private otpStore = new Map<string, string>(),
     private readonly dbManager: DatabaseManagerService,
   ) {}
 
@@ -38,10 +39,10 @@ export class AppService {
     );
   }
 
-  async getUsersFromProcedure(): Promise<User[]> {
+  async getUsersFromProcedure(usercode: string | null): Promise<User[]> {
     return this.dbManager.executeStoredProcedure(
       `${databaseConfig.database}.dbo.User_List_II`,
-      [],
+      [{ name: 'usercode', type: sql.NVarChar(20), value: usercode }],
     );
   }
 
@@ -123,6 +124,38 @@ export class AppService {
     return await this.dbManager.executeStoredProcedure(
       `${databaseConfig.database}.dbo.Position_List`,
       [],
+    );
+  }
+
+  async saveTrustedDevice(req: TrustDeviceDto) {
+    await this.dbManager.executeStoredProcedure(
+      `${databaseConfig.database}.dbo.UserLogin_SaveTrustedDevice`,
+      [
+        { name: 'user_code', type: sql.VarChar(50), value: req.userCode },
+        { name: 'device_id', type: sql.VarChar(100), value: req.deviceId },
+        {
+          name: 'user_agent',
+          type: sql.NVarChar(sql.MAX),
+          value: req.userAgent,
+        },
+        { name: 'ip_address', type: sql.VarChar(50), value: req.ipAddress },
+      ],
+    );
+  }
+
+  async checkTrustedDevice(req: TrustDeviceDto) {
+    return this.dbManager.executeStoredProcedure(
+      `${databaseConfig.database}.dbo.UserLogin_CheckTrustedDevice`,
+      [
+        { name: 'user_code', type: sql.VarChar(50), value: req.userCode },
+        { name: 'device_id', type: sql.VarChar(100), value: req.deviceId },
+        {
+          name: 'user_agent',
+          type: sql.NVarChar(sql.MAX),
+          value: req.userAgent,
+        },
+        { name: 'ip_address', type: sql.VarChar(50), value: req.ipAddress },
+      ],
     );
   }
 }

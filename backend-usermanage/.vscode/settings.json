@@ -3,6 +3,7 @@
         "Frist",
         "recordset",
         "roundid",
+        "setex",
         "usercode"
     ]
 }

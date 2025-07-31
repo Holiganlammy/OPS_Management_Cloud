@@ -11,15 +11,22 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import Link from "next/link";
 import { signIn } from 'next-auth/react';
+import MfaDialog from "./MFAVerify/MFA";
+import dataConfig from "@/config/config";
+import client from "@/lib/axios/interceptors";
 
 export default function Login() {
   const router = useRouter();
+  const [showMfaDialog, setShowMfaDialog] = useState(false);
+  const [userLogin, setUserLogin] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [showError, setShowError] = useState(false);
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false);
+  const [otpExpiresAt, setOtpExpiresAt] = useState<number | null>(null);
   const searchParams = useSearchParams();
   const redirectPath = searchParams.get('redirect') || '/home';
+  
 
   useEffect(() => {
     if (error) {
@@ -51,31 +58,46 @@ export default function Login() {
     setIsLoading(true);
     setError(null);
     setShowError(false);
+
     try {
-      const res = await signIn("credentials", {
+      const payload = {
         loginname: values.loginname,
         password: values.password,
-        redirect: false,
+      };
+      const res = await client.post("/login", payload, {
+        headers: dataConfig().header
       })
-      if (res?.error) {
-        if (res.status == 401) {
+      const data = await res.data;
+
+      
+      if (data?.error === "MFA_REQUIRED") {
+        setOtpExpiresAt(data.expiresAt);
+        setUserLogin(values.loginname);
+        setShowMfaDialog(true);
+        return;
+      }
+      if (data?.error) {
+        if (data.status == 401) {
           throw new Error('Invalid credentials');
         }
         throw new Error('api fail');
       } else {
         router.push(redirectPath);
       }
+
     } catch (error) {
       setError("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง");
       setTimeout(() => setShowError(true), 100);
+    } finally {
       setIsLoading(false);
     }
   };
 
   return (
+    <>
     <div className="p-6 space-y-4 md:space-y-6 sm:p-8">
       <h1 className="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
-        User Manage Login
+        NEW OPS Management
       </h1>
       <div>
         <Form {...form}>
@@ -142,5 +164,14 @@ export default function Login() {
         </Form>
       </div>
     </div>
+    
+    <MfaDialog
+      showMfaDialog={showMfaDialog}
+      setShowMfaDialog={setShowMfaDialog}
+      redirectPath={redirectPath}
+      userLogin={userLogin}
+      otpExpiresAt={otpExpiresAt}
+    />
+    </>
   );
 }

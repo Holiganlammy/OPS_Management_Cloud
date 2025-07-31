@@ -8,6 +8,7 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from '../auth/jwt.strategy';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { redisProvider } from '../redis/redis.provider';
 import { DatabaseManagerModule } from 'src/database/database-manager.module';
 
 @Module({
@@ -25,6 +26,7 @@ import { DatabaseManagerModule } from 'src/database/database-manager.module';
   controllers: [AppController],
   providers: [
     AppService,
+    redisProvider,
     JwtStrategy,
     {
       provide: APP_GUARD,

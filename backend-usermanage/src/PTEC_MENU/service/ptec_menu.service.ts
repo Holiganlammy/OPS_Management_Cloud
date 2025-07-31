@@ -12,7 +12,7 @@ export class AppService {
     try {
       return this.dbManager.executeStoredProcedure(
         `${databaseConfig.database}.dbo.Apps_List_Menu`,
-        [{ name: 'userid', type: sql.Int(), value: req.userid }],
+        [{ name: 'UserID', type: sql.Int(), value: req.UserID }],
       );
     } catch (error) {
       console.error('Error in Apps_List_Menu:', error);

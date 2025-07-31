@@ -8,35 +8,37 @@ export const authOptions: AuthOptions = {
   providers: [
     CredentialsProvider({
       name: "Credentials",
-      credentials: {},
+      credentials: {
+        otpCode: { label: "OTP Token", type: "text" },
+        usercode: { label: "User Code", type: "text" },
+        trustDevice: { label: "Trust Device", type: "checkbox" },
+      },
 
       async authorize(credentials): Promise<User | null> {
         try {
-          const res = await fetch(`${API_URL}/login`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-            body: JSON.stringify(credentials),
-          });
+          if (credentials?.otpCode) {
+            const res = await fetch(`${API_URL}/verify-otp`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              credentials: 'include',
+              body: JSON.stringify({ otpCode: credentials.otpCode , usercode: credentials.usercode, trustDevice: credentials.trustDevice }),
+            });
 
-          const contentType = res.headers.get("content-type") || "";
-          if (!res.ok || !contentType.includes("application/json")) {
-            console.error("Login API error:", res.status, await res.text());
-            return null;
-          }
+            const data = await res.json();
+            console.log("OTP verification response:", data);
+            if (!res.ok || !data.access_token || !data.user) {
+              console.error("OTP verification failed:", data);
+              return null;
+            }
 
-          const response = await res.json();
-          console.log("Login response:", response);
+            const user = data.user;
+            const token = data.access_token;
 
-          const user = response.user;
-          const token = response.access_token;
-
-          if (user && token) {
             return {
               id: user.userid?.toString() ?? "",
-              userid: parseInt(user.userid),
+              UserID: parseInt(user.UserID),
               UserCode: user.UserCode,
               fristName: user.fristName,
               lastName: user.lastName,
@@ -46,10 +48,45 @@ export const authOptions: AuthOptions = {
               role_id: user.role_id,
             };
           }
+          // const res = await fetch(`${API_URL}/login`, {
+          //   method: "POST",
+          //   headers: {
+          //     "Content-Type": "application/json",
+          //   },
+          //   body: JSON.stringify(credentials),
+          // });
+
+          // const response = await res.json();
+
+          // if (response.error === "MFA_REQUIRED") {
+          //   const err = new Error("MFA_REQUIRED");
+          //   (err as any).code = "MFA_REQUIRED";
+          //   throw err;
+          // }
+
+          // if (response.user && response.access_token) {
+          //   const user = response.user;
+          //   const token = response.access_token;
+
+          //   return {
+          //     id: user.userid?.toString() ?? "",
+          //     UserID: parseInt(user.UserID),
+          //     UserCode: user.UserCode,
+          //     fristName: user.fristName,
+          //     lastName: user.lastName,
+          //     Email: user.Email,
+          //     access_token: token,
+          //     img_profile: user.img_profile,
+          //     role_id: user.role_id,
+          //   };
+          // }
 
           return null;
         } catch (error) {
           console.error("Authorize error:", error);
+          if (typeof error === "object" && error !== null && "code" in error && (error as any).code === "MFA_REQUIRED") {
+            throw new Error("MFA_REQUIRED");
+          }
           return null;
         }
       }
@@ -59,7 +96,7 @@ export const authOptions: AuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.userid = user.userid;
+        token.UserID = user.UserID;
         token.UserCode = user.UserCode;
         token.fristName = user.fristName;
         token.lastName = user.lastName;
@@ -75,7 +112,7 @@ export const authOptions: AuthOptions = {
       if (typeof token === 'object') {
         session.user = {
           ...(session.user || {}),
-          userid: token.userid as number,
+          UserID: token.UserID as number,
           UserCode: token.UserCode as string,
           fristName: token.fristName as string,
           lastName: token.lastName as string,

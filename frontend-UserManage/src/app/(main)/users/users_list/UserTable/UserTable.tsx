@@ -28,7 +28,7 @@ export default function UserTable({ data, fetchUsers, branches, departments, pos
       <DataTable
         columns={columns}
         data={data}
-        searchKeys={["UserCode", "Fullname", "Email", "Position", "Depname"]}
+        searchKeys={["UserCode", "Fullname", "Email", "Position", "DepName"]}
         searchPlaceholder="ค้นหา..."
       />
     </div>

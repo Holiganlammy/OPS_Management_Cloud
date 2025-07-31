@@ -93,4 +93,21 @@ export class AppService {
       params,
     );
   }
+
+  async Reservation_Get_Billing(reservation_id: number) {
+    const params = [
+      { name: 'reservation_id', type: sql.Int(), value: reservation_id },
+    ];
+    return this.dbManager.executeStoredProcedure(
+      `${databaseConfig.database}.dbo.ReservationSys_GetReservationSummaryById`,
+      params,
+    );
+  }
+
+  async Reservation_GetBookingBillOnCalendar() {
+    return this.dbManager.executeStoredProcedure(
+      `${databaseConfig.database}.dbo.ReservationSys_GetBookingBillOnCalendar`,
+      [],
+    );
+  }
 }

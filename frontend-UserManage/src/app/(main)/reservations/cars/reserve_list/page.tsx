@@ -6,20 +6,35 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
-import { Search, Filter, SlidersHorizontal, Users, Car, Calendar, RefreshCw } from "lucide-react"
-import { useState } from "react"
+import { Search, Filter, SlidersHorizontal, Users, Car, RefreshCw } from "lucide-react"
+import { useEffect, useState } from "react"
 import CarCard from "./components/CarCard"
-import { BookCheck } from 'lucide-react';
 import CalendarModalButton from "./components/Fullcalendar/calendar"
 
 const cars = await client.get("/reservation/reservation_get_list", { method: 'GET', headers: dataConfig().header }).then((res) => res.data) // ข้อมูลรถ
 
+type EventType = {
+    title: string;
+    start: string;
+    end?: string;
+    extendedProps?: {
+        carModel: string;
+        carLicense: string;
+        driverName: string;
+        destination: string;
+        passengerCount: number;
+        contactNumber: string;
+        notes?: string;
+    };
+};
 export default function ShoppingCarsPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedBrand, setSelectedBrand] = useState("default")
   const [selectedType, setSelectedType] = useState("default")
   const [selectedSeats, setSelectedSeats] = useState("default")
   const [selectedStatus, setSelectedStatus] = useState("default")
+  const [bookingBill, setBookingBill] = useState<BookingBill[]>([])
+  const [events, setEvents] = useState<EventType[]>([])
   const statusLabelMap: Record<string, string> = {
     "1": "พร้อมใช้งาน",
     "2": "ซ่อมบำรุง",
@@ -27,6 +42,64 @@ export default function ShoppingCarsPage() {
     "default": "สถานะรถ",
   };
 
+  useEffect(() => {
+    const response = client.get('/reservation/reservation_get_booking_bill_on_calendar', { method: 'GET', headers: dataConfig().header })
+    response.then((res) => {
+      if (res.status === 200) {
+        setBookingBill(res.data);
+        console.log("Data fetched successfully:", res.data);
+      } else {
+        console.error("Failed to fetch data:", res.statusText);
+      }
+    }).catch((error) => {
+      console.error("Error fetching data:", error);
+    });
+  },[])
+  useEffect(() => {
+    if (!bookingBill) return;
+
+    const mapped = bookingBill.map((item) => {
+        let attendees = [];
+          try {
+            if (typeof item.attendees === "string") {
+              attendees = JSON.parse(item.attendees);
+            } else if (Array.isArray(item.attendees)) {
+              attendees = item.attendees;
+            }
+          } catch (e) {
+            console.warn("Invalid attendee JSON", e);
+          }
+      return {
+        title: `${item.car_band} ${item.car_tier} (${item.car_infocode.trim()}) - ${item.requester_name}`,
+        start: item.reservation_date_start,
+        end: item.reservation_date_end,
+        extendedProps: {
+          carModel: `${item.car_band} ${item.car_tier}`,
+          carLicense: item.car_infocode,
+          driverName: item.requester_name ?? "",
+          destination: item.destination,
+          passengerCount: attendees.length || 0,
+          contactNumber: item.Tel,
+          passengers: attendees.map((attendee: attendees) => ({
+            id: attendee.attendee_id,
+            name: attendee.attendee_name || `ผู้โดยสาร ${attendee.attendee_id}`,
+            depname: attendee.DepName || "",
+            secname: attendee.SecName || "",
+            status:
+            attendee.attend_status === 1
+              ? "Confirmed"
+              : attendee.attend_status === 0
+              ? "Declined"
+              : "Waiting",
+            note: attendee.note || "",
+          })),
+          notes: item.reason_name,
+        },
+      };
+    });
+
+    setEvents(mapped);
+  }, [bookingBill]);
   const selectBrands = [...new Set(cars.map((car: CarType) => String(car.car_band)))].filter(Boolean)
   const selectTypes = [...new Set(cars.map((car: CarType) => String(car.car_typename)))].filter(Boolean)
   const selectSeats = (
@@ -55,6 +128,17 @@ export default function ShoppingCarsPage() {
   }
 
   const activeFiltersCount = [selectedBrand, selectedType, selectedSeats, selectedStatus].filter(Boolean).length
+  const isCarReserved = (carId: number): boolean => {
+    const now = new Date();
+
+    return bookingBill.some((booking) => {
+      if (Number(booking.car_infoid) !== carId) return false;
+
+      const start = new Date(booking.reservation_date_start);
+      const end = new Date(booking.reservation_date_end);
+      return now >= start && now <= end;
+    });
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -95,7 +179,7 @@ export default function ShoppingCarsPage() {
                 <Calendar className="w-4 h-4 mr-2" />
                 ดูปฏิทินทั้งหมด
               </Button> */}
-              <CalendarModalButton />
+              <CalendarModalButton events={events} />
             </div>
           </div>
 
@@ -256,9 +340,12 @@ export default function ShoppingCarsPage() {
 
         {/* Cars Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {filteredCars.map((car: CarType) => (
-            <CarCard key={car.car_infoid} car={car} />
-          ))}
+          {filteredCars.map((car: CarType) => {
+            const isReserved = isCarReserved(Number(car.car_infoid));
+            return (
+              <CarCard key={car.car_infoid} car={car} isDisabled={isReserved} />
+            );
+          })}
         </div>
       </div>
     </div>
