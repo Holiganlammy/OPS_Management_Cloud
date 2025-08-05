@@ -11,7 +11,6 @@ import { useEffect, useState } from "react"
 import CarCard from "./components/CarCard"
 import CalendarModalButton from "./components/Fullcalendar/calendar"
 
-const cars = await client.get("/reservation/reservation_get_list", { method: 'GET', headers: dataConfig().header }).then((res) => res.data) // ข้อมูลรถ
 
 type EventType = {
     title: string;
@@ -35,19 +34,39 @@ export default function ShoppingCarsPage() {
   const [selectedStatus, setSelectedStatus] = useState("default")
   const [bookingBill, setBookingBill] = useState<BookingBill[]>([])
   const [events, setEvents] = useState<EventType[]>([])
+  const [cars, setCars] = useState<CarType[]>([])
   const statusLabelMap: Record<string, string> = {
     "1": "พร้อมใช้งาน",
     "2": "ซ่อมบำรุง",
     "0": "ไม่ใช้งาน",
     "default": "สถานะรถ",
   };
+  useEffect(() => {
+    const fetchCars = async () => {
+      try {
+        const res = await client.get("/reservation/reservation_get_list", {
+          method: 'GET',
+          headers: dataConfig().header
+        });
+
+        if (res.status === 200) {
+          setCars(res.data);
+        } else {
+          console.error("Failed to fetch cars:", res.statusText);
+        }
+      } catch (error) {
+        console.error("Error fetching cars:", error);
+      }
+    };
+
+    fetchCars();
+  }, []);
 
   useEffect(() => {
     const response = client.get('/reservation/reservation_get_booking_bill_on_calendar', { method: 'GET', headers: dataConfig().header })
     response.then((res) => {
       if (res.status === 200) {
         setBookingBill(res.data);
-        console.log("Data fetched successfully:", res.data);
       } else {
         console.error("Failed to fetch data:", res.statusText);
       }

@@ -9,32 +9,51 @@ export const authOptions: AuthOptions = {
     CredentialsProvider({
       name: "Credentials",
       credentials: {
-        otpCode: { label: "OTP Token", type: "text" },
-        usercode: { label: "User Code", type: "text" },
-        trustDevice: { label: "Trust Device", type: "checkbox" },
+        // otpCode: { label: "OTP Token", type: "text" },
+        // usercode: { label: "User Code", type: "text" },
+        // trustDevice: { label: "Trust Device", type: "checkbox" },
+        response: { label: "Response", type: "json" },
+        responseLogin: { label: "Response Login", type: "json" },
+        responseCondition: { label: "Response Condition", type: "text" },
       },
 
       async authorize(credentials): Promise<User | null> {
         try {
-          if (credentials?.otpCode) {
-            const res = await fetch(`${API_URL}/verify-otp`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              credentials: 'include',
-              body: JSON.stringify({ otpCode: credentials.otpCode , usercode: credentials.usercode, trustDevice: credentials.trustDevice }),
-            });
+          if (credentials?.response) {
+            // const res = await fetch(`${API_URL}/verify-otp`, {
+            //   method: "POST",
+            //   headers: {
+            //     "Content-Type": "application/json",
+            //   },
+            //   credentials: 'include',
+            //   body: JSON.stringify({ otpCode: credentials.otpCode , usercode: credentials.usercode, trustDevice: credentials.trustDevice }),
+            // });
 
-            const data = await res.json();
-            console.log("OTP verification response:", data);
-            if (!res.ok || !data.access_token || !data.user) {
-              console.error("OTP verification failed:", data);
+            // const data = await res.json();
+            // console.log("OTP verification response:", data);
+            // if (!res.ok || !data.access_token || !data.user) {
+            //   console.error("OTP verification failed:", data);
+            //   return null;
+            // }
+            type OTPResponse = {
+                access_token: string;
+                user: {
+                  userid?: string;
+                  UserID: string;
+                  UserCode: string;
+                  fristName: string;
+                  lastName: string;
+                  Email: string;
+                  img_profile: string;
+                  role_id: number;
+                };
+            };
+            if (!credentials?.response) {
               return null;
             }
-
-            const user = data.user;
-            const token = data.access_token;
+            const parsedResponse = JSON.parse(credentials.response) as OTPResponse;
+            const user = parsedResponse.user;
+            const token = parsedResponse.access_token;
 
             return {
               id: user.userid?.toString() ?? "",
@@ -63,31 +82,44 @@ export const authOptions: AuthOptions = {
           //   (err as any).code = "MFA_REQUIRED";
           //   throw err;
           // }
+          if (credentials?.responseCondition === 'pass' && credentials?.responseLogin) {
+          type ResponseLogin = {
+                access_token: string;
+                user: {
+                  userid?: string;
+                  UserID: string;
+                  UserCode: string;
+                  fristName: string;
+                  lastName: string;
+                  Email: string;
+                  img_profile: string;
+                  role_id: number;
+                };
+            };
+            const parsedResponse = JSON.parse(credentials.responseLogin) as ResponseLogin;
+            const user = parsedResponse.user;
+            const token = parsedResponse.access_token;
 
-          // if (response.user && response.access_token) {
-          //   const user = response.user;
-          //   const token = response.access_token;
+            return {
+              id: user.userid?.toString() ?? "",
+              UserID: parseInt(user.UserID),
+              UserCode: user.UserCode,
+              fristName: user.fristName,
+              lastName: user.lastName,
+              Email: user.Email,
+              access_token: token,
+              img_profile: user.img_profile,
+              role_id: user.role_id,
+            };
+          }
 
-          //   return {
-          //     id: user.userid?.toString() ?? "",
-          //     UserID: parseInt(user.UserID),
-          //     UserCode: user.UserCode,
-          //     fristName: user.fristName,
-          //     lastName: user.lastName,
-          //     Email: user.Email,
-          //     access_token: token,
-          //     img_profile: user.img_profile,
-          //     role_id: user.role_id,
-          //   };
-          // }
-
-          return null;
+          throw new Error("INVALID_CREDENTIALS");
         } catch (error) {
           console.error("Authorize error:", error);
           if (typeof error === "object" && error !== null && "code" in error && (error as any).code === "MFA_REQUIRED") {
             throw new Error("MFA_REQUIRED");
           }
-          return null;
+          throw error;
         }
       }
     })

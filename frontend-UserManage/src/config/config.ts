@@ -7,7 +7,8 @@ function dataConfig(access_token?: string) {
     header: {
       'Content-Type': 'application/json; charset=utf-8',
       'Authorization': headerDetail,
-      'Accept': 'application/json'
+      'Accept': 'application/json',
+      credentials: "include",
     },
     headerUploadFile: {
       'Content-Type': 'multipart/form-data',

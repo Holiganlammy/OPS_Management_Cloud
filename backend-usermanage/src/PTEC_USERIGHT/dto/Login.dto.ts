@@ -40,4 +40,34 @@ export class TrustDeviceDto {
   @IsString()
   @IsNotEmpty()
   ipAddress: string;
+
+  @IsString()
+  @IsNotEmpty()
+  os: string;
+
+  @IsString()
+  @IsNotEmpty()
+  browser: string;
+
+  @IsString()
+  @IsNotEmpty()
+  deviceType: string;
+}
+
+export class GetTrustedDeviceDto {
+  @IsString()
+  @IsNotEmpty()
+  userCode: string;
+
+  @IsString()
+  @IsNotEmpty()
+  deviceId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  userAgent: string;
+
+  @IsString()
+  @IsNotEmpty()
+  ipAddress: string;
 }

@@ -58,7 +58,6 @@ export class AppController {
     }
   }
 
-  @Public()
   @Get('/reservation_car_detail')
   async Reservation_cars_detail(
     @Query('id') id: ReservationGet_Car_ID,

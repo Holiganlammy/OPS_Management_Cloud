@@ -18,6 +18,7 @@ import { LoginDto, VerifyOtpDto } from '../dto/Login.dto';
 import { CreateUserDto } from '../dto/CreateUser.dto';
 import { EditUserDto } from '../dto/EditUser.dto';
 import { Public } from '../../auth/decorators/public.decorator';
+import { UAParser } from 'ua-parser-js';
 import {
   Department,
   Position,
@@ -60,7 +61,8 @@ export class AppController {
 
       const cookies = req.cookies as Record<string, string> | undefined;
       const trustedId = cookies?.trusted_device;
-      if (trustedId) {
+
+      if (trustedId && trustedId.trim() !== '') {
         const userAgent = req.headers['user-agent'] || 'unknown';
         const ipAddress =
           req.ip ||
@@ -76,7 +78,7 @@ export class AppController {
           ipAddress,
         });
 
-        if (isTrusted) {
+        if (isTrusted === true) {
           const payload = {
             userId: user.UserID,
             username: user.UserCode,
@@ -84,15 +86,14 @@ export class AppController {
           };
 
           const token = this.appService['jwtService'].sign(payload);
-
           return res.status(200).json({
             success: true,
             access_token: token,
             user,
+            message: 'Login successful with trusted device',
           });
         }
       }
-
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
       const key = `mfa:${user.UserCode}`;
       const ttl = 300; // 5 นาที
@@ -104,12 +105,13 @@ export class AppController {
 
       return res.status(200).json({
         success: true,
-        error: 'MFA_REQUIRED',
+        request_Mfa: true,
         userCode: user.UserCode,
         message: 'OTP sent to your email',
         expiresAt,
       });
     } catch (error: unknown) {
+      console.error('Login error:', error);
       throw new HttpException(
         error instanceof Error ? error.message : 'Unknown error',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -144,6 +146,23 @@ export class AppController {
     });
   }
 
+  private getClientIp(req: Request): string {
+    const xForwardedFor = req.headers['x-forwarded-for'] as string;
+    if (xForwardedFor) {
+      const ip = xForwardedFor.split(',')[0].trim();
+      if (ip === '::1') return '127.0.0.1';
+      if (ip.startsWith('::ffff:')) return ip.replace('::ffff:', '');
+      return ip;
+    }
+
+    const ip = req.socket?.remoteAddress || req.ip || '';
+
+    // แปลง IPv6 localhost เป็น IPv4
+    if (ip === '::1') return '127.0.0.1';
+    if (ip.startsWith('::ffff:')) return ip.replace('::ffff:', '');
+    return ip;
+  }
+
   @Public()
   @Post('/verify-otp')
   async verifyOtp(
@@ -155,9 +174,6 @@ export class AppController {
     const key = `mfa:${usercode}`;
 
     const storedOtp = await this.redis.get(key);
-    console.log(
-      `Stored OTP for ${usercode}: ${storedOtp} vs Provided OTP: ${otpCode}`,
-    );
     if (!storedOtp || storedOtp !== otpCode) {
       return res.status(401).json({
         success: false,
@@ -176,33 +192,47 @@ export class AppController {
       username: user.UserCode,
       role: user.PositionCode,
     };
-    console.log(trustDevice);
-
     const token = this.appService['jwtService'].sign(payload);
     if (trustDevice === true || trustDevice === 'true') {
-      console.log('Trusting device for user:', user.UserCode);
       const trustedId = crypto.randomUUID();
-      console.log('User-Agent:', req.headers['user-agent']);
       const userAgent = req.headers['user-agent'] || 'unknown';
-      const ipAddress =
-        req.ip ||
-        (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0] ||
-        'unknown';
-      console.log(
-        `Saving trusted device for user ${user.UserCode}: ${trustedId}, User Agent: ${userAgent}, IP Address: ${ipAddress}`,
-      );
-      // await this.appService.saveTrustedDevice({
-      //   userCode: user.UserCode,
-      //   deviceId: trustedId,
-      //   userAgent,
-      //   ipAddress,
-      // });
-      // res.cookie('trusted_device', trustedId, {
-      //   httpOnly: true,
-      //   secure: process.env.NODE_ENV === 'production',
-      //   sameSite: 'strict',
-      //   maxAge: 30 * 24 * 60 * 60 * 1000,
-      // });
+
+      const ipAddress = this.getClientIp(req);
+      if (!ipAddress || ipAddress === '' || ipAddress === 'unknown') {
+        console.warn('Could not determine client IP address');
+      }
+      const parser = new UAParser();
+      const uaResult = parser.setUA(userAgent).getResult();
+
+      let deviceType = 'desktop';
+      if (uaResult.device.type) {
+        deviceType = uaResult.device.type;
+      } else if (uaResult.device.model || uaResult.device.vendor) {
+        deviceType = 'mobile';
+      } else if (userAgent.toLowerCase().includes('mobile')) {
+        deviceType = 'mobile';
+      }
+
+      const deviceInfo = {
+        browser: uaResult.browser.name || '',
+        os: uaResult.os.name || '',
+        deviceType: deviceType,
+      };
+      await this.appService.saveTrustedDevice({
+        userCode: user.UserCode,
+        deviceId: trustedId,
+        userAgent,
+        ipAddress,
+        os: deviceInfo.os,
+        browser: deviceInfo.browser,
+        deviceType: deviceInfo.deviceType,
+      });
+      res.cookie('trusted_device', trustedId, {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'strict',
+        maxAge: 30 * 24 * 60 * 60 * 1000,
+      });
     }
     return res.status(200).json({
       success: true,

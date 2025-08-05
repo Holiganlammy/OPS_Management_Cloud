@@ -6,7 +6,11 @@ import { Section } from '../domain/model/ptec_useright.entity';
 import { Position } from '../domain/model/ptec_useright.entity';
 import { databaseConfig } from '../config/database.config';
 import * as sql from 'mssql';
-import { LoginDto, TrustDeviceDto } from '../dto/Login.dto';
+import {
+  GetTrustedDeviceDto,
+  LoginDto,
+  TrustDeviceDto,
+} from '../dto/Login.dto';
 import { CreateUserDto } from '../dto/CreateUser.dto';
 import { EditUserDto } from '../dto/EditUser.dto';
 import { JwtService } from '@nestjs/jwt';
@@ -31,7 +35,7 @@ export class AppService {
 
   async getUserLogin(req: LoginDto) {
     return this.dbManager.executeStoredProcedure(
-      `${databaseConfig.database}.dbo.User_Login`,
+      `${databaseConfig.database}.dbo.User_Login_OPS`,
       [
         { name: 'loginname', type: sql.NVarChar(50), value: req.loginname },
         { name: 'password', type: sql.NVarChar(50), value: req.password },
@@ -139,23 +143,28 @@ export class AppService {
           value: req.userAgent,
         },
         { name: 'ip_address', type: sql.VarChar(50), value: req.ipAddress },
+        { name: 'os', type: sql.NVarChar(50), value: req.os },
+        { name: 'browser', type: sql.NVarChar(50), value: req.browser },
+        { name: 'deviceType', type: sql.NVarChar(50), value: req.deviceType },
       ],
     );
   }
 
-  async checkTrustedDevice(req: TrustDeviceDto) {
-    return this.dbManager.executeStoredProcedure(
-      `${databaseConfig.database}.dbo.UserLogin_CheckTrustedDevice`,
-      [
-        { name: 'user_code', type: sql.VarChar(50), value: req.userCode },
-        { name: 'device_id', type: sql.VarChar(100), value: req.deviceId },
-        {
-          name: 'user_agent',
-          type: sql.NVarChar(sql.MAX),
-          value: req.userAgent,
-        },
-        { name: 'ip_address', type: sql.VarChar(50), value: req.ipAddress },
-      ],
-    );
+  async checkTrustedDevice(req: GetTrustedDeviceDto) {
+    const result =
+      ((await this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.UserLogin_CheckTrustedDevice`,
+        [
+          { name: 'user_code', type: sql.VarChar(50), value: req.userCode },
+          { name: 'device_id', type: sql.VarChar(100), value: req.deviceId },
+          {
+            name: 'user_agent',
+            type: sql.NVarChar(sql.MAX),
+            value: req.userAgent,
+          },
+          { name: 'ip_address', type: sql.VarChar(50), value: req.ipAddress },
+        ],
+      )) as unknown as Array<{ is_trusted: boolean }>) || [];
+    return result?.[0]?.is_trusted === true;
   }
 }

@@ -39,10 +39,19 @@ export default function Login() {
     }
   }, [error])
 
+  // const formSchema = z.object({
+  //   loginname: z.string().min(1, "Username must be 2+ characters"),
+  //   password: z.string().min(1, "Password must be 8+ characters")
+  // });
   const formSchema = z.object({
-    loginname: z.string().min(1, "Username must be 2+ characters"),
-    password: z.string().min(1, "Password must be 8+ characters")
-  });
+    loginname: z.string()
+      .min(2, "ชื่อผู้ใช้ต้องมีอย่างน้อย 2 ตัวอักษร"),
+
+    password: z.string()
+      .min(8, "รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร")
+      .regex(/[A-Z]/, "รหัสผ่านต้องมีอย่างน้อย 1 ตัวอักษรใหญ่")
+      .regex(/[!@#$%^&*(),.?":{}|<>_-]/, "รหัสผ่านต้องมีอย่างน้อย 1 ตัวอักษรพิเศษ")
+    });
 
   type FormLogin = z.infer<typeof formSchema>;
 
@@ -65,24 +74,31 @@ export default function Login() {
         password: values.password,
       };
       const res = await client.post("/login", payload, {
-        headers: dataConfig().header
+        headers: dataConfig().header,
+        withCredentials: true,
       })
       const data = await res.data;
 
       
-      if (data?.error === "MFA_REQUIRED") {
+      if (data?.request_Mfa === true) {
         setOtpExpiresAt(data.expiresAt);
         setUserLogin(values.loginname);
         setShowMfaDialog(true);
         return;
       }
-      if (data?.error) {
-        if (data.status == 401) {
+      const response = await signIn('credentials', {
+        redirect: false,
+        responseCondition: 'pass',
+        responseLogin: JSON.stringify(data),
+      });
+      if (!response?.ok) {
+        if (response?.status == 401) {
           throw new Error('Invalid credentials');
         }
         throw new Error('api fail');
       } else {
         router.push(redirectPath);
+        setIsLoading(false);
       }
 
     } catch (error) {
@@ -97,7 +113,7 @@ export default function Login() {
     <>
     <div className="p-6 space-y-4 md:space-y-6 sm:p-8">
       <h1 className="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
-        NEW OPS Management
+        OPS Management (Cloud)
       </h1>
       <div>
         <Form {...form}>
