@@ -28,7 +28,9 @@ export default function SiteHeader() {
   const menuTree = useMemo(() => buildMenuTree(menus as MenuItem[]), [menus]);
 
   const handleLogout = () => {
-    signOut({ callbackUrl: '/login' })
+    signOut({ redirect: false }).then(() => {
+      window.location.href = 'https://localhost:3000/login'
+    })
   }
 
   const toggleSidebar = () => {
@@ -177,7 +179,7 @@ export default function SiteHeader() {
       {/* Sidebar */}
       <div
         className={clsx(
-          "fixed top-0 left-0 h-full w-80 bg-primary text-primary-foreground shadow-xs dark:border-gray-700 z-50 transform transition-transform duration-300 ease-in-out",
+          "fixed top-0 left-0 h-full w-80 bg-white text-black shadow-xs dark:border-gray-700 z-50 transform transition-transform duration-300 ease-in-out",
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >

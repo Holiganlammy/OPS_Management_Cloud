@@ -1,17 +1,16 @@
 import axios, { AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from "axios";
 import { getSession, signOut, useSession } from "next-auth/react";
 import { Toast } from "../alert/toast";
-import Swal from "sweetalert2";
 
 
 const http = process.env.NEXT_PUBLIC_API_URL;
 
 
 export const error401 = () => {
-  signOut({ callbackUrl: '/login' })
+  signOut({ redirect: false })
 }
 export const error403 = () => {
-  window.location.href = '/home'
+  window.location.href = 'https://localhost:3000/home'
 }
 
 

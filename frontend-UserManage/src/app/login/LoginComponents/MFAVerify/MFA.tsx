@@ -44,7 +44,7 @@ export default function MfaDialog({
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      trustDevice: false,
+      trustDevice: true,
     }
   });
 
@@ -76,20 +76,26 @@ export default function MfaDialog({
 
     try {
       const trustDevice = form.getValues("trustDevice");
-      console.log("Trust Device:", trustDevice);
-      const res = await signIn("credentials", {
-        redirect: false,
+
+      const response = await client.post("/verify-otp", {
         otpCode,
         usercode: userLogin,
-        trustDevice
+        trustDevice,
+      }, {
+        headers: dataConfig().header,
+        withCredentials: true,
       });
-      if (!res?.ok || res.error === "OTP_INVALID") {
+      const signInResult = await signIn("credentials", {
+        response: JSON.stringify(response.data),
+        redirect: false,
+      });
+      if (response.data.error === "OTP_INVALID") {
         setMfaError("OTP ไม่ถูกต้อง หรือหมดอายุ");
         setOtpCode("");
         return;
       }
 
-      if (res?.ok && !res?.error) {
+      if (signInResult?.ok && !signInResult?.error) {
         setShowMfaDialog(false);
         router.push(redirectPath);
       } else {
@@ -168,8 +174,10 @@ export default function MfaDialog({
               <InputOTP
                 maxLength={6}
                 value={otpCode}
+                pattern="[0-9]*"
                 onChange={(val) => {
-                  setOtpCode(val);
+                  const numericValue = val.replace(/[^0-9]/g, '');
+                  setOtpCode(numericValue);
                   if (mfaError) setMfaError("");
                 }}
                 className="gap-3"
@@ -269,30 +277,24 @@ export default function MfaDialog({
                   name="trustDevice"
                   render={({ field }) => (
                     <FormItem>
-                      {/* <FormControl>
-                        <Checkbox
-                          id="trustDevice"
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl> */}
-                      <Label className="hover:bg-accent/50 flex items-start gap-3 rounded-lg border p-3 has-[[aria-checked=true]]:border-black has-[[aria-checked=true]]:bg-gray-200 dark:has-[[aria-checked=true]]:border-gray-400 dark:has-[[aria-checked=true]]:bg-gray-950">
-                        <Checkbox
-                          defaultChecked
-                          id="trustDevice"
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                          className="data-[state=checked]:border-black data-[state=checked]:bg-black data-[state=checked]:text-white dark:data-[state=checked]:border-black dark:data-[state=checked]:bg-black"
-                        />
-                        <div className="grid gap-1.5 font-normal">
-                          <p className="text-sm leading-none font-medium">
-                            Trust Device
-                          </p>
-                          <p className="text-muted-foreground text-sm">
-                            เลือกตัวเลือกนี้หากคุณต้องการให้ระบบจดจำอุปกรณ์นี้เพื่อไม่ต้องยืนยัน MFA ในครั้งถัดไป
-                          </p>
-                        </div>
-                      </Label>
+                      <FormControl>
+                        <Label className="hover:bg-accent/50 flex items-start gap-3 rounded-lg border p-3 has-[[aria-checked=true]]:border-black has-[[aria-checked=true]]:bg-gray-200 dark:has-[[aria-checked=true]]:border-gray-400 dark:has-[[aria-checked=true]]:bg-gray-950">
+                          <Checkbox
+                            id="trustDevice"
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            className="data-[state=checked]:border-black data-[state=checked]:bg-black data-[state=checked]:text-white dark:data-[state=checked]:border-black dark:data-[state=checked]:bg-black"
+                          />
+                          <div className="grid gap-1.5 font-normal">
+                            <p className="text-sm leading-none font-medium">
+                              Trust Device
+                            </p>
+                            <p className="text-muted-foreground text-sm">
+                              เลือกตัวเลือกนี้หากคุณต้องการให้ระบบจดจำอุปกรณ์นี้เพื่อไม่ต้องยืนยัน MFA ในครั้งถัดไป
+                            </p>
+                          </div>
+                        </Label>
+                      </FormControl>
                     </FormItem>
                   )}
                 />

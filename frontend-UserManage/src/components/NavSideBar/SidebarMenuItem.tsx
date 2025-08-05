@@ -58,7 +58,7 @@ export const SidebarMenuItem = ({
             >
               {item.name}
               {item.badge && (
-                <span className="bg-green-600 text-xs text-white rounded px-1 py-0.5 ml-2">
+                <span className="bg-green-600 text-xs text-black rounded px-1 py-0.5 ml-2">
                   {item.badge}
                 </span>
               )}
@@ -76,7 +76,7 @@ export const SidebarMenuItem = ({
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="ml-4 border-l border-muted pl-2"
+            className="ml-4 border-l border-black pl-2"
           >
             {(item.children ?? [])
               .sort((a, b) => a.order_no - b.order_no)
