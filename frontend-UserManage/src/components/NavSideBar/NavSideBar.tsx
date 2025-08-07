@@ -20,10 +20,12 @@ import client from "@/lib/axios/interceptors";
 import { buildMenuTree, MenuItem } from '@/type/buildMenuTree';
 import { SidebarMenuItem } from "./SidebarMenuItem";
 import clsx from "clsx";
+import ChangePasswordDialog from "@/app/login/LoginComponents/ChangePassword/Change";
 
 export default function SiteHeader() {
   const { data: session } = useSession();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [openChangePassword, setOpenChangePassword] = useState(false);
   const [menus, setMenu] = useState([]);
   const menuTree = useMemo(() => buildMenuTree(menus as MenuItem[]), [menus]);
 
@@ -145,7 +147,7 @@ export default function SiteHeader() {
                 <DropdownMenuShortcut className="text-gray-400 dark:text-gray-500">⌘S</DropdownMenuShortcut>
               </DropdownMenuItem>
 
-              <DropdownMenuItem className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 rounded-lg mx-1">
+              <DropdownMenuItem onClick={() => setOpenChangePassword(true)} className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 rounded-lg mx-1">
                 <div className="flex items-center text-gray-700 dark:text-gray-300">
                   <LockKeyholeOpen className="mr-3 h-4 w-4" />
                   Change Password
@@ -213,6 +215,7 @@ export default function SiteHeader() {
           </div>
         </div>
       </div>
+      <ChangePasswordDialog open={openChangePassword} setOpen={setOpenChangePassword} />
     </>
   )
 }

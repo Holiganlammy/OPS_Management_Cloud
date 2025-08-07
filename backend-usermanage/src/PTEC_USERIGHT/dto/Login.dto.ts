@@ -71,3 +71,21 @@ export class GetTrustedDeviceDto {
   @IsNotEmpty()
   ipAddress: string;
 }
+
+export class ChangPasswordDto {
+  @IsString()
+  @IsNotEmpty()
+  userCode: string;
+
+  @IsString()
+  @IsNotEmpty()
+  currentPassword: string;
+
+  @IsString()
+  @IsNotEmpty()
+  newPassword: string;
+
+  @IsString()
+  @IsNotEmpty()
+  confirmPassword: string;
+}

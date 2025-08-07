@@ -66,26 +66,27 @@ export default function CustomSelect<T extends FieldValues, K extends FieldPath<
   const [selectedOption, setSelectedOption] = useState<Option | Option[] | undefined>(undefined);
   const triggerRef = useRef<HTMLButtonElement>(null)
   const [triggerWidth, setTriggerWidth] = useState<number | undefined>(undefined)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false) 
 
   const isAsync = !!loadOptions
 
   const loadData = useCallback(
     async (input: string) => {
+      setIsLoading(true) 
+      
       let result: Option[] = []
 
       if (isAsync && loadOptions) {
         result = await loadOptions(input)
-        setIsLoading(true)
       } else {
         result = options.filter((opt) =>
           opt.label.toLowerCase().includes(input.toLowerCase())
         )
-        setIsLoading(true)
       }
 
+      console.log('Search input:', input, 'Results:', result) // Debug log
       setFilteredOptions(result)
-      setIsLoading(false)
+      setIsLoading(false) 
 
       return result.length > 0
     },
@@ -96,11 +97,17 @@ export default function CustomSelect<T extends FieldValues, K extends FieldPath<
 
   useEffect(() => {
     if (open && searchValue === "") {
-      debouncedLoad("") // initial load on open
+      debouncedLoad("") 
     } else if (open) {
       debouncedLoad(searchValue)
     }
   }, [open, debouncedLoad, searchValue])
+
+  useEffect(() => {
+    if (options.length > 0) {
+      setFilteredOptions(options)
+    }
+  }, [options])
 
   useLayoutEffect(() => {
     if (triggerRef.current) {
@@ -136,7 +143,7 @@ export default function CustomSelect<T extends FieldValues, K extends FieldPath<
   const handleSelect = (optionValue: string) => {
     if (!optionValue) return;
 
-    const selected = options.find((opt) => opt.value === optionValue);
+    const selected = filteredOptions.find((opt) => opt.value === optionValue);
     if (!selected) return;
 
     if (isMulti) {
@@ -145,25 +152,18 @@ export default function CustomSelect<T extends FieldValues, K extends FieldPath<
       if (Array.isArray(selectedOption)) {
         const exists = selectedOption.some((opt) => opt.value === optionValue);
 
-        // ❌ ถ้ามีอยู่แล้ว → เอาออก
         if (exists) {
           newSelectedOption = selectedOption.filter((opt) => opt.value !== optionValue);
-        }
-        // ✅ ถ้ายังไม่มี → เพิ่มเข้าไป
-        else {
+        } else {
           newSelectedOption = [...selectedOption, selected];
         }
       } else {
-        // ยังไม่มีค่าเลย → เพิ่มค่าใหม่
         newSelectedOption = [selected];
       }
 
       setSelectedOption(newSelectedOption);
-
-      // update field.value โดยเอา value ของแต่ละ option มา join
       const newValue = newSelectedOption.map((opt) => opt.value).join(",");
       field.onChange(newValue);
-
       setSearchValue("");
     } else {
       const newValue = field.value === optionValue ? "" : optionValue;
@@ -190,7 +190,7 @@ export default function CustomSelect<T extends FieldValues, K extends FieldPath<
       <FormLabel>{formLabel}</FormLabel>
       <FormControl>
         <div className="relative w-full">
-          <Popover open={open} onOpenChange={setOpen}>
+          <Popover open={open} onOpenChange={setOpen} modal={true}>
             <div className="relative w-full">
               <PopoverTrigger asChild>
                 <Button
@@ -230,10 +230,11 @@ export default function CustomSelect<T extends FieldValues, K extends FieldPath<
               className="p-0 mx-2"
               align="center"
             >
-              <Command className="w-full">
+              <Command className="w-full" shouldFilter={false}>
                 <CommandInput
                   placeholder={`ค้นหา ${formLabel}...`}
                   className="h-9"
+                  value={searchValue}
                   onValueChange={setSearchValue}
                 />
                 <CommandEmpty>
@@ -252,8 +253,8 @@ export default function CustomSelect<T extends FieldValues, K extends FieldPath<
                   {filteredOptions.map((option) => (
                     <CommandItem
                       key={option.value}
-                      value={option.value}
-                      onSelect={handleSelect}
+                      value={option.label}
+                      onSelect={() => handleSelect(option.value)}
                       className="cursor-pointer"
                     >
                       <Check

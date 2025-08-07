@@ -14,7 +14,7 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { AppService } from '../service/ptec_useright.service';
-import { LoginDto, VerifyOtpDto } from '../dto/Login.dto';
+import { ChangPasswordDto, LoginDto, VerifyOtpDto } from '../dto/Login.dto';
 import { CreateUserDto } from '../dto/CreateUser.dto';
 import { EditUserDto } from '../dto/EditUser.dto';
 import { Public } from '../../auth/decorators/public.decorator';
@@ -50,6 +50,17 @@ export class AppController {
     @Res() res: Response,
   ): Promise<Response> {
     try {
+      const password = loginDto.password;
+
+      const hasUpperCase = /[A-Z]/.test(password);
+      const hasSpecialChar = /[^A-Za-z0-9]/.test(password);
+
+      if (!hasUpperCase || !hasSpecialChar) {
+        return res.status(400).json({
+          success: false,
+          message: 'ใส่รหัสผ่านต้องมีตัวอักษรใหญ่และอักขระพิเศษ',
+        });
+      }
       const resultLogin = await this.appService.getUserLogin(loginDto);
       const user = resultLogin[0] as User;
 
@@ -380,6 +391,30 @@ export class AppController {
       res.status(500).send({
         success: false,
         message: 'Error deleting user',
+      });
+    }
+  }
+
+  @Post('/user/change-password')
+  async changePassword(@Body() req: ChangPasswordDto, @Res() res: Response) {
+    try {
+      const result = await this.appService.changePassword(req);
+      if (result) {
+        res.status(200).send({
+          success: true,
+          message: 'Password changed successfully',
+        });
+      } else {
+        res.status(404).send({
+          success: false,
+          message: 'User not found',
+        });
+      }
+    } catch (error) {
+      console.error('Error changing password:', error);
+      res.status(500).send({
+        success: false,
+        message: 'Error changing password',
       });
     }
   }

@@ -64,6 +64,7 @@ export default function SupColumn({ user, onUserFetched, users, branches, depart
         departments={departments}
         positions={positions}
         sections={sections}
+        onUserUpdated={onUserFetched}
       />
 
       <DeleteUserDialog
