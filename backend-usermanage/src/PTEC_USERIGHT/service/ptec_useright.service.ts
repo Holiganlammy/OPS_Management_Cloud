@@ -7,6 +7,7 @@ import { Position } from '../domain/model/ptec_useright.entity';
 import { databaseConfig } from '../config/database.config';
 import * as sql from 'mssql';
 import {
+  ChangPasswordDto,
   GetTrustedDeviceDto,
   LoginDto,
   TrustDeviceDto,
@@ -166,5 +167,29 @@ export class AppService {
         ],
       )) as unknown as Array<{ is_trusted: boolean }>) || [];
     return result?.[0]?.is_trusted === true;
+  }
+
+  async changePassword(req: ChangPasswordDto) {
+    return this.dbManager.executeStoredProcedure(
+      `${databaseConfig.database}.dbo.User_Change_Password_Cloud`,
+      [
+        { name: 'userCode', type: sql.VarChar(50), value: req.userCode },
+        {
+          name: 'newPassword',
+          type: sql.VarChar(255),
+          value: req.newPassword,
+        },
+        {
+          name: 'confirmPassword',
+          type: sql.VarChar(255),
+          value: req.confirmPassword,
+        },
+        {
+          name: 'currentPassword',
+          type: sql.VarChar(255),
+          value: req.currentPassword,
+        },
+      ],
+    );
   }
 }
