@@ -33,6 +33,8 @@ export default function DeleteUserDialog({ user, open, onOpenChange, onUserDelet
     setIsLoading(true);
     try {
       const response = await client.put(`/user/delete/${user.UserID}`, {
+        actived: "0"
+      }, {
         headers: dataConfig().header
       });
       const data = await response.data;
@@ -40,12 +42,12 @@ export default function DeleteUserDialog({ user, open, onOpenChange, onUserDelet
       if (response.status === 200) {
         onOpenChange(false);
         setShowSuccessAlert(true);
-        if (onUserDeleted) {
-          onUserDeleted();
-        }
         setTimeout(() => {
           setShowSuccessAlert(false);
-        }, 5000);
+          if (onUserDeleted) {
+            onUserDeleted();
+          }
+        }, 2000);
       } else {
         throw new Error(data.message || "Failed to delete user");
       }
