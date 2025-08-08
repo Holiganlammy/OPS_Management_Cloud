@@ -9,8 +9,10 @@ import {
 import { MoreHorizontal } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import EditUserDialog from "@/app/(main)/users/users_list/EditUser/EditUserDialog"
-import DeleteUserDialog from "@/app/(main)/users/users_list/DeleteUser/Delete"
+import DeleteUserDialog from "@/app/(main)/users/users_list/ChangeStatusUser/Delete"
 import { useState } from "react"
+import ActivateDialog from "../../ChangeStatusUser/Activate"
+import { set } from "date-fns"
 
 interface Props {
   user: UserData;
@@ -25,6 +27,7 @@ interface Props {
 export default function SupColumn({ user, onUserFetched, users, branches, departments, positions, sections }: Props) {
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [activateOpen, setActivateOpen] = useState(false)
   return (
     <>
       <DropdownMenu>
@@ -49,9 +52,15 @@ export default function SupColumn({ user, onUserFetched, users, branches, depart
           <DropdownMenuSeparator />
           <DropdownMenuItem>ดูรายละเอียด</DropdownMenuItem>
           <DropdownMenuItem onClick={() => setEditOpen(true)}>แก้ไขข้อมูล</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setDeleteOpen(true)} className="text-red-600">
-            ปิดใช้งานผู้ใช้
-          </DropdownMenuItem>
+          {user.Actived === true ? (
+            <DropdownMenuItem className="text-red-600" onClick={() => setDeleteOpen(true)}>
+              ปิดใช้งานผู้ใช้
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem className="text-green-600" onClick={() => setActivateOpen(true)}>
+              เปิดใช้งานผู้ใช้
+            </DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
 
@@ -65,6 +74,13 @@ export default function SupColumn({ user, onUserFetched, users, branches, depart
         positions={positions}
         sections={sections}
         onUserUpdated={onUserFetched}
+      />
+
+      <ActivateDialog
+        user={user}
+        open={activateOpen}
+        onOpenChange={setActivateOpen}
+        onUserActivated={onUserFetched}
       />
 
       <DeleteUserDialog

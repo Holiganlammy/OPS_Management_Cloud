@@ -377,11 +377,11 @@ export class AppController {
   @Put('/user/delete/:UserID')
   async deleteUser(
     @Param('UserID') UserID: string,
-    @Body('Actived') Actived: string,
+    @Body('actived') actived: string,
     @Res() res: Response,
   ) {
     try {
-      await this.appService.deleteUser(UserID, Actived);
+      await this.appService.changeStatus(UserID, actived);
       res.status(200).send({
         success: true,
         message: 'User deleted successfully',
@@ -415,6 +415,27 @@ export class AppController {
       res.status(500).send({
         success: false,
         message: 'Error changing password',
+      });
+    }
+  }
+
+  @Put('/user/activate/:UserID')
+  async activateUser(
+    @Param('UserID') UserID: string,
+    @Body('actived') actived: string,
+    @Res() res: Response,
+  ) {
+    try {
+      await this.appService.changeStatus(UserID, actived);
+      res.status(200).send({
+        success: true,
+        message: 'User status updated successfully',
+      });
+    } catch (error) {
+      console.error('Error updating user status:', error);
+      res.status(500).send({
+        success: false,
+        message: 'Error updating user status',
       });
     }
   }

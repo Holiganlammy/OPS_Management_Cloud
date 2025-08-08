@@ -10,7 +10,6 @@ import {
 } from '@nestjs/common';
 import { Response } from 'express';
 import { AppService } from '../service/ptec.reservation.service';
-import { Public } from 'src/auth/decorators/public.decorator';
 import {
   ReservationCreateBookingDto,
   ReservationGet_Car_ID,

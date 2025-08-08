@@ -94,12 +94,12 @@ export class AppService {
     );
   }
 
-  async deleteUser(ID: string, Actived: string): Promise<void> {
+  async changeStatus(ID: string, actived: string): Promise<void> {
     await this.dbManager.executeStoredProcedure(
       `${databaseConfig.database}.dbo.User_Delete`,
       [
         { name: 'UserID', type: sql.VarChar(50), value: ID },
-        { name: 'Actived', type: sql.VarChar(10), value: Actived },
+        { name: 'actived', type: sql.VarChar(10), value: actived },
       ],
     );
   }

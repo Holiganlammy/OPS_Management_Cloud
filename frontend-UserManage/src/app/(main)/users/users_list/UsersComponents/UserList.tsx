@@ -36,14 +36,20 @@ export default function UserListClient() {
   const [departments, setDepartments] = useState<department[]>([]);
   const [positions, setPositions] = useState<position[]>([]);
   const [sections, setSections] = useState<Section[]>([]);
+  const [isLoading, setIsLoading] = useState(false)
   const [filters, setFilters] = useState({
     position: "",
     department: "",
     branch: "",
     filter: "",
   })
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: 10,
+  });
 
   const fetchUsers = useCallback(async () => {
+    setIsLoading(true) // เซ็ต loading เมื่อเริ่ม fetch
     try {
       const data = await getAutoData();
       setUserFetch(data?.filter(data => data.key === 'users')[0].data || []);
@@ -54,6 +60,8 @@ export default function UserListClient() {
       setIsChecking(false)
     } catch (error) {
       console.error("Error fetching users:", error)
+    } finally {
+      setIsLoading(false) // ปิด loading เมื่อเสร็จ
     }
   }, [])
 
@@ -64,6 +72,15 @@ export default function UserListClient() {
     }
     checkAuth()
   }, [fetchUsers, router])
+
+  // ลบ useEffect ที่ใช้ setTimeout ออก เพราะไม่จำเป็น
+  // useEffect(() => {
+  //   setIsLoading(true)
+  //   const timeout = setTimeout(() => {
+  //     setIsLoading(false)
+  //   }, 1000)
+  //   return () => clearTimeout(timeout)
+  // }, [fetchUsers])
 
   const filteredUsers = useMemo(() => {
     let filtered = userFetch;
@@ -104,21 +121,45 @@ export default function UserListClient() {
   }, [userFetch, filters]);
 
   const handleFilterSelect = useCallback((filterType: string) => {
+    setIsLoading(true) // เซ็ต loading เมื่อเปลี่ยน filter
     setFilters(prev => ({ ...prev, filter: filterType }));
+    // จำลอง delay สำหรับ UI
+    setTimeout(() => setIsLoading(false), 300)
   }, []);
 
   const clearAllFilters = useCallback(() => {
+    setIsLoading(true) // เซ็ต loading เมื่อล้าง filter
     setFilters({
       position: "",
       department: "",
       branch: "",
       filter: "",
     });
+    // จำลอง delay สำหรับ UI
+    setTimeout(() => setIsLoading(false), 300)
   }, []);
 
   const handleFiltersChange = useCallback((newFilters: typeof filters) => {
+    setIsLoading(true) // เซ็ต loading เมื่อเปลี่ยน filter
     setFilters(newFilters);
+    // จำลอง delay สำหรับ UI
+    setTimeout(() => setIsLoading(false), 300)
   }, []);
+
+  // เพิ่มฟังก์ชันสำหรับจัดการ pagination
+  const handlePageChange = useCallback((newPage: number) => {
+    setIsLoading(true)
+    setPagination(prev => ({ ...prev, pageIndex: newPage }))
+    // จำลอง delay สำหรับ UI
+    setTimeout(() => setIsLoading(false), 500)
+  }, [])
+
+  const handlePageSizeChange = useCallback((newSize: number) => {
+    setIsLoading(true)
+    setPagination(prev => ({ ...prev, pageSize: newSize, pageIndex: 0 }))
+    // จำลอง delay สำหรับ UI
+    setTimeout(() => setIsLoading(false), 500)
+  }, [])
 
   if (isChecking) {
     return (
@@ -146,7 +187,7 @@ export default function UserListClient() {
                 <div className="grid grid-cols-3 sm:flex justify-end space-x-2 space-y-3 sm:space-y-0 mr-[0px]">
                   <DropdownMenu>
                     <DropdownMenuTrigger className="text-xs sm:text-sm" asChild>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" disabled={isLoading}>
                         <Filter className="h-4 w-4 mr-2" />
                         Filter
                         {filters.filter && filters.filter !== "" && (
@@ -179,22 +220,34 @@ export default function UserListClient() {
                       size="sm"
                       onClick={clearAllFilters}
                       className="text-xs sm:text-sm"
+                      disabled={isLoading}
                     >
                       Clear Filters
                     </Button>
                   )}
 
-                  <Button variant="outline" size="sm" className="text-xs sm:text-sm">
+                  <Button variant="outline" size="sm" className="text-xs sm:text-sm" disabled={isLoading}>
                     <Download className="h-4 w-4 mr-2" />
                     Export
                   </Button>
 
-                  <Button className="text-xs sm:text-sm" variant="outline" size="sm" onClick={fetchUsers}>
-                    <RefreshCw className="h-4 w-4 mr-2" />
+                  <Button 
+                    className="text-xs sm:text-sm" 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={fetchUsers}
+                    disabled={isLoading}
+                  >
+                    <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
                     Refresh
                   </Button>
 
-                  <Button onClick={() => setOpenCreate(true)} size="sm" className="bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm text-white">
+                  <Button 
+                    onClick={() => setOpenCreate(true)} 
+                    size="sm" 
+                    className="bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm text-white"
+                    disabled={isLoading}
+                  >
                     <UserPlus className="h-4 w-4 mr-2" />
                     Add User
                   </Button>
@@ -230,6 +283,11 @@ export default function UserListClient() {
                 departments={departments}
                 positions={positions}
                 sections={sections}
+                pagination={pagination}
+                setPagination={setPagination}
+                onPageChange={handlePageChange}
+                onPageSizeChange={handlePageSizeChange}
+                Loading={isLoading}
               />
             </div>
           </CardContent>
