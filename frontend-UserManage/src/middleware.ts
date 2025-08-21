@@ -9,7 +9,7 @@ export async function middleware(req: NextRequest) {
 
   const { pathname, search } = req.nextUrl;
 
-  if (!token && pathname !== '/login') {
+  if (!token && pathname !== '/login' && pathname !== '/forget_password' && pathname !== '/reset-password') {
     const redirectTo = `${pathname}${search}`;
     const loginUrl = new URL(`/login`, req.url);
     loginUrl.searchParams.set('redirect', redirectTo);

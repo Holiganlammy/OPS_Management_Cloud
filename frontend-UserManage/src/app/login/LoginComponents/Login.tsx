@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { AlertCircleIcon, Eye, EyeOff, Loader2 } from "lucide-react"
+import { AlertCircleIcon, Eye, EyeOff, Loader2, User, Lock } from "lucide-react"
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -24,6 +24,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false);
   const [otpExpiresAt, setOtpExpiresAt] = useState<number | null>(null);
+  const [disableSubmit, setDisableSubmit] = useState(false);
   const searchParams = useSearchParams();
   const redirectPath = searchParams.get('redirect') || '/home';
   
@@ -39,10 +40,6 @@ export default function Login() {
     }
   }, [error])
 
-  // const formSchema = z.object({
-  //   loginname: z.string().min(1, "Username must be 2+ characters"),
-  //   password: z.string().min(1, "Password must be 8+ characters")
-  // });
   const formSchema = z.object({
     loginname: z.string()
       .min(2, "ชื่อผู้ใช้ต้องมีอย่างน้อย 2 ตัวอักษร"),
@@ -99,6 +96,7 @@ export default function Login() {
       } else {
         router.push(redirectPath);
         setIsLoading(false);
+        setDisableSubmit(false);
       }
 
     } catch (error) {
@@ -111,83 +109,128 @@ export default function Login() {
 
   return (
     <>
-    <div className="p-6 space-y-4 md:space-y-6 sm:p-8">
-      <h1 className="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
-        OPS Management (Cloud)
-      </h1>
-      <div>
+      <div className="w-full">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-black mb-2">
+            OPS Management on Cloud
+          </h1>
+          <p className="text-gray-600 text-sm">
+            Sign in to NAC Systems , User Management System , Reservation System
+          </p>
+        </div>
+
+        {/* Error Alert */}
+        {error && (
+          <Alert
+            variant="destructive"
+            className={`mb-6 transition-all duration-300 ease-in-out transform ${showError
+              ? 'opacity-100 translate-y-0'
+              : 'opacity-0 -translate-y-2'
+            }`}
+          >
+            <AlertCircleIcon className="h-4 w-4" />
+            <AlertTitle>เข้าสู่ระบบล้มเหลว</AlertTitle>
+            <AlertDescription>
+              {error}
+            </AlertDescription>
+          </Alert>
+        )}
+
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {error && (
-              <Alert
-                variant="destructive"
-                className={`transition-all duration-300 ease-in-out transform ${showError
-                  ? 'opacity-100'
-                  : 'opacity-0'
-                  }`}
-              >
-                <AlertCircleIcon className="h-4 w-4" />
-                <AlertTitle>เข้าสู่ระบบล้มเหลว</AlertTitle>
-                <AlertDescription>
-                  {error}
-                </AlertDescription>
-              </Alert>
-            )}
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* Username Field */}
             <FormField
               control={form.control}
               name="loginname"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Username</FormLabel>
+                  <FormLabel className="block text-sm font-medium text-black mb-2">
+                    Username
+                  </FormLabel>
                   <FormControl>
-                    <Input placeholder="Username" {...field} />
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <Input 
+                        placeholder="Enter your username" 
+                        className="pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all"
+                        {...field} 
+                      />
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            {/* Password Field */}
             <FormField
               control={form.control}
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
+                  <FormLabel className="block text-sm font-medium text-black mb-2">
+                    Password
+                  </FormLabel>
                   <div className="relative">
                     <FormControl>
-                      <Input type={showPassword ? "text" : "password"} placeholder="Password" {...field} />
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <Input 
+                          type={showPassword ? "text" : "password"} 
+                          placeholder="Enter your password" 
+                          className="pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all"
+                          {...field} 
+                        />
+                        <button
+                          type="button"
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 cursor-pointer"
+                          onClick={() => setShowPassword((prev) => !prev)}
+                          tabIndex={-1}
+                        >
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
                     </FormControl>
-                    <button
-                      type="button"
-                      className="absolute top-1/2 right-2 -translate-y-1/2 p-1 cursor-pointer"
-                      onClick={() => setShowPassword((prev) => !prev)}
-                      tabIndex={-1}
-                    >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
                   </div>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            {/* Forgot Password Link */}
             <div className="flex justify-end">
-              <Link href="/password_reset" className="text-sm font-medium text-primary-600 hover:underline dark:text-primary-500">Forgot password?</Link>
+              <Link 
+                href="/forget_password" 
+                className="text-sm font-medium text-black hover:underline transition-colors"
+              >
+                ลืมรหัสผ่าน?
+              </Link>
             </div>
-            <Button className="w-full cursor-pointer" type="submit" disabled={isLoading}>
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Login
-            </Button>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={isLoading || disableSubmit}
+              className="w-full bg-black text-white py-3 px-4 rounded-lg font-medium hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+            >
+              {isLoading ? (
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              ) : (
+                'Sign In'
+              )}
+            </button>
           </form>
         </Form>
       </div>
-    </div>
     
-    <MfaDialog
-      showMfaDialog={showMfaDialog}
-      setShowMfaDialog={setShowMfaDialog}
-      redirectPath={redirectPath}
-      userLogin={userLogin}
-      otpExpiresAt={otpExpiresAt}
-    />
+      <MfaDialog
+        showMfaDialog={showMfaDialog}
+        setShowMfaDialog={setShowMfaDialog}
+        redirectPath={redirectPath}
+        userLogin={userLogin}
+        otpExpiresAt={otpExpiresAt}
+      />
     </>
   );
 }

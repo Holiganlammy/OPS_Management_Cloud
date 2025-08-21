@@ -1,13 +1,33 @@
 import Login from "@/app/login/LoginComponents/Login";
+import Image from "next/image";
+import caltexPicture from "@/image/caltex-picture.jpg";
 
 export default function LoginPage() {
   return (
-    <section className="bg-gray-300 dark:bg-gray-900">
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700">
-            <Login />
+    <div className="min-h-screen flex">
+      {/* Right Side - Image */}
+      <div className="w-1/2 bg-black relative overflow-hidden">
+        {/* Content */}
+        <div className="relative z-10 h-full flex flex-col justify-center items-center">
+          <Image
+            src={caltexPicture}
+            alt="Caltex"
+            className="w-full h-full object-cover"
+            fill
+            priority
+          />
+        </div>
+
+        {/* Bottom Accent */}
+        <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-white/20 to-white/60"></div>
+      </div>
+
+      {/* Left Side - Login Form */}
+      <div className="w-1/2 bg-white flex items-center justify-center p-8">
+        <div className="max-w-md w-full">
+          <Login />
         </div>
       </div>
-    </section>
+    </div>
   );
 }
