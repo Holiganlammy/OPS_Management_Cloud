@@ -10,9 +10,7 @@ export async function sendOtpEmail(
   otp: string,
 ): Promise<void> {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const transporter: Transporter<SMTPTransport.SentMessageInfo> =
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       createTransport({
         service: 'gmail',
         auth: {
@@ -21,9 +19,9 @@ export async function sendOtpEmail(
         },
       });
     const emailTemplate = getOtpMailOptions(to, user, otp);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+
     const result = await transporter.sendMail(emailTemplate);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+
     console.log('Email sent successfully:', result.messageId);
   } catch (error) {
     console.error('Error sending email:', error);

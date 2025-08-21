@@ -14,21 +14,61 @@ export const error403 = () => {
 }
 
 
-function hadleError(err: any) {
+function handleError(err: any) {
   if (axios.isAxiosError(err)) {
     if (err.response?.status === 400) {
+      // Safe access to nested properties with fallbacks
+      const errorData = err.response.data;
+      const message = errorData?.message || "Bad Request";
+      
+      // Handle error details safely
+      let errorText = "Something went wrong.";
+      if (errorData?.error) {
+        const code = errorData.error.code || "ERROR";
+        const path = errorData.error.path?.[0] || "unknown_field";
+        errorText = `${code} : ${path}`;
+      }
+
       Toast.fire({
         icon: "error",
-        title: err.response.data.message,
-        text: err.response.data.error.code + " : " + err.response.data.error.path[0] || "Sometjing went wrong."
+        title: message,
+        text: errorText
       });
     }
-
-    if (err.response?.status === 401) {
-      error401()
+    else if (err.response?.status === 401) {
+      error401();
+    }
+    else if (err.response?.status === 500) {
+      Toast.fire({
+        icon: "error",
+        title: "Server Error",
+        text: "Internal server error occurred. Please try again later."
+      });
+    }
+    else if (err.response?.status) {
+      // Handle other HTTP error codes
+      Toast.fire({
+        icon: "error", 
+        title: `Error ${err.response.status}`,
+        text: err.response.data?.message || "An error occurred"
+      });
+    }
+    else {
+      // Network error or no response
+      Toast.fire({
+        icon: "error",
+        title: "Network Error",
+        text: "Please check your internet connection and try again."
+      });
     }
   } else {
-    alert('Sometjing went wrong.')
+    // Non-axios errors
+    console.error("Non-axios error:", err);
+    Toast.fire({
+      icon: "error",
+      title: "Unexpected Error", 
+      text: "Something went wrong. Please try again."
+    });
   }
 }
 
@@ -81,14 +121,14 @@ const baseResponse = (response: AxiosResponse) => {
 let client = axios.create(baseConfig);
 client.interceptors.request.use(baseRequest, (error: any) => {
 
-  hadleError(error);
+  handleError(error);
   //return error;
   return Promise.reject(error);
 });
 
 client.interceptors.response.use(baseResponse, (error: any) => {
 
-  hadleError(error);
+  handleError(error);
   //return error;
   return Promise.reject(error);
 });

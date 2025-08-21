@@ -1,5 +1,6 @@
 import type SMTPTransport from 'nodemailer/lib/smtp-transport';
 import { User } from 'src/PTEC_USERIGHT/domain/model/ptec_useright.entity';
+import * as path from 'path';
 
 export function getOtpMailOptions(
   to: string,
@@ -13,6 +14,10 @@ export function getOtpMailOptions(
     text: `รหัส OTP ของคุณคือ: ${otp}\nรหัสนี้จะหมดอายุภายใน 5 นาที`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 400px; margin: 0 auto;">
+        <div style="background-color: #f8f9fa; padding: 20px; text-align: center;">
+          <img src="cid:logo@ptec" alt="PTEC Logo" style="width: 300px; height: auto; margin: 0 auto 20px; display: block;" />
+          <h1 style="color: #333; margin: 0;">Password Reset Request</h1>
+        </div>
         <h2 style="color: #005BBB; text-align: center;">ระบบยืนยันตัวตน PTEC</h2>
         <div style="background-color: #f9f9f9; padding: 20px; border-radius: 8px;">
           <p>เรียนผู้ใช้งาน ${user.fristName} ${user.lastName} Initial: ${user.UserCode},</p>
@@ -28,5 +33,12 @@ export function getOtpMailOptions(
         </p>
       </div>
     `,
+    attachments: [
+      {
+        filename: 'Picture1.png',
+        path: path.resolve(process.cwd(), 'src/images/Picture1.png'),
+        cid: 'logo@ptec',
+      },
+    ],
   };
 }

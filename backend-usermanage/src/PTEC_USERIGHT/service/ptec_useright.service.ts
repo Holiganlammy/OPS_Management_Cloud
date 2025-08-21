@@ -1,5 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { User } from '../domain/model/ptec_useright.entity';
+import {
+  ForgetPasswordModel,
+  User,
+} from '../domain/model/ptec_useright.entity';
 import { Branch } from '../domain/model/ptec_useright.entity';
 import { Department } from '../domain/model/ptec_useright.entity';
 import { Section } from '../domain/model/ptec_useright.entity';
@@ -8,8 +11,10 @@ import { databaseConfig } from '../config/database.config';
 import * as sql from 'mssql';
 import {
   ChangPasswordDto,
+  ForgetPasswordDto,
   GetTrustedDeviceDto,
   LoginDto,
+  resetPasswordDTO,
   TrustDeviceDto,
 } from '../dto/Login.dto';
 import { CreateUserDto } from '../dto/CreateUser.dto';
@@ -44,10 +49,16 @@ export class AppService {
     );
   }
 
-  async getUsersFromProcedure(usercode: string | null): Promise<User[]> {
+  async getUsersFromProcedure(
+    usercode?: string | null,
+    UserID?: number | null,
+  ): Promise<User[]> {
     return this.dbManager.executeStoredProcedure(
       `${databaseConfig.database}.dbo.User_List_II`,
-      [{ name: 'usercode', type: sql.NVarChar(20), value: usercode }],
+      [
+        { name: 'usercode', type: sql.NVarChar(20), value: usercode },
+        { name: 'UserID', type: sql.Int(), value: UserID },
+      ],
     );
   }
 
@@ -191,5 +202,65 @@ export class AppService {
         },
       ],
     );
+  }
+
+  async forgetPassword(req: ForgetPasswordDto) {
+    const result = await this.dbManager.executeStoredProcedure(
+      `${databaseConfig.database}.dbo.User_ForgotPassword_New_Cloud`,
+      [
+        { name: 'email', type: sql.NVarChar(255), value: req.email },
+        { name: 'token_hash', type: sql.VarBinary(32), value: req.token_hash },
+        { name: 'expires_at', type: sql.DateTime2(0), value: req.expires_at },
+        { name: 'ip_address', type: sql.VarChar(45), value: req.ip_address },
+        { name: 'user_agent', type: sql.NVarChar(400), value: req.user_agent },
+        // OUTPUT parameters
+        { name: 'result', type: sql.Int(), output: true },
+        { name: 'message', type: sql.NVarChar(500), output: true },
+        { name: 'user_id', type: sql.BigInt(), output: true },
+        { name: 'fullname', type: sql.NVarChar(100), output: true },
+      ],
+    );
+    return result?.[0] as unknown as ForgetPasswordModel;
+  }
+
+  async validateResetToken(tokenHash: Buffer) {
+    const result =
+      ((await this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.User_Validate_Reset_Token`,
+        [{ name: 'token_hash', type: sql.VarBinary(32), value: tokenHash }],
+      )) as unknown as Array<{ is_valid: number; UserID: number | null }>) ||
+      [];
+
+    const row = result[0];
+    return {
+      isValid: row?.is_valid === 1,
+      UserID: row?.UserID ?? null,
+    };
+  }
+
+  async resetPassword(req: resetPasswordDTO) {
+    const result =
+      ((await this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.User_ResetPassword_Cloud`,
+        [
+          { name: 'UserID', type: sql.Int(), value: req.UserID },
+          { name: 'userCode', type: sql.VarChar(50), value: req.userCode },
+          {
+            name: 'newPassword',
+            type: sql.VarChar(255),
+            value: req.newPassword,
+          },
+          { name: 'token_hash', type: sql.VarBinary(32), value: req.tokenHash },
+        ],
+      )) as unknown as Array<{
+        success: number;
+        samePassword: number | null;
+      }>) || [];
+
+    const row = result[0];
+    return {
+      success: row?.success === 1,
+      samePassword: row?.samePassword ?? null,
+    };
   }
 }

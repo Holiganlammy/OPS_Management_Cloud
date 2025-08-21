@@ -47,3 +47,10 @@ export interface Position {
   positionid: number;
   position: string;
 }
+
+export interface ForgetPasswordModel {
+  result: number;
+  message: string;
+  user_id: number;
+  fullname: string;
+}

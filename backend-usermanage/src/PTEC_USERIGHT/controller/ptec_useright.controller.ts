@@ -14,7 +14,12 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { AppService } from '../service/ptec_useright.service';
-import { ChangPasswordDto, LoginDto, VerifyOtpDto } from '../dto/Login.dto';
+import {
+  ChangPasswordDto,
+  LoginDto,
+  resetPasswordDTO,
+  VerifyOtpDto,
+} from '../dto/Login.dto';
 import { CreateUserDto } from '../dto/CreateUser.dto';
 import { EditUserDto } from '../dto/EditUser.dto';
 import { Public } from '../../auth/decorators/public.decorator';
@@ -26,7 +31,9 @@ import {
   User,
 } from '../domain/model/ptec_useright.entity';
 import { Redis } from 'ioredis';
-import { sendOtpEmail } from 'src/utils/email';
+import { sendOtpEmail } from 'src/utils/sendEmailOTPLogin';
+import * as crypto from 'crypto';
+import { sendResetPasswordEmail } from 'src/utils/sendEmailForgetPassword';
 
 @Controller('')
 export class AppController {
@@ -35,9 +42,16 @@ export class AppController {
     @Inject('REDIS') private readonly redis: Redis,
   ) {}
 
+  @Public()
   @Get('/users')
-  async getUser(@Query('usercode') usercode?: string | null) {
-    const users = await this.appService.getUsersFromProcedure(usercode || null);
+  async getUser(
+    @Query('usercode') usercode?: string | null,
+    @Query('UserID') UserID?: string | null,
+  ) {
+    const users = await this.appService.getUsersFromProcedure(
+      usercode ? usercode : null,
+      UserID ? Number(UserID) : null,
+    );
     const filterOutUsers = users.map(({ ...user }) => user);
     return filterOutUsers;
   }
@@ -436,6 +450,151 @@ export class AppController {
       res.status(500).send({
         success: false,
         message: 'Error updating user status',
+      });
+    }
+  }
+
+  @Public()
+  @Post('/forget-password')
+  async forgetPassword(
+    @Body('Email') Email: string,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    try {
+      const token = crypto.randomBytes(32).toString('hex');
+      const tokenHash = crypto.createHash('sha256').update(token).digest();
+      const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
+
+      const ip = this.getClientIp(req);
+      const userAgent = req.headers['user-agent'] || 'unknown';
+      const baseUrl = process.env.APP_URL || 'https://localhost:3000';
+      const resetLink = `${baseUrl}/reset-password?token=${token}`;
+      const result = await this.appService.forgetPassword({
+        email: Email,
+        token_hash: tokenHash,
+        expires_at: expiresAt,
+        ip_address: ip,
+        user_agent: userAgent,
+      });
+
+      if (result) {
+        const { result: spResult, message, user_id, fullname } = result;
+
+        if (spResult === 1 && user_id) {
+          try {
+            await sendResetPasswordEmail(Email, fullname, resetLink);
+          } catch (mailError) {
+            console.error('❌ Failed to send email:', mailError);
+          }
+          res.status(200).send({
+            success: true,
+            message: 'Password reset email sent successfully',
+          });
+        } else {
+          res.status(400).send({
+            success: false,
+            message: message || 'User not found',
+          });
+        }
+      } else {
+        res.status(500).send({
+          success: false,
+          message: 'Database error',
+        });
+      }
+    } catch (error) {
+      console.error('Error sending forgot password email:', error);
+      res.status(500).send({
+        success: false,
+        message: 'Error sending forgot password email',
+      });
+    }
+  }
+
+  @Public()
+  @Post('/validate-reset-token')
+  async validateResetToken(@Body('token') token: string, @Res() res: Response) {
+    try {
+      const tokenHash = crypto.createHash('sha256').update(token).digest();
+      const isValid = await this.appService.validateResetToken(tokenHash);
+      if (isValid.isValid === true) {
+        return res.status(200).send({
+          success: true,
+          message: 'Validate token successfully',
+          UserID: isValid.UserID,
+        });
+      } else {
+        return res.status(400).send({
+          success: false,
+          message: 'Invalid or expired token',
+        });
+      }
+    } catch (err) {
+      console.error('Token validation error:', err);
+      return res.status(500).send({
+        success: false,
+        message: 'Internal server error',
+      });
+    }
+  }
+
+  @Public()
+  @Post('/reset-password')
+  async resetPassword(@Body() req: resetPasswordDTO, @Res() res: Response) {
+    try {
+      if (req.newPassword !== req.confirmPassword) {
+        return res.status(400).send({
+          success: false,
+          message: 'New password and confirm password do not match',
+        });
+      }
+      const tokenHash = crypto.createHash('sha256').update(req.token).digest();
+      const isValid = await this.appService.validateResetToken(tokenHash);
+      if (isValid.isValid === true) {
+        const users = await this.appService.getUsersFromProcedure(
+          null,
+          isValid.UserID,
+        );
+        const user = users && users.length > 0 ? users[0] : null;
+        if (!user) {
+          return res.status(404).send({
+            success: false,
+            message: 'User not found',
+          });
+        }
+        const resetResult = await this.appService.resetPassword({
+          UserID: isValid.UserID ? isValid.UserID : 0,
+          userCode: user.UserCode,
+          newPassword: req.newPassword,
+          tokenHash: tokenHash,
+          token: '',
+          confirmPassword: '',
+        });
+
+        if (resetResult?.samePassword === 1) {
+          return res.status(400).send({
+            success: false,
+            samePassword: true,
+            message:
+              'รหัสผ่านใหม่และรหัสผ่านเก่าไม่สามารถตรงกันได้ กรุณาเปลี่ยนรหัสผ่านใหม่',
+          });
+        }
+        return res.status(200).send({
+          success: true,
+          message: 'Password reset successfully',
+        });
+      } else {
+        return res.status(400).send({
+          success: false,
+          message: 'Invalid or expired token',
+        });
+      }
+    } catch (err) {
+      console.error('Error resetting password:', err);
+      return res.status(500).send({
+        success: false,
+        message: 'Internal server error',
       });
     }
   }

@@ -8,7 +8,7 @@ import PageLoading from '@/components/PageLoading';
 
 export function AppWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isNotSpecialRoute = !['/login', '/forgetPassword'].includes(pathname);
+  const isNotSpecialRoute = !['/login', '/forget_password', '/reset-password'].includes(pathname);
 
   return (
     <CustomProvider>
