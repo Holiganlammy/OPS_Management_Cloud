@@ -4,7 +4,7 @@ import { Calendar, Clock, MapPin, Users, Car, Building2, User, CheckCircle, XCir
 import { useSearchParams } from 'next/navigation';
 import client from '@/lib/axios/interceptors';
 import dataConfig from '@/config/config';
-import ReservationSkeleton from './../components/skeleton'
+import ReservationSkeleton from '../components/skeleton'
 
 
 export default function ReservationSummary() {
