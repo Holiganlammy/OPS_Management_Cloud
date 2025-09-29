@@ -29,6 +29,7 @@ interface CarList {
 }
 
 interface BookingBill {
+    approve_status: number;
     reservation_id: number;
     requester_id: number;
     requester_name: string;

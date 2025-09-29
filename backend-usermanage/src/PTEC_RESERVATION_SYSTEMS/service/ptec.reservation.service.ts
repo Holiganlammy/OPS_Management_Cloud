@@ -106,7 +106,7 @@ export class AppService {
 
   async Reservation_GetBookingBillOnCalendar() {
     return this.dbManager.executeStoredProcedure(
-      `${databaseConfig.database}.dbo.ReservationSys_GetBookingBillOnCalendar`,
+      `${databaseConfig.database}.dbo.ReservationSys_GetBookingBillOnCalendar_Car`,
       [],
     );
   }

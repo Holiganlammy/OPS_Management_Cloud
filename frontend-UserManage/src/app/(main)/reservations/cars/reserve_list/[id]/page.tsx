@@ -27,7 +27,9 @@ import { useSession } from 'next-auth/react';
 
 
 export default function CarDetailPage() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession({
+  required: false,
+});
   const [open, setOpen] = useState(false);
   const searchParams = useSearchParams();
   const id = searchParams.get('id') || '';

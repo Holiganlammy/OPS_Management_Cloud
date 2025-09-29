@@ -12,6 +12,7 @@ export interface FAControlUpdateDetailCountedInput {
   image_1?: string;
   image_2?: string;
   userid: number;
+  UserBranch: string;
 }
 
 export interface NacCreateInput {

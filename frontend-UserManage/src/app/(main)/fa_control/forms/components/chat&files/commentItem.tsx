@@ -27,7 +27,9 @@ function getShortTimeAgo(date: Date): string {
 }
 
 export function CommentItem({ comments, onSend }: Props) {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession({
+  required: false,
+});
   const [message, setMessage] = useState("");
 
   const handleSend = () => {

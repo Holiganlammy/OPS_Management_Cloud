@@ -11,6 +11,7 @@ declare module "next-auth" {
       access_token?: string;
       img_profile?: string;
       role_id?: number;
+      branchid?: number;
     };
   }
   interface User {
@@ -22,6 +23,8 @@ declare module "next-auth" {
     access_token: string;
     img_profile?: string;
     role_id?: number;
+    branchid?: number;
+    accessTokenExpires?: number;
   }
 
   interface JWT { 

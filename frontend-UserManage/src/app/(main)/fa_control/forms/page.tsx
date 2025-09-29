@@ -34,7 +34,9 @@ export default function AssetCreatePage() {
   const nac_type = searchParams.get("nac_type") || "1";
   const nac_codeParam = searchParams.get("nac_code") || "";
   const schema = getCombinedFormSchema(nac_type);
-  const { data: session } = useSession();
+  const { data: session, status } = useSession({
+  required: false,
+});
   const router = useRouter();
 
   const [isChecking, setIsChecking] = useState(false);
@@ -462,13 +464,13 @@ export default function AssetCreatePage() {
       if ([2, 3].includes(status) && currentStatus === 2) {
         extra = {
           verify_by_usercode: session.user.UserCode,
-          verify_by_userid: session.user.userid,
+          verify_by_userid: session.user.UserID,
           verify_date: dayjs().format("YYYY-MM-DD HH:mm"),
         };
       } else if (status === 4 && currentStatus === 3) {
         extra = {
           source_approve_usercode: session.user.UserCode,
-          source_approve_userid: session.user.userid,
+          source_approve_userid: session.user.UserID,
           source_approve_date: dayjs().format("YYYY-MM-DD HH:mm"),
         };
       } else if (status === 5 && currentStatus === 4) {
@@ -478,7 +480,7 @@ export default function AssetCreatePage() {
       } else if (status === 6 && currentStatus === 5) {
         extra = {
           account_aprrove_usercode: session.user.UserCode,
-          account_aprrove_id: session.user.userid,
+          account_aprrove_id: session.user.UserID,
           account_aprrove_date: dayjs().format("YYYY-MM-DD HH:mm"),
         };
       }
@@ -486,25 +488,25 @@ export default function AssetCreatePage() {
       if ([2, 3].includes(status) && currentStatus === 2) {
         extra = {
           verify_by_usercode: session.user.UserCode,
-          verify_by_userid: session.user.userid,
+          verify_by_userid: session.user.UserID,
           verify_date: dayjs().format("YYYY-MM-DD HH:mm"),
         };
       } else if (status === 12 && currentStatus === 3) {
         extra = {
           source_approve_usercode: session.user.UserCode,
-          source_approve_userid: session.user.userid,
+          source_approve_userid: session.user.UserID,
           source_approve_date: dayjs().format("YYYY-MM-DD HH:mm"),
         };
       } else if (status === 13 && currentStatus === 15) {
         extra = {
           account_aprrove_usercode: session.user.UserCode,
-          account_aprrove_id: session.user.userid,
+          account_aprrove_id: session.user.UserID,
           account_aprrove_date: dayjs().format("YYYY-MM-DD HH:mm"),
         };
       } else if (status === 6 && currentStatus === 13) {
         extra = {
           finance_aprrove_usercode: session.user.UserCode,
-          finance_aprrove_id: session.user.userid,
+          finance_aprrove_id: session.user.UserID,
           finance_aprrove_date: dayjs().format("YYYY-MM-DD HH:mm"),
         };
       }

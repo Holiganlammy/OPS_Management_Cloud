@@ -25,7 +25,9 @@ export function FilePickerV2({
   const [open, setOpen] = useState(false);
   const [uploadedUrl, setUploadedUrl] = useState<string | undefined>(imageUrl);
   const file = imageUrl as File | undefined;
-  const { data: session } = useSession();
+  const { data: session, status } = useSession({
+  required: false,
+});
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -42,7 +44,7 @@ export function FilePickerV2({
           reference: original.Reference,
           image_1: fieldName === "ImagePath" ? response.url : original.ImagePath,
           image_2: fieldName === "ImagePath_2" ? response.url : original.ImagePath_2,
-          userid: session?.user.userid,
+          userid: session?.user.UserID,
         };
         
         try {

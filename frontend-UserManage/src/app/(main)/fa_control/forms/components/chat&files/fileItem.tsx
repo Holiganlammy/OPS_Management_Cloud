@@ -28,7 +28,9 @@ function getShortTimeAgo(date: Date): string {
 }
 
 export function FileItem({ fileItem, onUpload }: Props) {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession({
+  required: false,
+});
 
   // สเตตสำหรับอัปโหลดไฟล์ใหม่
   const [selectedFile, setSelectedFile] = useState<File | null>(null);

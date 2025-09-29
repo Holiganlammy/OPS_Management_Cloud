@@ -40,7 +40,9 @@ interface DialogSubmitReservationProps {
 
 export function DialogSubmitReservation({ open, setOpen, car, status }: DialogSubmitReservationProps) {
    const router = useRouter();
-   const { data: session } = useSession();
+   const { data: session, status } = useSession({
+  required: false,
+});
    const [allCarsData, setAllCarsData] = useState<CarType[]>([]);
    const [userData, setUserData] = useState<UserData[]>([]);
    const [selectedUser, setSelectedUser] = useState<{ UserID: string; note: string }>({ UserID: "", note: "" });
@@ -181,7 +183,7 @@ export function DialogSubmitReservation({ open, setOpen, car, status }: DialogSu
       const formattedEndTZ = formatForSQLWithTZ(combinedEnd);
 
       const bookingPayload = {
-         UserID: session?.user?.userid,
+         UserID: session?.user?.UserID,
          car_infoid: selectedCarId || null,
          reservation_detail: ReservationDetails,
          reason_name,
@@ -203,7 +205,7 @@ export function DialogSubmitReservation({ open, setOpen, car, status }: DialogSu
                      UserID: Number(userId.UserID),
                      attend_status: 2,
                      note: userId.note || "",
-                     created_by: session?.user?.userid,
+                     created_by: session?.user?.UserID,
                   };
                   // console.log("Adding attendee:", attendeePayload);
                   try {
@@ -456,7 +458,7 @@ export function DialogSubmitReservation({ open, setOpen, car, status }: DialogSu
                            const [search, setSearch] = useState("");
 
                            const availableUsers = userData
-                              .filter((u) => u.UserID !== String(session?.user?.userid))
+                              .filter((u) => u.UserID !== String(session?.user?.UserID))
                               .filter((u) => !attendees.some((a) => a.UserID === u.UserID));
 
                            const filteredUsers = availableUsers.filter((u) =>

@@ -8,7 +8,9 @@ import ListDetail from "./components/DialogListCar/ListDetail";
 import { Card, CardContent } from "@/components/ui/card";
 import "./components/DialogListCar/css/calendar-style.css"
 import TodayListCard from "./components/TodayListCard/today";
-
+import client from "@/lib/axios/interceptors";
+import dataConfig from "@/config/config";
+import dayjs from "dayjs";
 
 type EventType = {
     title: string;
@@ -28,44 +30,44 @@ export default function reserveCalendarCarPage() {
     const [events, setEvents] = useState<EventType[]>([]);
     const [selectedEvent, setSelectedEvent] = useState<EventType | null>(null);
     const [eventDialogOpen, setEventDialogOpen] = useState(false);
-    const todayBookings = [
-    {
-      id: 1,
-      title: "Nonnipat จองรถเช้าไปทำงานแถวๆโคราช",
-      time: "08:00 - 10:00",
-      carModel: "Honda City",
-      destination: "สนามบินสุวรรณภูมิ",
-      status: "กำลังดำเนินการ",
-      color: "bg-blue-500"
-    },
-    {
-      id: 2,
-      title: "TOYOTA จองเที่ยง",
-      time: "12:00 - 14:00",
-      carModel: "Toyota Camry",
-      destination: "ห้างสยามพารากอน",
-      status: "รอการยืนยัน",
-      color: "bg-orange-500"
-    },
-    {
-      id: 3,
-      title: "NISSAN จองบ่าย",
-      time: "15:00 - 17:00",
-      carModel: "Nissan Almera",
-      destination: "โรงพยาบาลบำรุงราษฎร์",
-      status: "ยืนยันแล้ว",
-      color: "bg-green-500"
-    },
-    {
-      id: 4,
-      title: "NISSAN จองเย็น",
-      time: "18:00 - 19:00",
-      carModel: "Nissan March",
-      destination: "ตลาดนัดรถไฟรัชดา",
-      status: "ยืนยันแล้ว",
-      color: "bg-green-500"
-    }
-  ];
+    const [bookingBill, setBookingBill] = useState<BookingBill[]>([]);
+    const todayBookings = bookingBill
+    .filter((item) => {
+        const today = dayjs().format("YYYY-MM-DD");
+        const itemDate = dayjs(item.reservation_date_start).format("YYYY-MM-DD");
+        return itemDate === today;
+    })
+    .map((item, index) => {
+        const start = dayjs(item.reservation_date_start).format("HH:mm");
+        const end = dayjs(item.reservation_date_end).format("HH:mm");
+        const attendees =
+        typeof item.attendees === "string"
+            ? JSON.parse(item.attendees)
+            : Array.isArray(item.attendees)
+            ? item.attendees
+            : [];
+
+        const statusColor = item.approve_status === 1
+        ? "bg-green-500"
+        : item.approve_status === 2
+        ? "bg-orange-500"
+        : "bg-blue-500";
+
+        return {
+        id: index + 1,
+        title: `${item.car_band} ${item.car_tier} (${item.car_infocode}) - ${item.requester_name}`,
+        time: `${start} - ${end}`,
+        carModel: `${item.car_band} ${item.car_tier}`,
+        destination: item.destination,
+        status:
+            item.approve_status === 1
+            ? "ยืนยันแล้ว"
+            : item.approve_status === 2
+            ? "รอการยืนยัน"
+            : "กำลังดำเนินการ",
+        color: statusColor,
+        };
+    });
     const getStatusColor = (status: string) => {
     switch (status) {
       case 'ยืนยันแล้ว':
@@ -78,136 +80,63 @@ export default function reserveCalendarCarPage() {
         return 'bg-gray-100 text-gray-800';
     }
   };
-    useEffect(() => {
-        setEvents([
-            {
-                title: "Nonnipat จองรถเช้าไปทำงานแถวๆโคราช",
-                start: "2025-07-16T08:00:00",
-                end: "2025-07-16T10:00:00",
-                extendedProps: {
-                    carModel: "Honda City",
-                    carLicense: "กข-1234",
-                    driverName: "คุณสมชาย",
-                    destination: "สนามบินสุวรรณภูมิ",
-                    passengerCount: 2,
-                    contactNumber: "081-234-5678",
-                    notes: "ลูกค้า VIP, ต้องการน้ำเย็น"
-                }
-            },
-            {
-                title: "TOYOTA จองเที่ยง",
-                start: "2025-07-16T12:00:00",
-                end: "2025-07-16T14:00:00",
-                extendedProps: {
-                    carModel: "Toyota Camry",
-                    carLicense: "คง-5678",
-                    driverName: "คุณสมหญิง",
-                    destination: "ห้างสยามพารากอน",
-                    passengerCount: 4,
-                    contactNumber: "082-345-6789",
-                    notes: "จอดที่ชั้น B1"
-                }
-            },
-            {
-                title: "NISSAN จองบ่าย",
-                start: "2025-07-16T15:00:00",
-                end: "2025-07-16T17:00:00",
-                extendedProps: {
-                    carModel: "Nissan Almera",
-                    carLicense: "จฉ-9012",
-                    driverName: "คุณสมศักดิ์",
-                    destination: "โรงพยาบาลบำรุงราษฎร์",
-                    passengerCount: 1,
-                    contactNumber: "083-456-7890",
-                    notes: "ผู้ป่วยผู้สูงอายุ, ขับช้าๆ"
-                }
-            },
-            {
-                title: "NISSAN จองเย็น",
-                start: "2025-07-16T18:00:00",
-                end: "2025-07-16T19:00:00",
-                extendedProps: {
-                    carModel: "Nissan March",
-                    carLicense: "ชซ-3456",
-                    driverName: "คุณสมพร",
-                    destination: "ตลาดนัดรถไฟรัชดา",
-                    passengerCount: 3,
-                    contactNumber: "084-567-8901",
-                    notes: "รอรับที่ประตูหลัก"
-                }
-            },
-            {
-                title: "SUZUKI จองเย็น",
-                start: "2025-07-17T09:00:00",
-                end: "2025-07-19T11:30:00",
-                extendedProps: {
-                    carModel: "Suzuki Swift",
-                    carLicense: "ญฎ-7890",
-                    driverName: "คุณสมบูรณ์",
-                    destination: "มหาวิทยาลัยธรรมศาสตร์",
-                    passengerCount: 2,
-                    contactNumber: "085-678-9012",
-                    notes: "นิสิตไปสอบ, ไม่ให้สาย"
-                }
-            },
-            {
-                title: "MITSUBISHI จองเที่ยง",
-                start: "2025-08-01T12:30:00",
-                end: "2025-08-01T14:30:00",
-                extendedProps: {
-                    carModel: "Mitsubishi Xpander",
-                    carLicense: "ฐฐ-1234",
-                    driverName: "คุณสมคิด",
-                    destination: "ห้างเซ็นทรัลลาดพร้าว",
-                    passengerCount: 5,
-                    contactNumber: "086-789-0123",
-                    notes: "จอดที่ชั้น 3, มีของแถม"
-                }
-            },
-            {
-                title: "MITSUBISHI จองเที่ยง",
-                start: "2025-08-01T12:30:00",
-                end: "2025-08-01T14:30:00",
-                extendedProps: {
-                    carModel: "Mitsubishi Xpander",
-                    carLicense: "ฐฐ-1234",
-                    driverName: "คุณสมคิด",
-                    destination: "ห้างเซ็นทรัลลาดพร้าว",
-                    passengerCount: 5,
-                    contactNumber: "086-789-0123",
-                    notes: "จอดที่ชั้น 3, มีของแถม"
-                }
-            },
-            {
-                title: "MITSUBISHI จองเที่ยง",
-                start: "2025-08-01T12:30:00",
-                end: "2025-08-01T14:30:00",
-                extendedProps: {
-                    carModel: "Mitsubishi Xpander",
-                    carLicense: "ฐฐ-1234",
-                    driverName: "คุณสมคิด",
-                    destination: "ห้างเซ็นทรัลลาดพร้าว",
-                    passengerCount: 5,
-                    contactNumber: "086-789-0123",
-                    notes: "จอดที่ชั้น 3, มีของแถม"
-                }
-            },
-            {
-                title: "MITSUBISHI จองเที่ยง",
-                start: "2025-08-01T12:30:00",
-                end: "2025-08-01T14:30:00",
-                extendedProps: {
-                    carModel: "Mitsubishi Xpander",
-                    carLicense: "ฐฐ-1234",
-                    driverName: "คุณสมคิด",
-                    destination: "ห้างเซ็นทรัลลาดพร้าว",
-                    passengerCount: 5,
-                    contactNumber: "086-789-0123",
-                    notes: "จอดที่ชั้น 3, มีของแถม"
-                }
-            },
-        ]);
-    }, []);
+  useEffect(() => {
+    const response = client.get('/reservation/reservation_get_booking_bill_on_calendar', { method: 'GET', headers: dataConfig().header })
+    response.then((res) => {
+      if (res.status === 200) {
+        console.log("✅ API response:", res.data);
+        setBookingBill(res.data);
+      } else {
+        console.error("Failed to fetch data:", res.statusText);
+      }
+    }).catch((error) => {
+      console.error("Error fetching data:", error);
+    });
+  },[])
+  useEffect(() => {
+    if (!bookingBill) return;
+
+    const mapped = bookingBill.map((item) => {
+        let attendees = [];
+          try {
+            if (typeof item.attendees === "string") {
+              attendees = JSON.parse(item.attendees);
+            } else if (Array.isArray(item.attendees)) {
+              attendees = item.attendees;
+            }
+          } catch (e) {
+            console.warn("Invalid attendee JSON", e);
+          }
+      return {
+        title: `${item.car_band} ${item.car_tier} (${item.car_infocode.trim()}) - ${item.requester_name}`,
+        start: item.reservation_date_start,
+        end: item.reservation_date_end,
+        extendedProps: {
+          carModel: `${item.car_band} ${item.car_tier}`,
+          carLicense: item.car_infocode,
+          driverName: item.requester_name ?? "",
+          destination: item.destination,
+          passengerCount: attendees.length || 0,
+          contactNumber: item.Tel,
+          passengers: attendees.map((attendee: attendees) => ({
+            id: attendee.attendee_id,
+            name: attendee.attendee_name || `ผู้โดยสาร ${attendee.attendee_id}`,
+            depname: attendee.DepName || "",
+            secname: attendee.SecName || "",
+            status:
+            attendee.attend_status === 1
+              ? "Confirmed"
+              : attendee.attend_status === 0
+              ? "Declined"
+              : "Waiting",
+            note: attendee.note || "",
+          })),
+          notes: item.reason_name,
+        },
+      };
+    });
+    setEvents(mapped);
+  }, [bookingBill]);
 
     const handleEventClick = (info: any) => {
         const eventData = {
@@ -267,7 +196,7 @@ export default function reserveCalendarCarPage() {
                 setEventDialogOpen={setEventDialogOpen}
                 selectedEvent={selectedEvent}
             />
-            <div className="max-w-4xl mx-auto p-4">
+            <div className="max-w-6xl mx-auto p-4">
                 <TodayListCard todayBookings={todayBookings} getStatusColor={getStatusColor} />
             </div>
         </div>

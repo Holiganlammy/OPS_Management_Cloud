@@ -116,6 +116,11 @@ export class AppService {
           { name: 'image_1', type: sql.NVarChar(), value: body.image_1 },
           { name: 'image_2', type: sql.NVarChar(), value: body.image_2 },
           { name: 'userid', type: sql.Int(), value: body.userid },
+          {
+            name: 'UserBranch',
+            type: sql.NVarChar(20),
+            value: body.UserBranch,
+          },
         ],
       );
     } catch (error) {

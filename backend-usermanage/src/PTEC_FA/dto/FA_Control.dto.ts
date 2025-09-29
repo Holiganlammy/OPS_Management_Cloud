@@ -50,6 +50,10 @@ export class FA_Control_UpdateDetailCounted_Dto {
   @IsInt()
   @IsNotEmpty()
   userid: number;
+
+  @IsString()
+  @IsNotEmpty()
+  UserBranch: string;
 }
 
 export class NacCreateDto {

@@ -44,7 +44,9 @@ import { getAutoData as FetchData } from "@/app/(main)/fa_control/forms/service/
 
 
 export default function AssetsCountedListClient() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession({
+  required: false,
+});
   const searchParams = useSearchParams();
   const nac_type = searchParams.get("type") || "user";
 
@@ -105,23 +107,40 @@ export default function AssetsCountedListClient() {
         }
       } catch (error) {
         console.error("Error fetching NAC:", error);
+        setIsChecking(false); // เพิ่มตรงนี้ด้วยเผื่อ error
       }
     }
-  }, [session, nac_type]);
+  }, [session, nac_type, newValue]);
 
   useEffect(() => {
     setIsChecking(true);
     fetchAssetsCounted();
-  }, [fetchAssetsCounted, nac_type]);
+  }, [nac_type]);
 
   const filteredAssets = useMemo(() => {
     return assetsFetch.filter((asset) => {
       if (typeString && asset.typeCode !== typeString) return false;
-      if (filters.Code && asset.Code?.toString() !== filters.nac_code) return false;
-      if (filters.Name && asset.Name?.toString() !== filters.name) return false;
-      if (filters.BranchID && asset.BranchID?.toString() !== filters.source_userid) return false;
-      if (filters.OwnerID && asset.OwnerID?.toString() !== filters.des_userid) return false;
-      if (filters.Position && asset.Position?.toString() !== filters.status_name) return false;
+      if (filters.Code && !asset.Code?.toString().toLowerCase().includes(filters.Code.toLowerCase())) return false;
+      if (filters.Name && !asset.Name?.toString().toLowerCase().includes(filters.Name.toLowerCase())) return false;
+      if (filters.BranchID && !asset.BranchID?.toString().toLowerCase().includes(filters.BranchID.toLowerCase())) return false;
+      if (filters.OwnerID && !asset.OwnerID?.toString().toLowerCase().includes(filters.OwnerID.toLowerCase())) return false;
+      if (filters.Position && !asset.Position?.toString().toLowerCase().includes(filters.Position.toLowerCase())) return false;
+      if (filters.typeCode && asset.typeCode !== filters.typeCode) return false;
+      if (filters.filter && filters.filter.trim()) {
+        const searchTerm = filters.filter.toLowerCase();
+        const searchFields = [
+          asset.Code?.toString(),
+          asset.Name?.toString(),
+          asset.BranchID?.toString(),
+          asset.OwnerID?.toString(),
+          asset.Position?.toString(),
+          asset.typeCode?.toString()
+        ].filter(Boolean).map(field => field!.toLowerCase());
+        
+        const hasMatch = searchFields.some(field => field.includes(searchTerm));
+        if (!hasMatch) return false;
+      }
+      
       return true;
     });
   }, [assetsFetch, filters, typeString]);

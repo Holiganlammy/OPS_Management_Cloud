@@ -41,7 +41,9 @@ function generateRandomString(length = 10) {
 }
 
 export default function AssetCreatePage() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession({
+  required: false,
+});
 
   const [userFetch, setUserFetch] = useState<UserData[]>([])
   const [branches, setBranches] = useState<Branch[]>([]);

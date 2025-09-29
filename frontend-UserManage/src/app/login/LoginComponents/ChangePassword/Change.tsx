@@ -41,7 +41,9 @@ export default function ChangePasswordDialog({ open, setOpen }: { open: boolean;
   const [error, setError] = useState<string | null>(null);
   const [showError, setShowError] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const { data: session } = useSession();
+  const { data: session, status } = useSession({
+  required: false,
+});
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),

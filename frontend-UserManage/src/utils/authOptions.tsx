@@ -1,6 +1,7 @@
 import type { AuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import type { User } from "next-auth";
+import Swal from "sweetalert2";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -46,6 +47,7 @@ export const authOptions: AuthOptions = {
                   Email: string;
                   img_profile: string;
                   role_id: number;
+                  branchid: number;
                 };
             };
             if (!credentials?.response) {
@@ -65,6 +67,8 @@ export const authOptions: AuthOptions = {
               access_token: token,
               img_profile: user.img_profile,
               role_id: user.role_id,
+              branchid: user.branchid,
+              accessTokenExpires: Date.now() + 60 * 60 * 1000, // 1 hours
             };
           }
           // const res = await fetch(`${API_URL}/login`, {
@@ -94,6 +98,7 @@ export const authOptions: AuthOptions = {
                   Email: string;
                   img_profile: string;
                   role_id: number;
+                  branchid: number;
                 };
             };
             const parsedResponse = JSON.parse(credentials.responseLogin) as ResponseLogin;
@@ -110,6 +115,7 @@ export const authOptions: AuthOptions = {
               access_token: token,
               img_profile: user.img_profile,
               role_id: user.role_id,
+              branchid: user.branchid,
             };
           }
 
@@ -136,11 +142,26 @@ export const authOptions: AuthOptions = {
         token.access_token = user.access_token;
         token.img_profile = user.img_profile;
         token.role_id = user.role_id;
+        token.branchid = user.branchid;
+        token.accessTokenExpires = Date.now() + 60 * 60 * 1000; // 1 hours
       }
+
+      if (token.accessTokenExpires && Date.now() > (token.accessTokenExpires as number)) {
+        console.log("⚠️ Token expired, logging out...");
+        return null as any;
+      }
+      
       return token;
     },
 
     async session({ session, token }) {
+      if (!token || Object.keys(token).length === 0) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Session Expired',
+        });
+      }
+
       if (typeof token === 'object') {
         session.user = {
           ...(session.user || {}),
@@ -157,9 +178,14 @@ export const authOptions: AuthOptions = {
       return session;
     },
   },
-
+  events: {
+    async signOut(message) {
+      console.log("User signed out:", message);
+    },
+  },
   session: {
     strategy: 'jwt',
+    maxAge: 60 * 60, // 1 hours
   },
 
   secret: process.env.NEXTAUTH_SECRET,

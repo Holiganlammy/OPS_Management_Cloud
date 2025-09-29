@@ -23,7 +23,9 @@ interface Props {
 }
 
 export default function ChatAndFiles({ nac_code, nac_status }: Props) {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession({
+  required: false,
+});
   const [fileItem, setFileItem] = useState<FileItemType[]>([]);
   const [comments, setComments] = useState<IComment[]>([]);
   const [isLoading, setIsLoading] = useState(true);

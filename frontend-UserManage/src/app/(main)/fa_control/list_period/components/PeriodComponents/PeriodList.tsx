@@ -23,7 +23,9 @@ import { exportToExcel } from "../../service/export";
 
 
 export default function PeriodListClient() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession({
+  required: false,
+});
   const searchParams = useSearchParams();
   const nac_type = searchParams.get("type") || "user";
 

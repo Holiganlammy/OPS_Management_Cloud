@@ -1,6 +1,7 @@
 "use client";
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 
 const HomeComponent = () => {
   const [currentTime, setCurrentTime] = useState('');
@@ -22,7 +23,6 @@ const HomeComponent = () => {
       clearInterval(timeInterval);
     };
   }, []);
-
   return (
     <div className="min-h-screen bg-white text-gray-900">
       {/* Header */}

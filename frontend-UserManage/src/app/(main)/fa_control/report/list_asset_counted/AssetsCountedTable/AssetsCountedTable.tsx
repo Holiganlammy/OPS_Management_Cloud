@@ -18,13 +18,14 @@ export default function AssetsCountedTable({ data, fetchAssetsCounted }: Props) 
   useEffect(() => {
     fetchAssetsCounted()
   }, [fetchAssetsCounted])
+  console.log("data in table", data);
 
   return (
     <div>
       <DataTable
         columns={columns}
         data={data}
-        searchKeys={["Code", "Name", "BranchID", "OwnerID", "Position", "typeCode",]}
+        searchKeys={["Code", "Name", "UserID", "OwnerID", "Reference",]}
         searchPlaceholder="ค้นหา..."
       />
     </div>

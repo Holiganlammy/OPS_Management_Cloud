@@ -29,7 +29,9 @@ export default function AssetTable({ nac_code, form, userFetch, assets, fields, 
 
   const { control } = form;
 
-  const { data: session } = useSession();
+  const { data: session, status } = useSession({
+  required: false,
+});
   const dataUser = userFetch.find(data => data.UserCode === session?.user.UserCode)
 
   const debouncedLoadOptions = useMemo(() => {

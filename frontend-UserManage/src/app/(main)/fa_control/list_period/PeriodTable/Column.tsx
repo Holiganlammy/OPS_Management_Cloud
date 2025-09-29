@@ -173,7 +173,9 @@ export const nacColumns = (
       id: "Actions",
       header: () => <div className="text-center whitespace-nowrap px-1">Action</div>,
       cell: ({ row }) => {
-        const { data: session } = useSession();
+        const { data: session, status } = useSession({
+  required: false,
+});
         const [open, setOpen] = useState(false);
         const [loading, setLoading] = useState(false);
         const [localDraft, setLocalDraft] = useState<Partial<Period>>(row.original);

@@ -111,7 +111,9 @@ export const nacColumns = (
         const nac = row.original;
         const [updating, setUpdating] = useState(false);
         const statusColor = getStatusColor(updating ? 0 : (nac.nac_status || 0));
-        const { data: session } = useSession();
+        const { data: session, status } = useSession({
+  required: false,
+});
 
         const handleStatusChange = async (value: string) => {
           const newStatus = parseInt(value);
@@ -200,7 +202,9 @@ export const nacColumns = (
       cell: ({ row }) => {
         const data = row.original;
         const router = useRouter();
-        const { data: session } = useSession();
+        const { data: session, status } = useSession({
+  required: false,
+});
 
         const handleView = () => {
           const type = data.workflowtypeid;
