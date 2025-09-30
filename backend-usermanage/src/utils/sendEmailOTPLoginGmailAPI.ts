@@ -70,7 +70,7 @@ export async function sendOtpWithGmailAPI(
   const boundary = 'boundary_ptec_' + Date.now();
 
   const messageParts = [
-    `From: PTEC Authentication <${process.env.Email}>`,
+    `From: PTEC Authentication<${process.env.Email}>`,
     `To: ${to}`,
     `Subject: =?UTF-8?B?${Buffer.from('รหัสยืนยัน (OTP) สำหรับการเข้าสู่ระบบ').toString('base64')}?=`,
     'MIME-Version: 1.0',

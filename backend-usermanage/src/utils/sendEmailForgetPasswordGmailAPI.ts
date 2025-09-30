@@ -99,7 +99,7 @@ export async function sendResetPasswordWithGmailAPI(
   const boundary = 'boundary_reset_' + Date.now();
 
   const messageParts = [
-    `From: PTEC Authentication <${process.env.Email}>'`,
+    `From: PTEC Authentication<${process.env.Email}>'`,
     `To: ${to}`,
     `Subject: =?UTF-8?B?${subject}?=`,
     'MIME-Version: 1.0',

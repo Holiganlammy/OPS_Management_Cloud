@@ -31,7 +31,7 @@ import {
 } from "react"
 import debounce from "lodash.debounce"
 import { ControllerRenderProps, FieldPath, FieldValues } from "react-hook-form"
-
+import { useDebounce } from "use-debounce"
 type Option = {
   label: string
   value: string
@@ -67,8 +67,38 @@ export default function CustomSelect<T extends FieldValues, K extends FieldPath<
   const triggerRef = useRef<HTMLButtonElement>(null)
   const [triggerWidth, setTriggerWidth] = useState<number | undefined>(undefined)
   const [isLoading, setIsLoading] = useState(false)
+  const [visibleCount, setVisibleCount] = useState(200);
+  const [debouncedSearchValue] = useDebounce(searchValue, 300)
 
   const isAsync = !!loadOptions
+
+  useEffect(() => {
+    if (isAsync && loadOptions) {
+      loadOptions("").then(setFilteredOptions);
+    }
+  }, [isAsync, loadOptions]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    loadData(debouncedSearchValue)
+  }, [debouncedSearchValue, open])
+
+  useEffect(() => {
+    if (!open) return;
+
+    if (debouncedSearchValue.trim() !== "") {
+      setVisibleCount(filteredOptions.length)
+    } else {
+      setVisibleCount(Math.min(filteredOptions.length, 200))
+    }
+  }, [debouncedSearchValue, filteredOptions.length, open])
+
+  useEffect(() => {
+    if (debouncedSearchValue.trim() === "" && options.length > 0) {
+      setFilteredOptions(options.slice(0, visibleCount)) // fallback option set
+    }
+  }, [debouncedSearchValue, options, visibleCount])
 
   const loadData = useCallback(
     async (input: string) => {
@@ -91,22 +121,37 @@ export default function CustomSelect<T extends FieldValues, K extends FieldPath<
     },
     [isAsync, loadOptions, options]
   )
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    if (scrollTop + clientHeight >= scrollHeight - 10) {
+      setVisibleCount((prev) => prev + 100); // โหลดเพิ่มทีละ 100
+    }
+  };
+    const debouncedLoadRef = useRef<ReturnType<typeof debounce>>(undefined);
 
-  const debouncedLoad = useMemo(() => debounce(loadData, 300), [loadData])
+    useEffect(() => {
+      debouncedLoadRef.current = debounce((input: string) => {
+        loadData(input);
+      }, 300);
+
+      return () => {
+        debouncedLoadRef.current?.cancel(); // cleanup debounce ถ้า component unmount
+      };
+    }, [loadData]);
 
   useEffect(() => {
     if (open && searchValue === "") {
-      debouncedLoad("")
+      debouncedLoadRef.current?.("")
     } else if (open) {
-      debouncedLoad(searchValue)
+      debouncedLoadRef.current?.(searchValue)
     }
-  }, [open, debouncedLoad, searchValue])
+  }, [open, searchValue])
 
   useEffect(() => {
-    if (options.length > 0) {
-      setFilteredOptions(options)
+    if (open && !isAsync && filteredOptions.length === 0) {
+      setFilteredOptions(options); // sync mode preload
     }
-  }, [options])
+  }, [open, isAsync, filteredOptions.length, options]);
 
   useLayoutEffect(() => {
     if (triggerRef.current) {
@@ -128,7 +173,7 @@ export default function CustomSelect<T extends FieldValues, K extends FieldPath<
 
     const asyncSet = async () => {
       if (loadOptions) {
-        const opts = await loadOptions("");
+        const opts = await loadOptions(field.value || "");
         const matched = opts.filter((opt) => valueList.includes(opt.value));
         if (matched.length > 0) setSelectedOption(isMulti ? matched : matched[0]);
       }
@@ -183,7 +228,9 @@ export default function CustomSelect<T extends FieldValues, K extends FieldPath<
       loadData("")
     }
   }
-
+  const filteredResult = searchValue
+  ? filteredOptions
+  : filteredOptions.slice(0, visibleCount);
   return (
     <FormItem className="flex flex-col">
       <FormLabel>{formLabel}</FormLabel>
@@ -234,40 +281,37 @@ export default function CustomSelect<T extends FieldValues, K extends FieldPath<
                   placeholder={`ค้นหา ${formLabel}...`}
                   className="h-9"
                   value={searchValue}
-                  onValueChange={setSearchValue}
+                  onValueChange={(val) => {
+                    setSearchValue(val ?? "");
+                  }}
                 />
-                <CommandEmpty>
-                  {isLoading ? (
-                    <div className="flex flex-col items-center justify-center h-20">
-                      <div className="flex flex-row items-center gap-4">
-                        <div className="animate-spin h-5 w-5 border-4 border-gray-300 border-t-black rounded-full"></div>
-                        <p>Loading...</p>
-                      </div>
-                    </div>
-                  ) : (
-                    "ไม่พบข้อมูล"
-                  )}
-                </CommandEmpty>
-                <CommandGroup className="max-h-[300px] overflow-y-auto">
-                  {filteredOptions.map((option) => (
-                    <CommandItem
-                      key={option.value}
-                      value={option.label}
-                      onSelect={() => handleSelect(option.value)}
-                      className="cursor-pointer"
-                    >
-                      <Check
-                        className={cn(
-                          "mr-2 h-4 w-4 shrink-0",
-                          (isMulti && Array.isArray(selectedOption) && selectedOption.some((s) => s.value === option.value)) ||
-                            (!isMulti && field.value === option.value)
-                            ? "opacity-100"
-                            : "opacity-0"
-                        )}
-                      />
-                      <span title={option.label}>{option.label}</span>
-                    </CommandItem>
-                  ))}
+                {isLoading ? (
+                  <div className="p-4 text-center">Loading...</div>
+                ) : filteredOptions.length === 0 ? (
+                  <div className="p-4 text-center text-muted-foreground">ไม่พบข้อมูล</div>
+                ) : null}
+                <CommandGroup onScroll={handleScroll} className="max-h-[300px] overflow-y-auto">
+                  {filteredResult.length > 0 ? (
+                    filteredResult.map((option) => (
+                      <CommandItem
+                        key={option.value}
+                        value={option.label}
+                        onSelect={() => handleSelect(option.value)}
+                        className="cursor-pointer"
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4 shrink-0",
+                            (isMulti && Array.isArray(selectedOption) && selectedOption.some((s) => s.value === option.value)) ||
+                              (!isMulti && field.value === option.value)
+                              ? "opacity-100"
+                              : "opacity-0"
+                          )}
+                        />
+                        <span title={option.label}>{option.label}</span>
+                      </CommandItem>
+                    ))
+                  ) : null}
                 </CommandGroup>
               </Command>
             </PopoverContent>

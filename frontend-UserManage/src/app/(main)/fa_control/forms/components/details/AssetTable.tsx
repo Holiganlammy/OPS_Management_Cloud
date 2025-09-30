@@ -140,15 +140,33 @@ const loadOptionsForSelect = useMemo(() => {
           {fields.map((field, index) => (
             <tr key={field.id} className="bg-white border-t">
               <td className="p-2 pt-0">
-                <FormField
-                  control={control}
-                  name={`details.${index}.nacdtl_assetsCode`}
+              <FormField
+                control={control}
+                name={`details.${index}.nacdtl_assetsCode`}
+                render={({ field }) => {
+                  const matched = assets.find(asset => asset.Code === field.value);
 
-                  render={({ field }) => (
+                  // ✅ ถ้าไม่มีใน assets ให้โชว์เป็น Input readOnly
+                  if (!matched && field.value) {
+                    return (
+                      <Input
+                        type="text"
+                        value={field.value}
+                        readOnly
+                        className="w-full bg-gray-100 text-gray-600 cursor-not-allowed"
+                        placeholder="ไม่มีข้อมูลในระบบ"
+                      />
+                    );
+                  }
+
+                  // ✅ ถ้ามี matched หรือค่าว่าง — ใช้ CustomSelect ตามปกติ
+                  return (
                     <CustomSelect
                       field={{
                         ...field,
                         onChange: (value: string) => {
+                          console.log("✅ Selected asset code:", value);
+
                           field.onChange(value);
                           const matched = assets.find(asset => asset.Code === value);
                           if (matched && value) {
@@ -170,13 +188,14 @@ const loadOptionsForSelect = useMemo(() => {
                           }
                         }
                       }}
-                      errorString={Boolean(form.formState.errors.details?.[index]?.nacdtl_assetsCode) ? true : false}
+                      errorString={Boolean(form.formState.errors.details?.[index]?.nacdtl_assetsCode)}
                       placeholder="กรุณาเลือกรหัสทรัพย์สิน"
                       formLabel=""
                       loadOptions={loadOptionsForSelect}
                     />
-                  )}
-                />
+                  );
+                }}
+              />
               </td>
               <td className="p-2 hidden md:table-cell">
                 <FormField

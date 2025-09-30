@@ -63,27 +63,53 @@ export default function NacListClient() {
       filter: "",
     };
   });
-
   const fetchNac = useCallback(async () => {
     if (session && nac_type) {
       try {
-        const dataOther = await getAutoData()
-        setTypeGroup(dataOther?.find((d) => d.key === "typeGroup")?.data || [])
-        setNacStatus(dataOther?.find((d) => d.key === "nacStatus")?.data || [])
+        const dataOther = await getAutoData();
+        setTypeGroup(dataOther?.find((d: { key: string }) => d.key === "typeGroup")?.data || []);
+        setNacStatus(dataOther?.find((d: { key: string }) => d.key === "nacStatus")?.data || []);
+
         const dataNAC = await getAutoDataNAC(session.user.UserCode);
-        const list = dataNAC?.find((d) => d.key === nac_type)?.data || []
+        const list = dataNAC?.find((d: { key: string }) => d.key === nac_type)?.data || [];
         setNacFetch(list);
-        setIsChecking(false);
       } catch (error) {
         console.error("Error fetching NAC:", error);
+      } finally {
+        setIsChecking(false);
       }
     }
   }, [session, nac_type]);
 
   useEffect(() => {
-    setIsChecking(true);
+    if (!isChecking) return;
     fetchNac();
-  }, [fetchNac, nac_type]);
+  }, [isChecking, fetchNac]);
+
+  useEffect(() => {
+    const isHardReload =
+      typeof window !== "undefined" &&
+      (performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming)?.type === "reload";
+
+    const cacheKey = `nac_already_loaded_${nac_type}`;
+    const alreadyLoaded = sessionStorage.getItem(cacheKey);
+
+    if (isHardReload || !alreadyLoaded) {
+      // เคลียร์ cache ถ้า reload page
+      if (isHardReload && session?.user?.UserCode) {
+        sessionStorage.removeItem("autoData_cache");
+        sessionStorage.removeItem("autoData_cache_time");
+        sessionStorage.removeItem(`autoDataNAC_${session.user.UserCode}`);
+        sessionStorage.removeItem(`autoDataNAC_time_${session.user.UserCode}`);
+      }
+
+      setIsChecking(true); // ✅ สั่ง fetch จริง
+      sessionStorage.setItem(cacheKey, "1"); // ✅ ตั้ง flag ว่าโหลดแล้ว
+    } else {
+      // ถ้าเคยโหลดแล้ว และไม่ใช่ reload → ไม่ fetch ใหม่
+      setIsChecking(false);
+    }
+  }, [session?.user?.UserCode, nac_type]);
 
   const filteredNac = useMemo(() => {
     return nacFetch.filter((nac) => {

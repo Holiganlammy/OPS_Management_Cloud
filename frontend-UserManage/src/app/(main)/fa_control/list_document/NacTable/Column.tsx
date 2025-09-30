@@ -210,7 +210,7 @@ export const nacColumns = (
           const type = data.workflowtypeid;
           const code = data.nac_code;
           if (type && code) {
-            router.replace(`/fa_control/forms?nac_type=${type}&nac_code=${code}`);
+            window.open(`/fa_control/forms?nac_type=${type}&nac_code=${code}`, "_blank")
           }
         };
 

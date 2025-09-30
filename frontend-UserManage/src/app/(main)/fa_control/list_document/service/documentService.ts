@@ -1,49 +1,84 @@
 import dataConfig from '@/config/config';
 import client from '@/lib/axios/interceptors';
-
 export async function getAutoData() {
+  const cacheKey = "autoData_cache";
+  const cacheTimeKey = "autoData_cache_time";
+
+  const cached = sessionStorage.getItem(cacheKey);
+  const cachedTime = sessionStorage.getItem(cacheTimeKey);
+
+  if (cached && cachedTime) {
+    const age = Date.now() - parseInt(cachedTime);
+    if (age < 1000 * 60 * 5) {
+      return JSON.parse(cached);
+    }
+  }
+
   const urls = {
     typeGroup: '/FA_Control_Assets_TypeGroup',
     nacStatus: '/FA_Control_ListStatus',
   };
 
-  const fetchMultipleUrls = async (urls: { [key: string]: string }) => {
-    try {
-      const response = Object.entries(urls).map(async ([key, url]) => {
-        const response = await client.get(dataConfig().http + url, { method: 'GET', headers: dataConfig().header });
-        const data = await response.data;
-        return { key, data };
-      });
-      return await Promise.all(response);
-    } catch (error) {
-      console.error('ข้อผิดพลาด:', error);
-    }
-  };
+  try {
+    const response = await Promise.all(
+      Object.entries(urls).map(async ([key, url]) => {
+        const res = await client.get(dataConfig().http + url, {
+          method: 'GET',
+          headers: dataConfig().header,
+        });
+        return { key, data: res.data };
+      })
+    );
 
-  return fetchMultipleUrls(urls);
+    // เก็บ cache
+    sessionStorage.setItem(cacheKey, JSON.stringify(response));
+    sessionStorage.setItem(cacheTimeKey, Date.now().toString());
+
+    return response;
+  } catch (error) {
+    console.error('ข้อผิดพลาด:', error);
+  }
 }
 
 export async function getAutoDataNAC(usercode: string) {
+  const cacheKey = `autoDataNAC_${usercode}`;
+  const cacheTimeKey = `autoDataNAC_time_${usercode}`;
+
+  const cached = sessionStorage.getItem(cacheKey);
+  const cachedTime = sessionStorage.getItem(cacheTimeKey);
+
+  if (cached && cachedTime) {
+    const age = Date.now() - parseInt(cachedTime);
+    if (age < 1000 * 60 * 5) {
+      return JSON.parse(cached);
+    }
+  }
 
   const urls = {
     user: '/FA_Control_Select_MyNAC',
     admin: '/FA_Control_Select_MyNAC_Approve',
   };
 
-  const fetchMultipleUrls = async (urls: { [key: string]: string }) => {
-    try {
-      const response = Object.entries(urls).map(async ([key, url]) => {
-        const response = await client.post(dataConfig().http + url, { usercode }, { method: 'POST', headers: dataConfig().header });
-        const data = await response.data;
-        return { key, data };
-      });
+  try {
+    const response = await Promise.all(
+      Object.entries(urls).map(async ([key, url]) => {
+        const res = await client.post(
+          dataConfig().http + url,
+          { usercode },
+          { method: 'POST', headers: dataConfig().header }
+        );
+        return { key, data: res.data };
+      })
+    );
 
-      return await Promise.all(response);
-    } catch (error) {
-      console.error('ข้อผิดพลาด:', error);
-    }
-  };
+    // cache result
+    sessionStorage.setItem(cacheKey, JSON.stringify(response));
+    sessionStorage.setItem(cacheTimeKey, Date.now().toString());
 
-  return fetchMultipleUrls(urls);
+    return response;
+  } catch (error) {
+    console.error('ข้อผิดพลาด:', error);
+  }
 }
+
 
