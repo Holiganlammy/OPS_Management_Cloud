@@ -32,8 +32,9 @@ import {
 } from '../domain/model/ptec_useright.entity';
 import { Redis } from 'ioredis';
 import * as crypto from 'crypto';
-import { sendResetPasswordEmail } from 'src/utils/sendEmailForgetPassword';
+// import { sendResetPasswordEmail } from 'src/utils/sendEmailForgetPassword';
 import { sendOtpWithGmailAPI } from 'src/utils/sendEmailOTPLoginGmailAPI';
+import { sendResetPasswordWithGmailAPI } from 'src/utils/sendEmailForgetPasswordGmailAPI';
 
 @Controller('')
 export class AppController {
@@ -490,7 +491,7 @@ export class AppController {
 
         if (spResult === 1 && user_id) {
           try {
-            await sendResetPasswordEmail(Email, fullname, resetLink);
+            await sendResetPasswordWithGmailAPI(Email, fullname, resetLink);
           } catch (mailError) {
             console.error('❌ Failed to send email:', mailError);
           }

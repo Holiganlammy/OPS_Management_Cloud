@@ -3,33 +3,42 @@ import * as path from 'path';
 import { google } from 'googleapis';
 import { User } from 'src/PTEC_USERIGHT/domain/model/ptec_useright.entity';
 
+interface GoogleCredentials {
+  installed: {
+    client_id: string;
+    client_secret: string;
+    redirect_uris: string[];
+  };
+}
+
+interface GoogleToken {
+  access_token: string;
+  refresh_token: string;
+  scope: string;
+  token_type: string;
+  expiry_date?: number;
+}
+
 export async function sendOtpWithGmailAPI(
   to: string,
   otp: string,
   user?: User,
 ) {
-  // 🔹 หา path ของ credentials / token
   const credentialsPath = path.resolve(process.cwd(), 'credentials.json');
   const tokenPath = path.resolve(process.cwd(), 'token.json');
 
-  // 🔹 โหลด credentials + token
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const credentials = JSON.parse(fs.readFileSync(credentialsPath, 'utf8'));
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const token = JSON.parse(fs.readFileSync(tokenPath, 'utf8'));
+  const credentials: GoogleCredentials = JSON.parse(
+    fs.readFileSync(credentialsPath, 'utf8'),
+  ) as GoogleCredentials;
+  const token = JSON.parse(fs.readFileSync(tokenPath, 'utf8')) as GoogleToken;
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
   const { client_secret, client_id, redirect_uris } = credentials.installed;
   const oAuth2Client = new google.auth.OAuth2(
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     client_id,
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     client_secret,
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
     redirect_uris[0],
   );
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
   oAuth2Client.setCredentials(token);
   const gmail = google.gmail({ version: 'v1', auth: oAuth2Client });
 
@@ -61,7 +70,7 @@ export async function sendOtpWithGmailAPI(
   const boundary = 'boundary_ptec_' + Date.now();
 
   const messageParts = [
-    'From: noreply.ptec@gmail.com',
+    `From: PTEC Authentication <${process.env.Email}>`,
     `To: ${to}`,
     `Subject: =?UTF-8?B?${Buffer.from('รหัสยืนยัน (OTP) สำหรับการเข้าสู่ระบบ').toString('base64')}?=`,
     'MIME-Version: 1.0',
