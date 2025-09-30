@@ -34,20 +34,16 @@ export default function AssetTable({ nac_code, form, userFetch, assets, fields, 
 });
   const dataUser = userFetch.find(data => data.UserCode === session?.user.UserCode)
 
-  const debouncedLoadOptions = useMemo(() => {
-    const loadOptions = async (input: string): Promise<{ value: string; label: string }[]> => {
-      return new Promise((resolve) => {
-        debounce(() => {
-          const result = assets
-            .filter((a) => a.Code.toLowerCase().includes(input.toLowerCase()))
-            .slice(0, 50)
-            .map((a) => ({ value: a.Code, label: a.Code }));
-          resolve(result);
-        }, 300)();
-      });
-    };
-    return loadOptions;
-  }, [assets]);
+const loadOptionsForSelect = useMemo(() => {
+  return async (input: string): Promise<{ value: string; label: string }[]> => {
+    const filtered = input.trim() === ""
+      ? assets
+      : assets.filter((a) => a.Code.toLowerCase().includes(input.toLowerCase()));
+    const result = filtered.map((a) => ({ value: a.Code, label: a.Code }));
+
+    return result;
+  };
+}, [assets]);
 
 
   useEffect(() => {
@@ -177,7 +173,7 @@ export default function AssetTable({ nac_code, form, userFetch, assets, fields, 
                       errorString={Boolean(form.formState.errors.details?.[index]?.nacdtl_assetsCode) ? true : false}
                       placeholder="กรุณาเลือกรหัสทรัพย์สิน"
                       formLabel=""
-                      loadOptions={debouncedLoadOptions}
+                      loadOptions={loadOptionsForSelect}
                     />
                   )}
                 />

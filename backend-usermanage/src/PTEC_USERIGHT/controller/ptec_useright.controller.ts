@@ -31,9 +31,9 @@ import {
   User,
 } from '../domain/model/ptec_useright.entity';
 import { Redis } from 'ioredis';
-import { sendOtpEmail } from 'src/utils/sendEmailOTPLogin';
 import * as crypto from 'crypto';
 import { sendResetPasswordEmail } from 'src/utils/sendEmailForgetPassword';
+import { sendOtpWithGmailAPI } from 'src/utils/sendEmailOTPLoginGmailAPI';
 
 @Controller('')
 export class AppController {
@@ -42,7 +42,6 @@ export class AppController {
     @Inject('REDIS') private readonly redis: Redis,
   ) {}
 
-  @Public()
   @Get('/users')
   async getUser(
     @Query('usercode') usercode?: string | null,
@@ -124,7 +123,15 @@ export class AppController {
       const ttl = 300; // 5 นาที
 
       await this.redis.setex(key, ttl, otp);
-      await sendOtpEmail(user.Email, user, otp);
+      try {
+        await sendOtpWithGmailAPI(user.Email, otp, user);
+      } catch (emailError) {
+        console.error('Failed to send OTP email:', emailError);
+        throw new HttpException(
+          'Failed to send OTP email',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
 
       const expiresAt = Date.now() + ttl * 1000;
 
@@ -162,7 +169,7 @@ export class AppController {
     const ttl = 300; // 5 minutes
     const key = `mfa:${usercode}`;
     await this.redis.setex(key, ttl, otp);
-    await sendOtpEmail(user.Email, user, otp);
+    await sendOtpWithGmailAPI(user.Email, otp, user);
 
     return res.status(200).json({
       success: true,

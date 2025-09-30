@@ -66,14 +66,14 @@ export default function CustomSelect<T extends FieldValues, K extends FieldPath<
   const [selectedOption, setSelectedOption] = useState<Option | Option[] | undefined>(undefined);
   const triggerRef = useRef<HTMLButtonElement>(null)
   const [triggerWidth, setTriggerWidth] = useState<number | undefined>(undefined)
-  const [isLoading, setIsLoading] = useState(false) 
+  const [isLoading, setIsLoading] = useState(false)
 
   const isAsync = !!loadOptions
 
   const loadData = useCallback(
     async (input: string) => {
-      setIsLoading(true) 
-      
+      setIsLoading(true)
+
       let result: Option[] = []
 
       if (isAsync && loadOptions) {
@@ -84,9 +84,8 @@ export default function CustomSelect<T extends FieldValues, K extends FieldPath<
         )
       }
 
-      console.log('Search input:', input, 'Results:', result) // Debug log
       setFilteredOptions(result)
-      setIsLoading(false) 
+      setIsLoading(false)
 
       return result.length > 0
     },
@@ -97,7 +96,7 @@ export default function CustomSelect<T extends FieldValues, K extends FieldPath<
 
   useEffect(() => {
     if (open && searchValue === "") {
-      debouncedLoad("") 
+      debouncedLoad("")
     } else if (open) {
       debouncedLoad(searchValue)
     }
