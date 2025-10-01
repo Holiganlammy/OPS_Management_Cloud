@@ -476,7 +476,7 @@ export class AppController {
 
       const ip = this.getClientIp(req);
       const userAgent = req.headers['user-agent'] || 'unknown';
-      const baseUrl = process.env.APP_URL || 'https://localhost:3000';
+      const baseUrl = process.env.APP_URL;
       const resetLink = `${baseUrl}/reset-password?token=${token}`;
       const result = await this.appService.forgetPassword({
         email: Email,

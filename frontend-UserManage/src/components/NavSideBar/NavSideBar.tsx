@@ -36,7 +36,7 @@ export default function SiteHeader() {
 
   const handleLogout = () => {
     signOut({ redirect: false }).then(() => {
-      window.location.href = 'https://localhost:3000/login'
+      window.location.href = process.env.BACK_LOGIN!
     })
   }
 

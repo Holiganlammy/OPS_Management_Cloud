@@ -78,14 +78,14 @@ export default function Signup({
   const onSubmit = async (values: SignupForm) => {
     try {
       const response = await client.post("/user/create", values, { headers: dataConfig().header });
-      const data = await response.data.json();
-      if (!response.status) {
+      const data = await response.data;
+      if (data.success) {
         setFullNameValue(values.Name);
         onOpenChange?.(false);
         setShowSuccessAlert(true);
-        if (onUserCreated) {
-          onUserCreated();
-        }
+
+        if (onUserCreated) onUserCreated();
+
         form.reset({
           Name: "",
           loginname: "",
@@ -97,17 +97,13 @@ export default function Signup({
           email: "",
           password: ""
         });
-        setTimeout(() => {
-          setShowSuccessAlert(false);
-          // onOpenChange?.(false);
-        }, 5000);
+
+        setTimeout(() => setShowSuccessAlert(false), 5000);
       } else {
         console.error("Error creating user:", data);
         setFullNameValue(values.Name);
         setShowErrorAlert(true);
-        setTimeout(() => {
-          setShowErrorAlert(false);
-        }, 5000);
+        setTimeout(() => setShowErrorAlert(false), 5000);
       }
     } catch (error) {
       console.error("Error signing up:", error);
