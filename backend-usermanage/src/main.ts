@@ -45,7 +45,7 @@ async function bootstrap(): Promise<void> {
 
     app.use(cookieParser());
 
-    const port = process.env.PORT ?? 7777;
+    const port = process.env.PORT ?? 3000;
     await app.listen(port);
 
     console.log(`🚀 HTTPS Server is running on: https://localhost:${port}`);
@@ -77,7 +77,7 @@ async function bootstrap(): Promise<void> {
 
     app.use(cookieParser());
 
-    const port = process.env.PORT ?? 7777;
+    const port = process.env.PORT ?? 3000;
     await app.listen(port);
 
     console.log(`🚀 HTTP Server is running on: http://localhost:${port}`);
