@@ -26,7 +26,8 @@ export default function Login() {
   const [otpExpiresAt, setOtpExpiresAt] = useState<number | null>(null);
   const [disableSubmit, setDisableSubmit] = useState(false);
   const searchParams = useSearchParams();
-  const redirectPath = searchParams.get('redirect') || '/home';
+  const redirectParam = searchParams.get('redirect');
+  const redirectPath = redirectParam?.startsWith('/') ? redirectParam : '/home';
   
 
   useEffect(() => {

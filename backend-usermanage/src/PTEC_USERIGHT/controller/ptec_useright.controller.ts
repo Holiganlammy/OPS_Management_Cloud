@@ -29,6 +29,7 @@ import {
   Position,
   Section,
   User,
+  CreateUserResult,
 } from '../domain/model/ptec_useright.entity';
 import { Redis } from 'ioredis';
 import * as crypto from 'crypto';
@@ -277,18 +278,46 @@ export class AppController {
   @Post('/user/create')
   async createUser(@Body() createUser: CreateUserDto, @Res() res: Response) {
     try {
-      const result = await this.appService.createUser(createUser);
-      if (result.length > 0) {
-        res.status(200).send({
-          success: true,
-          user: result,
-        });
+      const result: CreateUserResult[] =
+        await this.appService.createUser(createUser);
+
+      if (result && result.length > 0) {
+        const status = result[0].status;
+
+        if (status === 'success') {
+          return res.status(200).json({
+            success: true,
+            message: result[0].message ?? 'User created successfully',
+            user: result[0],
+          });
+        }
+
+        if (status === 'duplicate') {
+          return res.status(409).json({
+            success: false,
+            message: result[0].message ?? 'User already exists',
+            user: result[0],
+            duplicate: true,
+          });
+        }
+
+        if (status === 'error') {
+          return res.status(500).json({
+            success: false,
+            message: result[0].message ?? 'Database error occurred',
+          });
+        }
       }
-    } catch (error) {
-      console.error('Error creating user:', error);
-      res.status(500).send({
+
+      return res.status(500).json({
         success: false,
-        message: 'Error creating user',
+        message: 'No response from stored procedure',
+      });
+    } catch (error: unknown) {
+      console.error('Error creating user:', error);
+      return res.status(500).json({
+        success: false,
+        message: error instanceof Error ? error.message : 'Error creating user',
       });
     }
   }

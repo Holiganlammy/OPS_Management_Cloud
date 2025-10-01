@@ -20,8 +20,6 @@ function handleError(err: any) {
       // Safe access to nested properties with fallbacks
       const errorData = err.response.data;
       const message = errorData?.message || "Bad Request";
-      
-      // Handle error details safely
       let errorText = "Something went wrong.";
       if (errorData?.error) {
         const code = errorData.error.code || "ERROR";
@@ -34,6 +32,9 @@ function handleError(err: any) {
         title: message,
         text: errorText
       });
+    }
+    else if (err.response?.status === 409 && err.response?.data?.duplicate === true) {
+      return;
     }
     else if (err.response?.status === 401) {
       error401();

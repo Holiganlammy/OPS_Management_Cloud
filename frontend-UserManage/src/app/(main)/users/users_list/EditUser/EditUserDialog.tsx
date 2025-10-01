@@ -324,7 +324,7 @@ export default function EditUserDialog({ user, open, onOpenChange, onUserUpdated
       {/* Success Toast Alert */}
       <SubmitSuccess
         showSuccessAlert={showSuccessAlert}
-        fullNameValue={user?.Fullname ?? ""}
+        fullNameValue={fullNameValue}
         setShowSuccessAlert={setShowSuccessAlert}
       />
       <SubmitFailed

@@ -150,7 +150,7 @@ export function DataTable<TData, TValue>({
 
    const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
       const value = event.target.value
-
+      table.setPageIndex(0)
       if (finalSearchKeys.length > 1) {
          setGlobalFilter(value)
       } else if (finalSearchKeys.length === 1) {

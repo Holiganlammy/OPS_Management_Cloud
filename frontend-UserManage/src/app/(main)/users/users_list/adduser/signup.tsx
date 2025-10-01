@@ -60,6 +60,7 @@ export default function Signup({
   const [fullNameValue, setFullNameValue] = useState("");
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
   const [showErrorAlert, setShowErrorAlert] = useState(false);
+  const [showDuplicateAlert, setShowDuplicateAlert] = useState(false);
   const form = useForm<SignupForm>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
@@ -105,8 +106,19 @@ export default function Signup({
         setShowErrorAlert(true);
         setTimeout(() => setShowErrorAlert(false), 5000);
       }
-    } catch (error) {
-      console.error("Error signing up:", error);
+    } catch (error: any) {
+      if (
+        error?.response?.status === 409 &&
+        error?.response?.data?.duplicate === true
+      ) {
+        setShowDuplicateAlert(true);
+        setTimeout(() => setShowDuplicateAlert(false), 5000);
+      } else {
+        console.error("Error signing up:", error);
+        setFullNameValue(values.Name);
+        setShowErrorAlert(true);
+        setTimeout(() => setShowErrorAlert(false), 5000);
+      }
     }
   };
   
@@ -288,6 +300,7 @@ export default function Signup({
       </Dialog>
       <SubmitSuccess showSuccessAlert={showSuccessAlert} setShowSuccessAlert={setShowSuccessAlert} fullNameValue={fullNameValue} />
       <SubmitFailed showErrorAlert={showErrorAlert} fullNameValue={fullNameValue} setShowErrorAlert={setShowErrorAlert} />
+      <SubmitFailed showErrorAlert={showDuplicateAlert} errorDuplicate={true} Usercode={form.getValues("loginname")} setShowErrorAlert={setShowDuplicateAlert} />
     </>
   )
 }

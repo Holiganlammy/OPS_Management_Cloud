@@ -48,7 +48,7 @@ export async function sendOtpWithGmailAPI(
   <div style="font-family: Arial, sans-serif; max-width: 400px; margin: 0 auto;">
     <div style="background-color: #f8f9fa; padding: 20px; text-align: center;">
       <img src="cid:logo@ptec" alt="PTEC Logo" 
-    style="width: 2000px; height: auto; margin: 0 auto 20px; display: block;" />
+    style="width: 200px; height: auto; margin: 0 auto 20px; display: block;" />
       <h1 style="color: #333; margin: 0;">Request OTP Login</h1>
     </div>
     <h2 style="color: #005BBB; text-align: center;">ระบบยืนยันตัวตน PTEC</h2>

@@ -54,3 +54,9 @@ export interface ForgetPasswordModel {
   user_id: number;
   fullname: string;
 }
+
+export interface CreateUserResult {
+  status: 'success' | 'duplicate' | 'error';
+  message?: string;
+  [key: string]: any; // สำหรับข้อมูล user อื่นๆ ที่อาจส่งกลับมา
+}

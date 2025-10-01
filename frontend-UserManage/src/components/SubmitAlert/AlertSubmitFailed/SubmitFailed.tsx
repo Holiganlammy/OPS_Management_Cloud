@@ -7,6 +7,8 @@ interface SubmitFailedProps {
   title?: string;
   message?: string;
   fullNameValue?: string;
+  Usercode?: string;
+  errorDuplicate?: boolean;
   position?: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
   autoHide?: boolean;
   autoHideDelay?: number;
@@ -14,7 +16,9 @@ interface SubmitFailedProps {
 
 export default function SubmitFailed({
     showErrorAlert, 
-    fullNameValue, 
+    fullNameValue,
+    errorDuplicate, 
+    Usercode,
     setShowErrorAlert,
     title = "เกิดข้อผิดพลาด!",
     message,
@@ -34,6 +38,8 @@ export default function SubmitFailed({
   const getDisplayMessage = () => {
     if (message) return message;
     if (fullNameValue) return `ไม่สามารถลงทะเบียนผู้ใช้ ${fullNameValue} ได้ กรุณาลองใหม่อีกครั้ง`;
+    if(errorDuplicate) return `ไม่สามารถลงทะเบียนผู้ใช้ ${Usercode} ได้ เนื่องจากมีข้อมูลซ้ำในระบบ`;
+    
     return "เกิดข้อผิดพลาดในการดำเนินการ";
   };
   // Auto hide functionality

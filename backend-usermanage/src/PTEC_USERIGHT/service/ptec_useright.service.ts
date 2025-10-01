@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import {
   ForgetPasswordModel,
   User,
+  CreateUserResult,
 } from '../domain/model/ptec_useright.entity';
 import { Branch } from '../domain/model/ptec_useright.entity';
 import { Department } from '../domain/model/ptec_useright.entity';
@@ -62,9 +63,9 @@ export class AppService {
     );
   }
 
-  async createUser(req: CreateUserDto) {
-    return this.dbManager.executeStoredProcedure(
-      `${databaseConfig.database}.dbo.User_Save`,
+  async createUser(req: CreateUserDto): Promise<CreateUserResult[]> {
+    return this.dbManager.executeStoredProcedure<CreateUserResult>(
+      `${databaseConfig.database}.dbo.User_Save_Cloud`,
       [
         { name: 'Name', type: sql.NVarChar(100), value: req.Name },
         { name: 'loginname', type: sql.NVarChar(20), value: req.loginname },
