@@ -95,11 +95,19 @@ export default function AssetsCountedListClient() {
         if (newValue === '') {
           const dataNAC: PeriodDescription[] = await getAutoDataAssetCounted(newValue);
           if (nac_type === "user") {
-            setListDescription(dataNAC.filter(res => {
-              return res.BranchID === userFetch.find(res => res.UserCode === session?.user.UserCode)?.BranchID ||
-                res.personID === userFetch.find(res => res.UserCode === session?.user.UserCode)?.UserCode ||
-                res.DepCode === userFetch.find(res => res.UserCode === session?.user.UserCode)?.DepCode;
-            }) || []);
+            // ใช้ users โดยตรงแทน userFetch เพราะ state ยังไม่ได้ update
+            console.log("userFetch:", session?.user);
+            console.log("users:", users);
+            const currentUser = users.find((u: { UserCode: string; }) => u.UserCode === session?.user.UserCode);
+            setListDescription(
+              dataNAC.filter(res => {
+                return (
+                  String(res.BranchID) === String(currentUser?.BranchID) ||
+                  String(res.personID) === String(currentUser?.UserCode) ||
+                  res.DepCode === currentUser?.DepCode
+                );
+              }) || []
+            );
           } else {
             setListDescription(dataNAC);
           }

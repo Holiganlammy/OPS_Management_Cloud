@@ -16,26 +16,31 @@ export const userColumns = (
   sections: Section[]
 ): ColumnDef<UserData>[] => [
     {
-      id: "select",
-      header: ({ table }) => (
-        <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && "indeterminate")
-          }
-          onCheckedChange={(value: boolean) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label="Select all"
-        />
-      ),
-      cell: ({ row }) => (
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value: boolean) => row.toggleSelected(!!value)}
-          aria-label="Select row"
-        />
-      ),
-      enableSorting: false,
-      enableHiding: false,
+        id: "select",
+        header: ({ table }) => (
+            <div className="flex justify-center items-center w-8">
+                <Checkbox
+                    checked={
+                        table.getIsAllPageRowsSelected() ||
+                        (table.getIsSomePageRowsSelected() && "indeterminate")
+                    }
+                    onCheckedChange={(value: boolean) => table.toggleAllPageRowsSelected(!!value)}
+                    aria-label="Select all"
+                />
+            </div>
+        ),
+        cell: ({ row }) => (
+            <div className="flex justify-center items-center w-8">
+                <Checkbox
+                    checked={row.getIsSelected()}
+                    onCheckedChange={(value: boolean) => row.toggleSelected(!!value)}
+                    aria-label="Select row"
+                />
+            </div>
+        ),
+        enableSorting: false,
+        enableHiding: false,
+        size: 40,
     },
     {
       accessorKey: "UserCode",
@@ -63,7 +68,6 @@ export const userColumns = (
       header: ({ column }) => {
         return (
           <Button
-            // variant="ghost"
             className="bg-zinc-700 hover:bg-zinc-700 cursor-pointer"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
@@ -74,8 +78,13 @@ export const userColumns = (
       },
       cell: ({ row }) => {
         const fullname = row.getValue("Fullname") as string
-        // แยกส่วน code ออกจากชื่อ (เช่น "PAB:Pison Anekboonyapirom" -> "Pison Anekboonyapirom")
-        const displayName = fullname.includes(':') ? fullname.split(':')[1] : fullname
+        let displayName = fullname
+
+        if (fullname.includes(":")) {
+          const [code, name] = fullname.split(":")
+          displayName = `${name.trim()} (${code.trim()})`
+        }
+
         return <div className="max-w-[200px] truncate">{displayName}</div>
       },
       meta: {

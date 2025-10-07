@@ -308,7 +308,10 @@ export default function MfaDialog({
                 รหัส OTP จะหมดอายุใน {Math.floor(remainingSeconds / 60) >= 1 ? `${Math.floor(remainingSeconds / 60)} นาที ${remainingSeconds % 60} วินาที` : `${remainingSeconds % 60} วินาที`}
               </p>
             )}
-            {remainingSeconds <= 240 && (
+            <p className="text-xs text-gray-500">
+              หากคุณไม่ได้รับรหัส OTP กรุณารอสักครู่ก่อนที่จะส่งรหัสใหม่
+            </p>
+            {remainingSeconds <= 270 && (
               <>
                 <button onClick={handleResendOTP} className="text-xs text-gray-700 hover:text-gray-900 underline transition-colors cursor-pointer">
                   ส่งรหัสใหม่อีกครั้ง

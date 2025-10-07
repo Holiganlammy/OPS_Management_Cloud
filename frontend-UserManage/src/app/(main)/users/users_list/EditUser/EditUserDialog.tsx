@@ -16,14 +16,14 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { useEffect, useState } from "react"
-import { Skeleton } from "@/components/ui/skeleton"
 import SubmitSuccess from "@/components/SubmitAlert/AlertSubmitSuccess/SubmitSuccess"
 import SubmitFailed from "@/components/SubmitAlert/AlertSubmitFailed/SubmitFailed"
 import dataConfig from '@/config/config';
 import client from '@/lib/axios/interceptors';
 
 const editSchema = z.object({
-  Name: z.string().min(2, "ชื่อต้องมีอย่างน้อย 2 ตัวอักษร"),
+  Firstname: z.string().min(2, "กรุณากรอกชื่อ"),
+  Lastname: z.string().min(2, "กรุณากรอกนามสกุล"),
   loginname: z.string().min(2, "รหัสผู้ใช้ต้องมีอย่างน้อย 2 ตัวอักษร"),
   branchid: z.string().min(1, "กรุณาเลือกสาขา"),
   department: z.string().min(1, "กรุณาเลือกแผนก"),
@@ -58,7 +58,8 @@ export default function EditUserDialog({ user, open, onOpenChange, onUserUpdated
   const form = useForm<EditForm>({
     resolver: zodResolver(editSchema),
     defaultValues: {
-      Name: "",
+      Firstname: "",
+      Lastname: "",
       loginname: "",
       branchid: "",
       department: "",
@@ -72,12 +73,9 @@ export default function EditUserDialog({ user, open, onOpenChange, onUserUpdated
 
   useEffect(() => {
     if (user && open) {
-      const displayName = user.Fullname.includes(':')
-        ? user.Fullname.split(':')[1].trim()
-        : user.Fullname;
-
       form.reset({
-        Name: displayName,
+        Firstname: user.fristName ?? 'null',
+        Lastname: user.lastName ?? 'null',
         loginname: user.UserCode,
         branchid: user.BranchID.toString(),
         department: user.DepID.toString(),
@@ -94,7 +92,8 @@ export default function EditUserDialog({ user, open, onOpenChange, onUserUpdated
     if (!user) return;
     setIsLoading(true);
     try {
-      const submitData = { ...values };
+      const Name = `${values.Firstname} ${values.Lastname}`;
+      const submitData = { ...values, Name };
       if (!submitData.password || submitData.password.toString() === "") {
         delete submitData.password;
       }
@@ -104,7 +103,7 @@ export default function EditUserDialog({ user, open, onOpenChange, onUserUpdated
       const data = await response.data;
 
       if (response.status === 200) {
-        setFullNameValue(values.Name);
+        setFullNameValue(`${values.Firstname} ${values.Lastname}`);
         onOpenChange(false);
         setShowSuccessAlert(true);
         if (onUserUpdated) {
@@ -115,7 +114,7 @@ export default function EditUserDialog({ user, open, onOpenChange, onUserUpdated
         }, 5000);
       } else {
         console.error("Failed to update user:", data);
-        setFullNameValue(values.Name);
+        setFullNameValue(`${values.Firstname} ${values.Lastname}`);
         setShowErrorAlert(true);
         setTimeout(() => {
           setShowErrorAlert(false);
@@ -143,15 +142,30 @@ export default function EditUserDialog({ user, open, onOpenChange, onUserUpdated
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
-                {/* Name */}
+                {/* Firstname */}
                 <FormField
                   control={form.control}
-                  name="Name"
+                  name="Firstname"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>ชื่อ-นามสกุล</FormLabel>
+                      <FormLabel>ชื่อ</FormLabel>
                       <FormControl>
-                        <Input placeholder="กรอกชื่อ-นามสกุล" {...field} />
+                        <Input placeholder="กรุณา กรอกชื่อ" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Lastname */}
+                <FormField
+                  control={form.control}
+                  name="Lastname"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>นามสกุล</FormLabel>
+                      <FormControl>
+                        <Input placeholder="กรุณา กรอกนามสกุล" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -282,13 +296,13 @@ export default function EditUserDialog({ user, open, onOpenChange, onUserUpdated
                     </FormItem>
                   )}
                 />
-
-                {/* Password */}
+              </div>
+              {/* Password */}
                 <FormField
                   control={form.control}
                   name="password"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="max-w-md">
                       <FormLabel>รหัสผ่านใหม่</FormLabel>
                       <FormControl>
                         <Input
@@ -301,10 +315,12 @@ export default function EditUserDialog({ user, open, onOpenChange, onUserUpdated
                       <p className="text-xs text-gray-500 mt-1">
                         หากไม่ต้องการเปลี่ยนรหัสผ่าน ให้เว้นว่างไว้
                       </p>
+                      <p className="text-xs text-red-500 mt-1">
+                        รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร, มีอักษรตัวใหญ่อย่างน้อย 1 ตัว และมีอักขระพิเศษอย่างน้อย 1 ตัว (เช่น !@# หรือ _-)
+                      </p>
                     </FormItem>
                   )}
                 />
-              </div>
 
               {/* Footer buttons */}
               <DialogFooter>

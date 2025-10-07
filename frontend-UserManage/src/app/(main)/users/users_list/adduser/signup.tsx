@@ -22,7 +22,8 @@ import dataConfig from "@/config/config"
 import client from "@/lib/axios/interceptors"
 
 const signupSchema = z.object({
-  Name: z.string().min(2, "ชื่อ-นามสกุลต้องมีอย่างน้อย 2 ตัวอักษร"),
+  Firstname: z.string().min(2, "ชื่อ ต้องมีอย่างน้อย 2 ตัวอักษร"),
+  Lastname: z.string().min(2, "นามสกุล ต้องมีอย่างน้อย 2 ตัวอักษร"),
   loginname: z.string().min(2, "ชื่อผู้ใช้ต้องมีอย่างน้อย 2 ตัวอักษร"),
   branchid: z.string().min(1, "ต้องระบุสาขา"),
   department: z.string().min(1, "ต้องระบุแผนก"),
@@ -32,7 +33,8 @@ const signupSchema = z.object({
   email: z.string().email("รูปแบบอีเมลไม่ถูกต้อง"),
   password: z.string()
     .min(8, "รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร")
-    .regex(/[!@#$%^&*(),.?":{}|<>]/, "รหัสผ่านต้องมีอักขระพิเศษอย่างน้อย 1 ตัว")
+    .regex(/[A-Z]/, "รหัสผ่านต้องมีอักษรตัวใหญ่อย่างน้อย 1 ตัว")
+    .regex(/[!@#$%^&*(),.?":{}|<>_\-]/, "รหัสผ่านต้องมีอักขระพิเศษอย่างน้อย 1 ตัว (เช่น !@# หรือ _-)")
 });
 type SignupForm = z.infer<typeof signupSchema>
 
@@ -64,7 +66,8 @@ export default function Signup({
   const form = useForm<SignupForm>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
-      Name: "",
+      Firstname: "",
+      Lastname: "",
       loginname: "",
       branchid: "",
       department: "",
@@ -78,17 +81,22 @@ export default function Signup({
 
   const onSubmit = async (values: SignupForm) => {
     try {
-      const response = await client.post("/user/create", values, { headers: dataConfig().header });
+      const dataToSend = {
+        ...values,
+        Name: `${values.Firstname} ${values.Lastname}`
+      };
+      const response = await client.post("/user/create", dataToSend, { headers: dataConfig().header });
       const data = await response.data;
       if (data.success) {
-        setFullNameValue(values.Name);
+        setFullNameValue(`${values.Firstname} ${values.Lastname}`);
         onOpenChange?.(false);
         setShowSuccessAlert(true);
 
         if (onUserCreated) onUserCreated();
 
         form.reset({
-          Name: "",
+          Firstname: "",
+          Lastname: "",
           loginname: "",
           branchid: "",
           department: "",
@@ -102,7 +110,7 @@ export default function Signup({
         setTimeout(() => setShowSuccessAlert(false), 5000);
       } else {
         console.error("Error creating user:", data);
-        setFullNameValue(values.Name);
+        setFullNameValue(`${values.Firstname} ${values.Lastname}`);
         setShowErrorAlert(true);
         setTimeout(() => setShowErrorAlert(false), 5000);
       }
@@ -115,7 +123,7 @@ export default function Signup({
         setTimeout(() => setShowDuplicateAlert(false), 5000);
       } else {
         console.error("Error signing up:", error);
-        setFullNameValue(values.Name);
+        setFullNameValue(`${values.Firstname} ${values.Lastname}`);
         setShowErrorAlert(true);
         setTimeout(() => setShowErrorAlert(false), 5000);
       }
@@ -138,12 +146,26 @@ export default function Signup({
                 {/* Name */}
                 <FormField
                   control={form.control}
-                  name="Name"
+                  name="Firstname"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>ชื่อ-นามสกุล</FormLabel>
+                      <FormLabel>ชื่อ</FormLabel>
                       <FormControl>
-                        <Input placeholder="กรุณากรอกชื่อ-นามสกุล" {...field} />
+                        <Input placeholder="กรุณากรอกชื่อ" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="Lastname"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>นามสกุล</FormLabel>
+                      <FormControl>
+                        <Input placeholder="กรุณากรอก นามสกุล" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -266,25 +288,24 @@ export default function Signup({
                     </FormItem>
                   )}
                 />
-
+              </div>
                 {/* Password */}
                 <FormField
                   control={form.control}
                   name="password"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="max-w-sm">
                       <FormLabel>รหัสผ่าน</FormLabel>
                       <FormControl>
                         <Input placeholder="กรุณากรอกรหัสผ่าน" type="password" {...field} />
                       </FormControl>
                       <FormMessage />
                       <p className="text-xs text-gray-500 mt-1">
-                        รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษรและมีอักขระพิเศษอย่างน้อย 1 ตัว
+                        รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร, มีอักษรตัวใหญ่อย่างน้อย 1 ตัว และมีอักขระพิเศษอย่างน้อย 1 ตัว (เช่น !@# หรือ _-)
                       </p>
                     </FormItem>
                   )}
                 />
-              </div>
               {/* Footer buttons */}
               <DialogFooter>
                 <DialogClose asChild>

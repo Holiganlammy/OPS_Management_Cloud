@@ -68,6 +68,8 @@ export class AppService {
       `${databaseConfig.database}.dbo.User_Save_Cloud`,
       [
         { name: 'Name', type: sql.NVarChar(100), value: req.Name },
+        { name: 'Firstname', type: sql.NVarChar(50), value: req.Firstname },
+        { name: 'Lastname', type: sql.NVarChar(50), value: req.Lastname },
         { name: 'loginname', type: sql.NVarChar(20), value: req.loginname },
         { name: 'branchid', type: sql.Int(), value: req.branchid },
         { name: 'department', type: sql.NVarChar(20), value: req.department },
@@ -82,6 +84,8 @@ export class AppService {
 
   async editUser(id: string, req: EditUserDto) {
     const params = [
+      { name: 'Firstname', type: sql.NVarChar(50), value: req.Firstname },
+      { name: 'Lastname', type: sql.NVarChar(50), value: req.Lastname },
       { name: 'Name', type: sql.NVarChar(100), value: req.Name },
       { name: 'loginname', type: sql.NVarChar(20), value: req.loginname },
       { name: 'branchid', type: sql.Int(), value: req.branchid },
@@ -101,7 +105,7 @@ export class AppService {
     }
 
     return this.dbManager.executeStoredProcedure(
-      `${databaseConfig.database}.dbo.User_Save`,
+      `${databaseConfig.database}.dbo.User_Save_Cloud`,
       params,
     );
   }
