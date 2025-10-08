@@ -122,9 +122,12 @@ export class AppController {
       }
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
       const key = `mfa:${user.UserCode}`;
+      // console.log('Generated OTP for key on login:', key);
       const ttl = 300; // 5 นาที
 
       await this.redis.setex(key, ttl, otp);
+      // const savedOtp = await this.redis.get(key);
+      // console.log(`Verify saved OTP on login: ${savedOtp}`);
       try {
         await sendOtpWithGmailAPI(user.Email, otp, user);
       } catch (emailError) {
@@ -156,7 +159,7 @@ export class AppController {
   @Public()
   @Post('/resend-otp')
   async resendOtp(@Body() body: { usercode: string }, @Res() res: Response) {
-    const usercode = body.usercode;
+    const usercode = body.usercode.toUpperCase();
 
     const resultLogin = await this.appService.getUsersFromProcedure(usercode);
     const user = resultLogin[0];
@@ -205,9 +208,12 @@ export class AppController {
     @Req() req: Request,
   ) {
     const { usercode, otpCode, trustDevice } = body;
-    const key = `mfa:${usercode}`;
+    const key = `mfa:${usercode.toUpperCase()}`;
+    // console.log('Verifying OTP for key on verify-otp:', key);
 
     const storedOtp = await this.redis.get(key);
+    // console.log('Stored OTP:', storedOtp);
+    // console.log('Provided OTP:', otpCode);
     if (!storedOtp || storedOtp !== otpCode) {
       return res.status(401).json({
         success: false,
