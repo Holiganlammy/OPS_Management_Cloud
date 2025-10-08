@@ -20,6 +20,7 @@ export interface User {
   EmpUpper: string;
   EmpUpperID: number;
   password: number;
+  role_id: number;
 }
 
 export interface Branch {

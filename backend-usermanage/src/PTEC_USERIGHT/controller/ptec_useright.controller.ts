@@ -108,7 +108,7 @@ export class AppController {
           const payload = {
             userId: user.UserID,
             username: user.UserCode,
-            role: user.PositionCode,
+            role: user.role_id, // 1.Admin 2.User 3.Moderator FA 4.Moderator SM 5.Guest 6.Moderrator Reservation Sys 7.Mockup User
           };
 
           const token = this.appService['jwtService'].sign(payload);

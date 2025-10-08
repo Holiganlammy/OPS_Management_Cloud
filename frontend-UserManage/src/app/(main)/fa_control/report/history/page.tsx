@@ -11,11 +11,14 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import HistoryAssetsTable from "./components/HistoryAssets/HistoryAssetsTable/AssetsTable";
 import HistoryFilterForm from "./components/HistoryAssets/HistoryFilterForm";
+import { getAutoData } from "../list_asset_counted/service/documentService";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 
 export default function HistoryAssets() {
   const { data: session, status } = useSession({
-  required: false,
-});
+    required: false,
+  });
   const searchParams = useSearchParams();
   const nac_type = searchParams.get("type") || "user";
 
@@ -29,55 +32,76 @@ export default function HistoryAssets() {
     nacdtl_assetsCode: [],
     name: [],
     source_approve_userid: [],
-    });
-    const handleFiltersChange = (newFilters: {
-        nac_code?: string[] | undefined;
-        nacdtl_assetsCode?: string[] | undefined;
-        source_approve_userid?: string[] | undefined;
-        name?: string[] | undefined;
-    }) => {
+  });
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+
+  const handleFiltersChange = (newFilters: {
+    nac_code?: string[] | undefined;
+    nacdtl_assetsCode?: string[] | undefined;
+    source_approve_userid?: string[] | undefined;
+    name?: string[] | undefined;
+  }) => {
     setFilters({
-        nac_code: newFilters.nac_code || [],
-        nacdtl_assetsCode: newFilters.nacdtl_assetsCode || [],
-        name: newFilters.name || [],
-        source_approve_userid: newFilters.source_approve_userid || [],
+      nac_code: newFilters.nac_code || [],
+      nacdtl_assetsCode: newFilters.nacdtl_assetsCode || [],
+      name: newFilters.name || [],
+      source_approve_userid: newFilters.source_approve_userid || [],
     });
-    };
-    const fetchHistoryAssetsData = useCallback(async () => {
+  };
+  const fetchHistoryAssetsData = useCallback(async () => {
     if (!session?.user?.UserCode) return;
 
+    setIsLoading(true);
     const fetchedAssets = await fetchHistoryAssets(session.user.UserCode);
     setAssets(fetchedAssets);        // สำหรับ Filter dropdown
     setAllAssets(fetchedAssets);     // สำหรับ DataTable filtering
     setIsChecking(false);
-    }, [session?.user?.UserCode]);
+    setIsLoading(false);
+  }, [session?.user?.UserCode]);
 
   useEffect(() => {
     fetchHistoryAssetsData();
   }, [fetchHistoryAssetsData]);
 
-    const filteredAssets = useMemo(() => {
+  const filteredAssets = useMemo(() => {
     return allAssets.filter((asset) => {
-        const matchNACCode = filters.nac_code?.length
+
+      const FilterType = typeString ? asset.typeCode === typeString : true;
+
+      const FilterNACCode = filters.nac_code?.length
         ? filters.nac_code.includes(asset.nac_code)
         : true;
 
-        const matchAssetCode = filters.nacdtl_assetsCode?.length
+      const FilterAssetCode = filters.nacdtl_assetsCode?.length
         ? filters.nacdtl_assetsCode.includes(asset.nacdtl_assetsCode)
         : true;
 
-        const matchAssetName = filters.name?.length
+      const FilterAssetName = filters.name?.length
         ? filters.name.includes(asset.name)
         : true;
 
-        const matchApprover = filters.source_approve_userid?.length
+      const FilterApprover = filters.source_approve_userid?.length
         ? filters.source_approve_userid.includes(asset.source_approve_userid)
         : true;
 
-        return matchNACCode && matchAssetCode && matchAssetName && matchApprover;
+      return FilterType && FilterNACCode && FilterAssetCode && FilterAssetName && FilterApprover;
     });
-    }, [allAssets, filters]);
-    
+  }, [allAssets, filters, typeString]);
+
+  useEffect(() => {
+    fetchHistoryAssetsData();
+    (async () => {
+      try {
+        const dataOther = await getAutoData();
+        const groupData = dataOther?.find((d) => d.key === "typeGroup")?.data || [];
+        setTypeGroup(groupData);
+      } catch (err) {
+        console.error("Error loading typeGroup:", err);
+      }
+    })();
+  }, [fetchHistoryAssetsData])
+
   if (isChecking) {
     return <PageLoading />;
   }
@@ -102,7 +126,7 @@ export default function HistoryAssets() {
                   variant="outline"
                   size="sm"
                   className="text-xs sm:text-sm cursor-pointer"
-                  // onClick={() => exportToExcel(filteredAssets)}
+                // onClick={() => exportToExcel(filteredAssets)}
                 >
                   <Download className="h-4 w-4 mr-2" /> Export
                 </Button>
@@ -117,37 +141,53 @@ export default function HistoryAssets() {
                 </Button>
               </div>
               <div className="flex flex-wrap gap-2 justify-end">
-                  <HistoryFilterForm
-                      filters={filters}
-                      filteredAssets={assets}
-                      onFiltersChange={handleFiltersChange}
-                  />
+                <HistoryFilterForm
+                  filters={filters}
+                  filteredAssets={assets}
+                  onFiltersChange={handleFiltersChange}
+                />
               </div>
             </div>
           </CardHeader>
 
           <CardContent className="p-0">
             <div className="border-t border-gray-200 dark:border-gray-700 p-4">
-              <div className="flex flex-wrap gap-2 justify-start">
-                <RadioGroup
-                  value={typeString ?? ""}
-                  onValueChange={(value) => setTypeString(value)}
-                  className="flex flex-wrap gap-3"
-                >
-                  {typeGroup.map((type) => (
-                    <div key={type.typeGroupID} className="flex items-center gap-2">
-                      <RadioGroupItem value={type.typeCode} id={`radio-${type.typeCode}`} />
-                      <Label htmlFor={`radio-${type.typeCode}`} className="px-2">
-                        {type.typeCode} : {type.typeName}
-                      </Label>
-                    </div>
-                  ))}
-                </RadioGroup>
+              <div className="w-full bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800">
+                <div className="max-w-7xl mx-auto px-6 py-4">
+                  <Tabs value={typeString ?? ""} onValueChange={setTypeString}>
+                    <TabsList className="inline-flex w-full flex-wrap gap-1 bg-gray-50 dark:bg-gray-900 rounded-lg p-1 border border-gray-200 dark:border-gray-800">
+                      {typeGroup.map((type) => (
+                        <TabsTrigger
+                          key={type.typeGroupID}
+                          value={type.typeCode}
+                          className={cn(
+                            "flex-1 min-w-fit px-6 py-3 rounded-md text-sm font-medium transition-all duration-200",
+                            "data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800",
+                            "data-[state=active]:text-gray-900 dark:data-[state=active]:text-white",
+                            "data-[state=active]:shadow-sm",
+                            "data-[state=inactive]:text-gray-600 dark:data-[state=inactive]:text-gray-400",
+                            "hover:text-gray-900 dark:hover:text-gray-200",
+                            "border border-transparent data-[state=active]:border-gray-200 dark:data-[state=active]:border-gray-700"
+                          )}
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs font-semibold tracking-wider text-gray-500 dark:text-gray-500 data-[state=active]:text-primary">
+                              {type.typeCode}
+                            </span>
+                            <span className="text-gray-300 dark:text-gray-700">|</span>
+                            <span className="font-medium">{type.typeName}</span>
+                          </div>
+                        </TabsTrigger>
+                      ))}
+                    </TabsList>
+                  </Tabs>
+                </div>
               </div>
 
               <HistoryAssetsTable
                 data={filteredAssets}
                 fetchHistoryAssets={fetchHistoryAssetsData}
+                Loading={isLoading}
               />
             </div>
           </CardContent>

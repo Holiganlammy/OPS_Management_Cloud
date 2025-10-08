@@ -92,7 +92,7 @@ export default function HistoryFilterForm({
             <FilterForms
               field={field}
               filteredAssets={filteredAssets}
-              fieldName="ชื่อทรัพย์สิน"
+              fieldName="หัวข้อรายการ"
               fieldID="name"
             />
           )}

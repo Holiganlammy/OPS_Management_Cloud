@@ -42,7 +42,7 @@ export class AppService {
 
   async getUserLogin(req: LoginDto) {
     return this.dbManager.executeStoredProcedure(
-      `${databaseConfig.database}.dbo.User_Login_OPS`,
+      `${databaseConfig.database}.dbo.User_Login_Cloud`,
       [
         { name: 'loginname', type: sql.NVarChar(50), value: req.loginname },
         { name: 'password', type: sql.NVarChar(50), value: req.password },

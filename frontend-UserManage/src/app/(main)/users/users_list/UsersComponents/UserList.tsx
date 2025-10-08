@@ -73,7 +73,6 @@ export default function UserListClient() {
     checkAuth()
   }, [fetchUsers, router])
 
-  // ลบ useEffect ที่ใช้ setTimeout ออก เพราะไม่จำเป็น
   // useEffect(() => {
   //   setIsLoading(true)
   //   const timeout = setTimeout(() => {
@@ -121,28 +120,25 @@ export default function UserListClient() {
   }, [userFetch, filters]);
 
   const handleFilterSelect = useCallback((filterType: string) => {
-    setIsLoading(true) // เซ็ต loading เมื่อเปลี่ยน filter
+    setIsLoading(true) 
     setFilters(prev => ({ ...prev, filter: filterType }));
-    // จำลอง delay สำหรับ UI
     setTimeout(() => setIsLoading(false), 300)
   }, []);
 
   const clearAllFilters = useCallback(() => {
-    setIsLoading(true) // เซ็ต loading เมื่อล้าง filter
+    setIsLoading(true)
     setFilters({
       position: "",
       department: "",
       branch: "",
       filter: "",
     });
-    // จำลอง delay สำหรับ UI
     setTimeout(() => setIsLoading(false), 300)
   }, []);
 
   const handleFiltersChange = useCallback((newFilters: typeof filters) => {
-    setIsLoading(true) // เซ็ต loading เมื่อเปลี่ยน filter
+    setIsLoading(true)
     setFilters(newFilters);
-    // จำลอง delay สำหรับ UI
     setTimeout(() => setIsLoading(false), 300)
   }, []);
 
@@ -150,14 +146,12 @@ export default function UserListClient() {
   const handlePageChange = useCallback((newPage: number) => {
     setIsLoading(true)
     setPagination(prev => ({ ...prev, pageIndex: newPage }))
-    // จำลอง delay สำหรับ UI
     setTimeout(() => setIsLoading(false), 500)
   }, [])
 
   const handlePageSizeChange = useCallback((newSize: number) => {
     setIsLoading(true)
     setPagination(prev => ({ ...prev, pageSize: newSize, pageIndex: 0 }))
-    // จำลอง delay สำหรับ UI
     setTimeout(() => setIsLoading(false), 500)
   }, [])
 
@@ -231,10 +225,10 @@ export default function UserListClient() {
                     Export
                   </Button>
 
-                  <Button 
-                    className="text-xs sm:text-sm" 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    className="text-xs sm:text-sm"
+                    variant="outline"
+                    size="sm"
                     onClick={fetchUsers}
                     disabled={isLoading}
                   >
@@ -242,9 +236,9 @@ export default function UserListClient() {
                     Refresh
                   </Button>
 
-                  <Button 
-                    onClick={() => setOpenCreate(true)} 
-                    size="sm" 
+                  <Button
+                    onClick={() => setOpenCreate(true)}
+                    size="sm"
                     className="bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm text-white"
                     disabled={isLoading}
                   >

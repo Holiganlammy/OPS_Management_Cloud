@@ -19,11 +19,6 @@ import UserTable from "../../AssetsCountedTable/AssetsCountedTable";
 import FilterForm from "./FilterForm";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
-import { Label } from "@/components/ui/label"
-import {
-  RadioGroup,
-  RadioGroupItem,
-} from "@/components/ui/radio-group"
 import { exportToExcel } from "../../service/export";
 import { Check, ChevronsUpDown } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -41,7 +36,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { getAutoData as FetchData } from "@/app/(main)/fa_control/forms/service/faService";
-
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export default function AssetsCountedListClient() {
   const { data: session, status } = useSession({
@@ -261,21 +256,36 @@ export default function AssetsCountedListClient() {
 
           <CardContent className="p-0">
             <div className="border-t border-gray-200 dark:border-gray-700 p-4">
-              <div className="flex flex-wrap gap-2 justify-start">
-                <RadioGroup
-                  value={typeString ?? ""}
-                  onValueChange={(value) => setTypeString(value)}
-                  className="flex flex-wrap gap-3"
-                >
-                  {typeGroup.map((type) => (
-                    <div key={type.typeGroupID} className="flex items-center gap-2">
-                      <RadioGroupItem value={type.typeCode} id={`radio-${type.typeCode}`} />
-                      <Label htmlFor={`radio-${type.typeCode}`} className="px-2">
-                        {type.typeCode} : {type.typeName}
-                      </Label>
-                    </div>
-                  ))}
-                </RadioGroup>
+              <div className="w-full bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800">
+                <div className="max-w-7xl mx-auto px-6 py-4">
+                  <Tabs value={typeString ?? ""} onValueChange={setTypeString}>
+                    <TabsList className="inline-flex w-full flex-wrap gap-1 bg-gray-50 dark:bg-gray-900 rounded-lg p-1 border border-gray-200 dark:border-gray-800">
+                      {typeGroup.map((type) => (
+                        <TabsTrigger
+                          key={type.typeGroupID}
+                          value={type.typeCode}
+                          className={cn(
+                            "flex-1 min-w-fit px-6 py-3 rounded-md text-sm font-medium transition-all duration-200",
+                            "data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800",
+                            "data-[state=active]:text-gray-900 dark:data-[state=active]:text-white",
+                            "data-[state=active]:shadow-sm",
+                            "data-[state=inactive]:text-gray-600 dark:data-[state=inactive]:text-gray-400",
+                            "hover:text-gray-900 dark:hover:text-gray-200",
+                            "border border-transparent data-[state=active]:border-gray-200 dark:data-[state=active]:border-gray-700 cursor-pointer",
+                          )}
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs font-semibold tracking-wider text-gray-500 dark:text-gray-500 data-[state=active]:text-primary">
+                              {type.typeCode}
+                            </span>
+                            <span className="text-gray-300 dark:text-gray-700">|</span>
+                            <span className="font-medium">{type.typeName}</span>
+                          </div>
+                        </TabsTrigger>
+                      ))}
+                    </TabsList>
+                  </Tabs>
+                </div>
               </div>
               <UserTable
                 data={filteredAssets}

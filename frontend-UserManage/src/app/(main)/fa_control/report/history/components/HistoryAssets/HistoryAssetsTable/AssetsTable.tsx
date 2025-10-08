@@ -7,9 +7,10 @@ import { HistoryAssetColumns } from "./Column";
 interface Props {
   data: HistoryAssetType[];
   fetchHistoryAssets: () => void
+  Loading?: boolean;
 }
 
-export default function HistoryAssetsTable({ data, fetchHistoryAssets }: Props) {
+export default function HistoryAssetsTable({ data ,fetchHistoryAssets, Loading }: Props) {
   const columns = useMemo(
     () => HistoryAssetColumns(fetchHistoryAssets, data),
     [fetchHistoryAssets, data]
@@ -26,6 +27,7 @@ export default function HistoryAssetsTable({ data, fetchHistoryAssets }: Props) 
         data={data}
         searchKeys={["nac_code", "nacdtl_assetsCode", "nacdtl_assetsName", "nacdtl_assetsPrice", "OwnerID", "nacdtl_date_asset","account_aprrove_id"]}
         searchPlaceholder="ค้นหา..."
+        Loading={Loading}
       />
     </div>
   )
