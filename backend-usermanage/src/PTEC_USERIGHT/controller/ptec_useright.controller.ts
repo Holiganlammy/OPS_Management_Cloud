@@ -230,7 +230,7 @@ export class AppController {
     const payload = {
       userId: user.UserID,
       username: user.UserCode,
-      role: user.PositionCode,
+      role: user.role_id,
     };
     const token = this.appService['jwtService'].sign(payload);
     if (trustDevice === true || trustDevice === 'true') {

@@ -35,9 +35,7 @@ export default function SiteHeader() {
   const hasFetchedMenus = useRef(false);
 
   const handleLogout = () => {
-    signOut({ redirect: false }).then(() => {
-      window.location.href = process.env.BACK_LOGIN!
-    })
+    signOut({ redirect: false })
   }
 
   const toggleSidebar = () => {

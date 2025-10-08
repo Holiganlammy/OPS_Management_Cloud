@@ -1,5 +1,15 @@
 import { getToken } from 'next-auth/jwt';
 import { NextRequest, NextResponse } from 'next/server';
+import { jwtDecode } from 'jwt-decode';
+
+// Type สำหรับ decoded JWT payload
+interface JWTPayload {
+  userId: number;
+  username: string;
+  role: number;
+  iat?: number;
+  exp?: number;
+}
 
 export async function middleware(req: NextRequest) {
   const token = await getToken({
@@ -9,7 +19,6 @@ export async function middleware(req: NextRequest) {
 
   const { pathname, searchParams } = req.nextUrl;
 
-  // ✅ ถ้ายังไม่ได้ login
   if (
     !token &&
     !['/login', '/forget_password', '/reset-password'].includes(pathname)
@@ -20,45 +29,44 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // ✅ ตรวจสอบ role และ type
-  if (token) {
-    const roleId = Number(token.role_id);
-    const typeInUrl = searchParams.get('type');
-    
-    // 🔒 กำหนด role ที่เป็น user และ admin
-    const userRoles = [2, 5, 7];
-    const adminRoles = [1, 3, 4, 6];
-    
-    // 🔍 เช็คว่า role_id เป็น user หรือ admin
-    let correctType: string;
-    
-    if (userRoles.includes(roleId)) {
-      correctType = 'user';
-    } else if (adminRoles.includes(roleId)) {
-      correctType = 'admin';
-    } else {
-      // ถ้า role_id ไม่อยู่ในทั้งสองกลุ่ม (กรณีมี role_id ใหม่)
-      correctType = 'user'; // default เป็น user
-    }
+  if (token && token.access_token) {
+    try {
+      const decoded = jwtDecode<JWTPayload>(token.access_token as string);
+      const roleId = Number(decoded.role);
+      
+      const typeInUrl = searchParams.get('type');
+      const userRoles = [2, 5, 7];
+      const adminRoles = [1, 3, 4, 6];
+      
+      let correctType: string;
+      
+      if (userRoles.includes(roleId)) {
+        correctType = 'user';
+      } else if (adminRoles.includes(roleId)) {
+        correctType = 'admin';
+      } else {
+        correctType = 'user'; // default เป็น user
+      }
 
-    console.log('🔍 Debug:', { roleId, typeInUrl, correctType });
+      console.log('🔍 Debug:', { roleId, typeInUrl, correctType });
 
-    // 🚫 ถ้า type ใน URL ไม่ตรงกับ role_id → บังคับ redirect ไปที่ type ที่ถูกต้อง
-    if (typeInUrl && typeInUrl !== correctType) {
-      const url = new URL(req.url);
-      url.searchParams.set('type', correctType);
-      return NextResponse.redirect(url);
-    }
+      if (typeInUrl && typeInUrl !== correctType) {
+        const url = new URL(req.url);
+        url.searchParams.set('type', correctType);
+        return NextResponse.redirect(url);
+      }
 
-    // ✅ ถ้าไม่มี type ให้เติมตาม role_id
-    if (!typeInUrl) {
-      const url = new URL(req.url);
-      url.searchParams.set('type', correctType);
-      return NextResponse.redirect(url);
+      if (!typeInUrl) {
+        const url = new URL(req.url);
+        url.searchParams.set('type', correctType);
+        return NextResponse.redirect(url);
+      }
+    } catch (error) {
+      console.error('❌ Error decoding JWT:', error);
+      return NextResponse.redirect(new URL('/login', req.url));
     }
   }
 
-  // ✅ ผ่านทุกอย่าง → ไปต่อ
   return NextResponse.next();
 }
 
