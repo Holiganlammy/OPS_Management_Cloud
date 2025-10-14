@@ -61,3 +61,28 @@ export interface CreateUserResult {
   message?: string;
   [key: string]: any; // สำหรับข้อมูล user อื่นๆ ที่อาจส่งกลับมา
 }
+
+export interface CheckUserPermission {
+  HasPermission: number;
+  RoleID: number;
+  RoleName: string;
+  Message: string;
+  SystemCode: string;
+}
+
+export interface UserWithRoles {
+  UserID: number;
+  UserCode: string;
+  FristName: string;
+  LastName: string;
+  Email: string;
+  ImgProfile: string;
+  RoleID: number;
+  BranchID: number;
+  DepID: number;
+  RoleName: string;
+  BranchName: string;
+  DepartmentName: string;
+  Actived: number;
+  PasswordExpire: Date;
+}

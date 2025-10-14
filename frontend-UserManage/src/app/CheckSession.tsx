@@ -1,43 +1,63 @@
-"use client"
-import PageLoading from "@/components/PageLoading"
-import { useSession, signOut } from "next-auth/react"
-import { useRouter } from "next/navigation"
-import { useEffect, useRef } from "react"
+// app/CheckSession.tsx
+"use client";
 
-export function CheckSession({ children, mustCheck }: { children: React.ReactNode, mustCheck: boolean }) {
-  const { data: session, status } = useSession({ 
-    required: false,
-    onUnauthenticated() {
-      // ✅ Callback เมื่อ unauthenticated
-      if (mustCheck) {
-        window.location.href = '/login'
-      }
-    }
-  })
-  const router = useRouter()
-  const hasRedirected = useRef(false)
+import PageLoading from "@/components/PageLoading";
+import { useSession, signOut } from "next-auth/react";
+import { useRouter, usePathname } from "next/navigation";
+import { useEffect, useRef } from "react";
+
+// ⭐ กำหนด public routes ที่นี่
+const PUBLIC_ROUTES = ['/login', '/forget_password', '/reset-password'];
+
+interface CheckSessionProps {
+  children: React.ReactNode;
+}
+
+export function CheckSession({ children }: CheckSessionProps) {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const pathname = usePathname(); // ⭐ ย้ายมาที่นี่
+  const hasRedirected = useRef(false);
+
+  // ⭐ คำนวณ mustCheck ที่นี่
+  const mustCheck = !PUBLIC_ROUTES.includes(pathname);
 
   useEffect(() => {
-    // ✅ เช็คว่า status เป็น unauthenticated
-    if (mustCheck && status === "unauthenticated" && !hasRedirected.current) {
-      hasRedirected.current = true
+    // ถ้าไม่ต้อง check ให้ข้ามไป
+    if (!mustCheck) {
+      hasRedirected.current = false;
+      return;
+    }
+
+    // ถ้า loading ให้รอก่อน
+    if (status === "loading") return;
+
+    // ถ้า unauthenticated ให้ redirect
+    if (status === "unauthenticated" && !hasRedirected.current) {
+      hasRedirected.current = true;
+      console.log("⚠️ Session not found, redirecting to login...");
+      
+      // Clear session และ redirect
       signOut({ redirect: false }).then(() => {
-        router.push("/login")
-      })
+        router.push("/login");
+      });
     }
 
+    // Reset flag เมื่อ authenticated
     if (status === "authenticated") {
-      hasRedirected.current = false
+      hasRedirected.current = false;
     }
-  }, [mustCheck, status, router])
+  }, [mustCheck, status, router]);
 
+  // แสดง loading เมื่อ checking
   if (mustCheck && status === "loading") {
-    return <PageLoading />
+    return <PageLoading />;
   }
 
+  // ถ้า unauthenticated แสดง loading (กำลัง redirect)
   if (mustCheck && status === "unauthenticated") {
-    return null
+    return <PageLoading />;
   }
 
-  return <>{children}</>
+  return <>{children}</>;
 }

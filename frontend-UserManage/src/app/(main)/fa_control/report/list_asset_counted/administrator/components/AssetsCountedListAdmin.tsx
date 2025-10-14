@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Download,
   RefreshCw,
+  ShieldAlert,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,9 +17,9 @@ import {
 import PageLoading from "@/components/PageLoading";
 import { getAutoDataAssetCounted, getAutoData } from "../../service/documentService";
 import UserTable from "../../AssetsCountedTable/AssetsCountedTable";
-import FilterForm from "./FilterForm";
+import FilterForm from "../../components/AssetsCountedComponents/FilterForm";
 import { useSession } from "next-auth/react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { exportToExcel } from "../../service/export";
 import { Check, ChevronsUpDown } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -37,6 +38,7 @@ import {
 } from "@/components/ui/popover"
 import { getAutoData as FetchData } from "@/app/(main)/fa_control/forms/service/faService";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function AssetsCountedListClient() {
   const { data: session, status } = useSession({
@@ -44,7 +46,8 @@ export default function AssetsCountedListClient() {
 });
   const searchParams = useSearchParams();
   const nac_type = searchParams.get("type") || "user";
-
+  const router = useRouter();
+  const ALLOWED_ROLES = [1, 3, 4, 6];
   const [isChecking, setIsChecking] = useState<boolean>(true);
   const [typeGroup, setTypeGroup] = useState<Assets_TypeGroup[]>([]);
   const [listDescription, setListDescription] = useState<PeriodDescription[]>([]);
@@ -78,46 +81,35 @@ export default function AssetsCountedListClient() {
       filter: "",
     };
   });
+   // ตรวจสอบสิทธิ์
+  useEffect(() => {
+    if (status === "loading") return; // รอ loading
+
+    if (status === "unauthenticated") {
+      router.push("/login"); // ไม่ได้ login
+      return;
+    }
+
+    if (session?.user?.role_id && !ALLOWED_ROLES.includes(session.user.role_id)) {
+      router.push("/unauthorized"); // ไม่มีสิทธิ์
+    }
+  }, [session, status, router]);
 
 const fetchAssetsCounted = useCallback(async () => {
-  if (session && nac_type) {
+  if (session) {
     try {
       const dataUser = await FetchData(session?.user.UserCode);
       console.log("🔍 Debug dataUser:", dataUser);
 
-      // ✅ ดึงสินทรัพย์ของ user คนนี้
       const myAssets = dataUser?.find((d) => d.key === "assets")?.data || [];
       console.log("✅ My assets:", myAssets);
       setUserFetch(myAssets);
 
-      // ✅ โหลด typeGroup ไว้ใช้ใน Tabs ด้านบน
       const dataOther = await getAutoData();
       setTypeGroup(dataOther?.find((d) => d.key === "typeGroup")?.data || []);
 
-      // ✅ โหลดรายการรอบตรวจนับทั้งหมด
       const dataNAC: PeriodDescription[] = await getAutoDataAssetCounted(newValue);
-
-      if (nac_type === "user") {
-        // ------------------------------
-        // ✅ Filter รอบตรวจนับเฉพาะของตัวเอง
-        // ------------------------------
-        const filteredRounds = dataNAC.filter((round) => {
-          const branchMatch =
-            round.BranchID === session?.user.branchid ||
-            round.BranchID === myAssets[0]?.BranchID; // เผื่อ user ไม่มี branch ใน session
-          const personMatch =
-            round.personID === session?.user.UserCode ||
-            myAssets.some((a) => a.OwnerID === session?.user.depid); // เผื่อ user ไม่มี depid ใน session
-
-          return branchMatch || personMatch;
-        });
-        console.log("👤 User BranchID:", session?.user.branchid)
-        console.log(session?.user.depid)
-        console.log("🎯 Filtered rounds:", filteredRounds);
-        setListDescription(filteredRounds);
-      } else {
-        setListDescription(dataNAC);
-      }
+      setListDescription(dataNAC);
 
       setIsChecking(false);
     } catch (error) {
@@ -125,12 +117,12 @@ const fetchAssetsCounted = useCallback(async () => {
       setIsChecking(false);
     }
   }
-}, [session, nac_type, newValue]);
+}, [session, newValue]);
 
   useEffect(() => {
     setIsChecking(true);
     fetchAssetsCounted();
-  }, [nac_type]);
+  }, [nac_type]);       
 
   const filteredAssets = useMemo(() => {
     return assetsFetch.filter((asset) => {
@@ -168,7 +160,19 @@ const fetchAssetsCounted = useCallback(async () => {
   if (isChecking) {
     return <PageLoading />;
   }
-
+  if (session?.user?.role_id && !ALLOWED_ROLES.includes(session.user.role_id)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <Alert variant="destructive" className="max-w-md">
+          <ShieldAlert className="h-4 w-4" />
+          <AlertTitle>ไม่มีสิทธิ์เข้าถึง</AlertTitle>
+          <AlertDescription>
+            คุณไม่มีสิทธิ์ในการเข้าถึงหน้านี้ กรุณาติดต่อผู้ดูแลระบบ
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-12">
       <div className="container mx-auto px-4 py-8 space-y-8">

@@ -1,5 +1,5 @@
 // types.ts หรืออยู่ใน component ก็ได้
-export interface MenuItem {
+interface MenuItem {
   id: number;
   name: string;
   path: string;

@@ -3,7 +3,6 @@ import NextAuth from "next-auth";
 declare module "next-auth" {
   interface Session {
     user: {
-      [x: string]: string;
       UserID: number;
       UserCode: string;
       fristName?: string;
@@ -13,6 +12,7 @@ declare module "next-auth" {
       img_profile?: string;
       role_id?: number;
       branchid?: number;
+      depid?: number;
     };
   }
   interface User {
@@ -26,6 +26,7 @@ declare module "next-auth" {
     role_id?: number;
     branchid?: number;
     accessTokenExpires?: number;
+    depid?:number;
   }
 
   interface JWT { 

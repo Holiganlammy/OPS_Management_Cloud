@@ -1,5 +1,6 @@
+// app/layout.tsx
 import "./globals.css";
-import { AppWrapper } from "./AppWrapper";
+import { Providers } from "./AppWrapper";
 import { Geist, Geist_Mono } from "next/font/google";
 import type { Metadata } from "next";
 
@@ -24,11 +25,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className="overflow-hidden">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <AppWrapper>
-          {children}
-        </AppWrapper>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

@@ -142,3 +142,19 @@ export class resetPasswordDTO {
   @IsNotEmpty()
   confirmPassword: string;
 }
+
+export class CheckUserPermissionDto {
+  @IsString()
+  @IsNotEmpty()
+  UserCode: string;
+
+  @IsString()
+  @IsNotEmpty()
+  SystemCode: string;
+}
+
+export class GetUserWithRolesDto {
+  @IsString()
+  @IsNotEmpty()
+  UserCode: string;
+}

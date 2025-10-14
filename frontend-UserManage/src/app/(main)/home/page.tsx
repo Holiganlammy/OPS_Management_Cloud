@@ -24,14 +24,14 @@ const HomeComponent = () => {
     };
   }, []);
   return (
-    <div className="min-h-screen bg-white text-gray-900">
+    <div className="w-full bg-white text-gray-900 px-6 py-12">
       {/* Header */}
-      <header className="absolute top-0 left-0 right-0 p-6 flex justify-between items-center z-10">
-        <div className="pt-24 text-sm text-gray-500 font-mono">{currentTime}</div>
+      <header className="mb-6 p-6 flex justify-between items-center">
+        <div className="text-sm text-gray-500 font-mono">{currentTime}</div>
       </header>
 
       {/* Main Content */}
-      <div className="flex flex-col items-center justify-center min-h-screen px-6">
+      <div className="flex flex-col items-center justify-center px-6">
         {/* Main Title */}
         <div className="text-center mb-16">
           <h1 className="text-6xl md:text-7xl font-light text-black mb-6 tracking-tight">
@@ -95,9 +95,6 @@ const HomeComponent = () => {
         </div>
       </div>
 
-      {/* Decorative Elements */}
-      <div className="absolute top-1/2 left-8 w-px h-24 bg-gray-200 hidden md:block"></div>
-      <div className="absolute top-1/2 right-8 w-px h-24 bg-gray-200 hidden md:block"></div>
       
       {/* Subtle Grid Pattern */}
       <div className="absolute inset-0 opacity-5 pointer-events-none">

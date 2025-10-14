@@ -16,6 +16,8 @@ import { Request, Response } from 'express';
 import { AppService } from '../service/ptec_useright.service';
 import {
   ChangPasswordDto,
+  CheckUserPermissionDto,
+  GetUserWithRolesDto,
   LoginDto,
   resetPasswordDTO,
   VerifyOtpDto,
@@ -126,8 +128,8 @@ export class AppController {
       const ttl = 300; // 5 นาที
 
       await this.redis.setex(key, ttl, otp);
-      // const savedOtp = await this.redis.get(key);
-      // console.log(`Verify saved OTP on login: ${savedOtp}`);
+      const savedOtp = await this.redis.get(key);
+      console.log(`Verify saved OTP on login: ${savedOtp}`);
       try {
         await sendOtpWithGmailAPI(user.Email, otp, user);
       } catch (emailError) {
@@ -638,6 +640,48 @@ export class AppController {
       return res.status(500).send({
         success: false,
         message: 'Internal server error',
+      });
+    }
+  }
+
+  @Public()
+  @Get('/CheckUserPermission')
+  async CheckUserPermission(
+    @Query() req: CheckUserPermissionDto,
+    @Res() res: Response,
+  ) {
+    try {
+      const result = await this.appService.CheckUserPermission(req);
+      res.status(200).send({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      console.error('Error fetching users with roles:', error);
+      res.status(500).send({
+        success: false,
+        message: 'Error fetching users with roles',
+      });
+    }
+  }
+
+  @Public()
+  @Get('/GetUserWithRoles')
+  async getUserWithRoles(
+    @Query() req: GetUserWithRolesDto,
+    @Res() res: Response,
+  ) {
+    try {
+      const result = await this.appService.getUserWithRoles(req);
+      res.status(200).send({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      console.error('Error fetching users with roles:', error);
+      res.status(500).send({
+        success: false,
+        message: 'Error fetching users with roles',
       });
     }
   }

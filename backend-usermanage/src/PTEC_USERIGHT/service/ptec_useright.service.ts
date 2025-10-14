@@ -3,6 +3,8 @@ import {
   ForgetPasswordModel,
   User,
   CreateUserResult,
+  CheckUserPermission,
+  UserWithRoles,
 } from '../domain/model/ptec_useright.entity';
 import { Branch } from '../domain/model/ptec_useright.entity';
 import { Department } from '../domain/model/ptec_useright.entity';
@@ -12,8 +14,10 @@ import { databaseConfig } from '../config/database.config';
 import * as sql from 'mssql';
 import {
   ChangPasswordDto,
+  CheckUserPermissionDto,
   ForgetPasswordDto,
   GetTrustedDeviceDto,
+  GetUserWithRolesDto,
   LoginDto,
   resetPasswordDTO,
   TrustDeviceDto,
@@ -267,5 +271,24 @@ export class AppService {
       success: row?.success === 1,
       samePassword: row?.samePassword ?? null,
     };
+  }
+
+  async CheckUserPermission(
+    req: CheckUserPermissionDto,
+  ): Promise<CheckUserPermission[]> {
+    return this.dbManager.executeStoredProcedure(
+      `${databaseConfig.database}.dbo.CheckUserPermission`,
+      [
+        { name: 'UserCode', type: sql.NVarChar(50), value: req.UserCode },
+        { name: 'SystemCode', type: sql.NVarChar(50), value: req.SystemCode },
+      ],
+    );
+  }
+
+  async getUserWithRoles(req: GetUserWithRolesDto): Promise<UserWithRoles[]> {
+    return this.dbManager.executeStoredProcedure(
+      `${databaseConfig.database}.dbo.GetUserWithRoles_Cloud`,
+      [{ name: 'UserCode', type: sql.NVarChar(50), value: req.UserCode }],
+    );
   }
 }
