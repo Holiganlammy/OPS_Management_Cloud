@@ -27,6 +27,7 @@ export default function Login() {
   const [disableSubmit, setDisableSubmit] = useState(false);
   const searchParams = useSearchParams();
   const redirectParam = searchParams.get('redirect');
+  const isExpired = searchParams.get('expired') === 'true';
   const redirectPath = redirectParam?.startsWith('/') ? redirectParam : '/home';
   
 
@@ -120,6 +121,20 @@ export default function Login() {
             Sign in to NAC Systems , User Management System , Reservation System
           </p>
         </div>
+
+        {/* Token Expired Alert */}
+        {isExpired && (
+          <Alert
+            variant="destructive"
+            className="mb-6 border-yellow-200 bg-yellow-50"
+          >
+            <AlertCircleIcon className="h-4 w-4 text-yellow-600" />
+            <AlertTitle className="text-yellow-800">เซสชันหมดอายุ</AlertTitle>
+            <AlertDescription className="text-yellow-700">
+              เซสชันของคุณหมดอายุแล้ว กรุณาเข้าสู่ระบบใหม่อีกครั้ง
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Error Alert */}
         {error && (

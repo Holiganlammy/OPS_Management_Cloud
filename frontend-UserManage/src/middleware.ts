@@ -1,79 +1,117 @@
-import { getToken } from 'next-auth/jwt';
-import { NextRequest, NextResponse } from 'next/server';
+import { getToken } from "next-auth/jwt";
+import { NextRequest, NextResponse } from "next/server";
+
+const secret = process.env.NEXTAUTH_SECRET;
+
+// ✅ Cache menus ชั่วคระว (optional - ใช้ Map แทน Redis)
+const menuCache = new Map<number, { paths: string[]; timestamp: number }>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 นาที
+
+async function fetchUserAccessiblePaths(userId: number, token: string = "") {
+  // ✅ ตรวจสอบ cache ก่อน
+  const cached = menuCache.get(userId);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    console.log(`[RBAC] 📦 Using cached paths for user ${userId}`);
+    return cached.paths;
+  }
+
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/Apps_List_Menu`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ UserID: userId }),
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      console.error(`[RBAC] ❌ Fetch menu fail for user ${userId}, status: ${res.status}`);
+      return [];
+    }
+
+    const menus = await res.json();
+    const accessiblePaths = (menus || [])
+      .filter((m: any) => m.path !== null && m.path !== undefined && m.path !== "")
+      .map((m: any) => m.path);
+
+    // ✅ เก็บใน cache
+    menuCache.set(userId, {
+      paths: accessiblePaths,
+      timestamp: Date.now()
+    });
+
+    console.log(`[RBAC] ✅ User ${userId} accessible paths (${accessiblePaths.length}):`, accessiblePaths);
+    return accessiblePaths;
+  } catch (err) {
+    console.error("[RBAC] Middleware fetch error:", err);
+    return [];
+  }
+}
+
+function isPathAllowed(requestPath: string, allowedPaths: string[]): boolean {
+  const cleanRequestPath = requestPath.split("?")[0];
+
+  for (const allowedPath of allowedPaths) {
+    const cleanAllowedPath = allowedPath.split("?")[0];
+
+    if (cleanRequestPath === cleanAllowedPath || 
+        cleanRequestPath.startsWith(cleanAllowedPath + "/")) {
+      return true;
+    }
+  }
+
+  return false;
+}
 
 export async function middleware(req: NextRequest) {
-  const token = await getToken({
-    req,
-    secret: process.env.NEXTAUTH_SECRET,
-  });
+  const token = await getToken({ req, secret });
+  const { pathname } = req.nextUrl;
 
-  const { pathname, search } = req.nextUrl;
+  // ✅ หน้าที่ไม่ต้อง login - ตรวจเร็วที่สุด
+  const publicPaths = ["/login", "/forget_password", "/reset-password", "/unauthorized", "/"];
+  
+  if (publicPaths.some(path => pathname === path || pathname.startsWith(path + "/"))) {
+    return NextResponse.next();
+  }
 
-  if (!token && pathname !== '/login' && pathname !== '/forget_password' && pathname !== '/reset-password') {
-    const redirectTo = `${pathname}${search}`;
-    const loginUrl = new URL(`/login`, req.url);
-    loginUrl.searchParams.set('redirect', redirectTo);
+  // ✅ ไม่มี token → redirect ทันที
+  if (!token) {
+    const loginUrl = new URL("/login", req.url);
+    loginUrl.searchParams.set("redirect", pathname);
+    loginUrl.searchParams.set("expired", "true");
     return NextResponse.redirect(loginUrl);
+  }
+
+  const userId = token.UserID || token.userid || token.sub;
+
+  if (!userId) {
+    return NextResponse.redirect(new URL("/unauthorized", req.url));
+  }
+
+  // ✅ ดึง path (จาก cache ถ้ามี)
+  const allowedPaths = await fetchUserAccessiblePaths(Number(userId), String(token.access_token || ""));
+
+  if (allowedPaths.length === 0) {
+    return NextResponse.redirect(new URL("/unauthorized", req.url));
+  }
+
+  const isAllowed = isPathAllowed(pathname, allowedPaths);
+
+  if (!isAllowed) {
+    console.warn(`[AUDIT] ❌ User ${userId} DENIED access to ${pathname}`);
+    return NextResponse.redirect(new URL("/unauthorized", req.url));
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/menu/:path*', '/home/:path*', '/users/:path*'],
+  matcher: [
+    "/users/:path*",
+    "/fa_control/:path*",
+    "/smart/:path*",
+    "/reservations/:path*",
+  ],
 };
-
-
-// // middleware.ts
-// import { getToken } from "next-auth/jwt";
-// import { withAuth } from "next-auth/middleware";
-// import { NextRequest, NextResponse } from 'next/server';
-// import { jwtDecode } from 'jwt-decode';
-
-// interface JWTPayload {
-//   userId: number;
-//   username: string;
-//   role: number;
-//   iat?: number;
-//   exp?: number;
-// }
-// export default withAuth(
-//   async function middleware(req :NextRequest) {
-//     const token = await getToken({
-//       req,
-//       secret: process.env.NEXTAUTH_SECRET,
-//     });
-    
-//     const path = req.nextUrl.pathname;
-//     if (token && token.access_token) {
-//       const decoded = jwtDecode<JWTPayload>(token.access_token as string);
-//       const roleId = Number(decoded.role);
-
-//       const ALLOWED_ADMIN_ROLES = [1, 3, 4, 6];
-
-
-//       if (path.includes("/administrator")) {
-//         if (!token?.role_id || !ALLOWED_ADMIN_ROLES.includes(roleId)) {
-//           console.warn(
-//             `[AUDIT] Unauthorized admin access attempt by user ${token?.sub} (role: ${token?.role_id}) to ${path}`
-//           );
-//           return NextResponse.redirect(new URL("/unauthorized", req.url));
-//         }
-//       }
-//     }
-
-//     return NextResponse.next();
-//   },
-//   {
-//     callbacks: {
-//       authorized: ({ token }) => !!token, // ต้อง login ก่อน
-//     },
-//   }
-// );
-
-// // Match ทุก path ที่มี /administrator
-// export const config = {
-//   matcher: [
-//     "/:path*/administrator/:path*",  // ตรง pattern นี้จะครอบคลุมทุก path ที่มี /administrator
-//   ],
-// };

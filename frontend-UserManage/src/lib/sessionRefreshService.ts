@@ -18,9 +18,9 @@ class SessionRefreshService {
 
     // First refresh after 5 seconds
     setTimeout(() => {
-      console.log("🔄 First refresh");
+      console.log("🔄 Loading New Session");
       this.refresh();
-    }, 5000);
+    }, 1000);
 
     // Then every 5 minutes
     this.intervalId = setInterval(() => {

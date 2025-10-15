@@ -88,12 +88,12 @@ const HomeComponent = () => {
       </div>
 
       {/* Bottom Section */}
-      <div className="absolute bottom-0 left-0 right-0 p-6">
+      {/* <div className="bottom-0 p-6">
         <div className="flex justify-center items-center text-sm text-gray-500">
           <div></div>
           <div>© 2025 Purethai All rights reserved</div>
         </div>
-      </div>
+      </div> */}
 
       
       {/* Subtle Grid Pattern */}

@@ -70,7 +70,7 @@ export default function NacListClient() {
         setTypeGroup(dataOther?.find((d: { key: string }) => d.key === "typeGroup")?.data || []);
         setNacStatus(dataOther?.find((d: { key: string }) => d.key === "nacStatus")?.data || []);
 
-        const dataNAC = await getAutoDataNAC(session.user.UserCode);
+        const dataNAC = await getAutoDataNAC(session.user.UserCode, 'user');
         const list = dataNAC?.find((d: { key: string }) => d.key === nac_type)?.data || [];
         setNacFetch(list);
       } catch (error) {

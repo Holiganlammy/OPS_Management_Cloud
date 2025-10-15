@@ -40,9 +40,9 @@ export async function getAutoData() {
   }
 }
 
-export async function getAutoDataNAC(usercode: string) {
-  const cacheKey = `autoDataNAC_${usercode}`;
-  const cacheTimeKey = `autoDataNAC_time_${usercode}`;
+export async function getAutoDataNAC(usercode: string, role: 'user' | 'admin' | 'moderator') {
+  const cacheKey = `autoDataNAC_${usercode}_${role}`;
+  const cacheTimeKey = `autoDataNAC_time_${usercode}_${role}`;
 
   const cached = sessionStorage.getItem(cacheKey);
   const cachedTime = sessionStorage.getItem(cacheTimeKey);
@@ -54,24 +54,23 @@ export async function getAutoDataNAC(usercode: string) {
     }
   }
 
-  const urls = {
-    user: '/FA_Control_Select_MyNAC',
+  // ✅ กำหนด mapping ระหว่าง role กับ API endpoint
+  const apiMap: Record<string, string> = {
     admin: '/FA_Control_Select_MyNAC_Approve',
+    moderator: '/FA_Control_Select_MyNAC_Approve', // ใช้ endpoint เดียวกับ admin
+    user: '/FA_Control_Select_MyNAC',
   };
 
+  const url = apiMap[role] || apiMap['user'];
+
   try {
-    const response = await Promise.all(
-      Object.entries(urls).map(async ([key, url]) => {
-        const res = await client.post(
-          dataConfig().http + url,
-          { usercode },
-          { method: 'POST', headers: dataConfig().header }
-        );
-        return { key, data: res.data };
-      })
+    const res = await client.post(
+      dataConfig().http + url,
+      { usercode },
+      { headers: dataConfig().header }
     );
 
-    // cache result
+    const response = [{ key: role, data: res.data }];
     sessionStorage.setItem(cacheKey, JSON.stringify(response));
     sessionStorage.setItem(cacheTimeKey, Date.now().toString());
 

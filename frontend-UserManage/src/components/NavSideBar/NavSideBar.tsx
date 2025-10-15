@@ -43,6 +43,7 @@ import { usePathname } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import Image from "next/image"
 import Purethai from "@/image/SHWJSE6g_400x400.jpg";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 interface MenuItem {
   id: number;
@@ -149,7 +150,7 @@ export default function SiteHeader({ children }: SiteHeaderProps) {
                 transition={{ duration: 0.15 }}
                 className="flex items-center justify-center"
               >
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-purple-600 overflow-hidden">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-black overflow-hidden">
                   <Image 
                     src={Purethai} 
                     alt="Logo" 
@@ -167,7 +168,7 @@ export default function SiteHeader({ children }: SiteHeaderProps) {
                 transition={{ duration: 0.15 }}
                 className="flex items-center gap-3 flex-1 min-w-0"
               >
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-purple-600 overflow-hidden">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-black overflow-hidden">
                   <Image 
                     src={Purethai} 
                     alt="Logo" 
@@ -195,22 +196,36 @@ export default function SiteHeader({ children }: SiteHeaderProps) {
             )}
             <div className="space-y-1">
               {/* ⭐ Home Link */}
-              <Link href="/">
-                <Button
-                  variant="ghost"
-                  className={clsx(
-                    "w-full h-9 transition-colors",
-                    isCollapsed ? "justify-center px-0" : "justify-start gap-2",
-                    pathname === "/" 
-                      ? "bg-gray-800 text-white" 
-                      : "text-gray-400 hover:text-white hover:bg-gray-800"
-                  )}
-                >
-                  <Home className="h-4 w-4 shrink-0" />
-                  {!isCollapsed && <span className="text-sm">Home</span>}
-                </Button>
-              </Link>
+              <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link href="/">
+                      <Button
+                        variant="ghost"
+                        className={clsx(
+                          "w-full h-9 transition-colors",
+                          isCollapsed ? "justify-center px-0" : "justify-start gap-2",
+                          pathname === "/" 
+                            ? "bg-gray-800 text-white" 
+                            : "text-gray-400 hover:text-white hover:bg-gray-800"
+                        )}
+                      >
+                        <Home className="h-4 w-4 shrink-0" />
+                        {!isCollapsed && <span className="text-sm">Home</span>}
+                      </Button>
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent 
+                    side="right" 
+                    className="bg-gray-900 text-white border-gray-800"
+                    // ⭐ แสดง Tooltip เฉพาะตอนพับ หรือลบ condition นี้ถ้าต้องการแสดงเสมอ
+                  >
+                    <p>Home</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
 
+              {/* Menu Items */}
               {session &&
                 menuTree
                   .sort((a, b) => a.order_no - b.order_no)
