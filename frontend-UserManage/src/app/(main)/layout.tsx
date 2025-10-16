@@ -30,7 +30,7 @@
 //         return
 //       }
 
-//       // ⭐ เช็ค token error
+//       //  เช็ค token error
 //       if (session?.error === "TokenExpired") {
 //         console.log("[AUTH] Token expired, logging out")
 //         await signOut({ redirect: true, callbackUrl: "/login" })
@@ -76,7 +76,7 @@
 //           router.replace("/unauthorized")
 //         }
 //       } catch (error: any) {
-//         // ⭐ ถ้า API return 401 → interceptor จะ logout ให้
+//         //  ถ้า API return 401 → interceptor จะ logout ให้
 //         console.error("Error checking access:", error)
         
 //         // ถ้าไม่ใช่ 401 ให้ไป unauthorized

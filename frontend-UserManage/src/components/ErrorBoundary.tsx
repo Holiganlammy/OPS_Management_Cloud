@@ -14,8 +14,8 @@ interface ErrorBoundaryProps {
 }
 
 export class ErrorBoundary extends React.Component<
-  ErrorBoundaryProps,  // ⭐ Props type
-  ErrorBoundaryState   // ⭐ State type
+  ErrorBoundaryProps,  // Props type
+  ErrorBoundaryState   // State type
 > {
   constructor(props: ErrorBoundaryProps) {
     super(props);

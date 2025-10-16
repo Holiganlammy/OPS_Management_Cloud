@@ -5,8 +5,6 @@ import PageLoading from "@/components/PageLoading";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
-
-// ⭐ กำหนด public routes ที่นี่
 const PUBLIC_ROUTES = ['/login', '/forget_password', '/reset-password'];
 
 interface CheckSessionProps {
@@ -16,10 +14,9 @@ interface CheckSessionProps {
 export function CheckSession({ children }: CheckSessionProps) {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const pathname = usePathname(); // ⭐ ย้ายมาที่นี่
+  const pathname = usePathname();
   const hasRedirected = useRef(false);
 
-  // ⭐ คำนวณ mustCheck ที่นี่
   const mustCheck = !PUBLIC_ROUTES.includes(pathname);
 
   useEffect(() => {
@@ -29,7 +26,6 @@ export function CheckSession({ children }: CheckSessionProps) {
       return;
     }
 
-    // ถ้า loading ให้รอก่อน
     if (status === "loading") return;
 
     // ถ้า unauthenticated ให้ redirect

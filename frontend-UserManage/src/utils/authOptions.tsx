@@ -52,7 +52,7 @@ export const authOptions: AuthOptions = {
               role_id: user.role_id,
               branchid: user.branchid,
               depid: user.depid,
-              accessTokenExpires: Date.now() + 60 * 60 * 1000,
+              // accessTokenExpires: Date.now() + 10 * 1000,
             };
           }
 
@@ -114,24 +114,24 @@ export const authOptions: AuthOptions = {
         token.role_id = user.role_id;
         token.branchid = user.branchid;
         token.depid = user.depid;
-        token.accessTokenExpires = Date.now() + 60 * 60 * 1000;
+        // token.accessTokenExpires = Date.now() + 10 * 1000;
       }
 
-      // ⭐ เมื่อมีการเรียก update() จาก client
+      //  เมื่อมีการเรียก update() จาก client
       if (trigger === "update" && token.UserCode) {
         try {
           console.log("🔄 Refreshing user data from backend...");
-          
           const response = await fetch(
-            `${API_URL}/GetUserWithRoles?UserCode=${token.UserCode}`,
+            `${process.env.Localhost_API}/GetUserWithRoles?UserCode=${token.UserCode}`,
             {
               method: "GET",
               headers: {
                 "Content-Type": "application/json",
+                Authorization: `Bearer ${token.access_token}`,
               },
+              cache: 'no-store'
             }
           );
-
           if (response.ok) {
             const result = await response.json();
             

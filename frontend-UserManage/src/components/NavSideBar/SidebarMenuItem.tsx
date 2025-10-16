@@ -50,7 +50,7 @@ export function SidebarMenuItem({
     }
   }
 
-  // ⭐ Content ของปุ่ม
+  //  Content ของปุ่ม
   const buttonContent = (
     <Button
       variant="ghost"
@@ -105,7 +105,7 @@ export function SidebarMenuItem({
               )}
             </div>
           </TooltipTrigger>
-          {/* ⭐ แสดง Tooltip */}
+          {/*  แสดง Tooltip */}
           <TooltipContent 
             side="right" 
             className="bg-gray-900 text-white border-gray-800"

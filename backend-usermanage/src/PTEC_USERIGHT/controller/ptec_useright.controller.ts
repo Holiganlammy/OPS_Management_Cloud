@@ -644,7 +644,6 @@ export class AppController {
     }
   }
 
-  @Public()
   @Get('/CheckUserPermission')
   async CheckUserPermission(
     @Query() req: CheckUserPermissionDto,
@@ -665,7 +664,6 @@ export class AppController {
     }
   }
 
-  @Public()
   @Get('/GetUserWithRoles')
   async getUserWithRoles(
     @Query() req: GetUserWithRolesDto,

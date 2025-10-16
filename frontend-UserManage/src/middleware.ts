@@ -1,14 +1,15 @@
+// middleware.ts
 import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
 
+export const runtime = 'nodejs';
+
 const secret = process.env.NEXTAUTH_SECRET;
 
-// ✅ Cache menus ชั่วคระว (optional - ใช้ Map แทน Redis)
 const menuCache = new Map<number, { paths: string[]; timestamp: number }>();
-const CACHE_TTL = 5 * 60 * 1000; // 5 นาที
+const CACHE_TTL = 5 * 60 * 1000;
 
 async function fetchUserAccessiblePaths(userId: number, token: string = "") {
-  // ✅ ตรวจสอบ cache ก่อน
   const cached = menuCache.get(userId);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
     console.log(`[RBAC] 📦 Using cached paths for user ${userId}`);
@@ -16,7 +17,7 @@ async function fetchUserAccessiblePaths(userId: number, token: string = "") {
   }
 
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/Apps_List_Menu`, {
+    const res = await fetch(`${process.env.Localhost_API}/Apps_List_Menu`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -28,15 +29,22 @@ async function fetchUserAccessiblePaths(userId: number, token: string = "") {
 
     if (!res.ok) {
       console.error(`[RBAC] ❌ Fetch menu fail for user ${userId}, status: ${res.status}`);
+      
+      // 401 = token หมดอายุ
+      if (res.status === 401) {
+        console.error(`[AUTH] ❌ Token expired for user ${userId}`);
+        return null; // return null เพื่อบอกว่า token หมดอายุ
+      }
+      
       return [];
     }
 
     const menus = await res.json();
+    
     const accessiblePaths = (menus || [])
       .filter((m: any) => m.path !== null && m.path !== undefined && m.path !== "")
       .map((m: any) => m.path);
 
-    // ✅ เก็บใน cache
     menuCache.set(userId, {
       paths: accessiblePaths,
       timestamp: Date.now()
@@ -56,9 +64,15 @@ function isPathAllowed(requestPath: string, allowedPaths: string[]): boolean {
   for (const allowedPath of allowedPaths) {
     const cleanAllowedPath = allowedPath.split("?")[0];
 
-    if (cleanRequestPath === cleanAllowedPath || 
-        cleanRequestPath.startsWith(cleanAllowedPath + "/")) {
+    if (cleanRequestPath === cleanAllowedPath) {
       return true;
+    }
+
+    if (cleanAllowedPath.endsWith("/*")) {
+      const basePath = cleanAllowedPath.slice(0, -2);
+      if (cleanRequestPath === basePath || cleanRequestPath.startsWith(basePath + "/")) {
+        return true;
+      }
     }
   }
 
@@ -69,14 +83,12 @@ export async function middleware(req: NextRequest) {
   const token = await getToken({ req, secret });
   const { pathname } = req.nextUrl;
 
-  // ✅ หน้าที่ไม่ต้อง login - ตรวจเร็วที่สุด
   const publicPaths = ["/login", "/forget_password", "/reset-password", "/unauthorized", "/"];
   
   if (publicPaths.some(path => pathname === path || pathname.startsWith(path + "/"))) {
     return NextResponse.next();
   }
 
-  // ✅ ไม่มี token → redirect ทันที
   if (!token) {
     const loginUrl = new URL("/login", req.url);
     loginUrl.searchParams.set("redirect", pathname);
@@ -90,8 +102,17 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL("/unauthorized", req.url));
   }
 
-  // ✅ ดึง path (จาก cache ถ้ามี)
   const allowedPaths = await fetchUserAccessiblePaths(Number(userId), String(token.access_token || ""));
+
+  // ถ้า allowedPaths = null แปลว่า token หมดอายุ
+  if (allowedPaths === null) {
+    console.log("[AUTH] ❌ Token expired (401 from API)");
+    const loginUrl = new URL("/login", req.url);
+    loginUrl.searchParams.set("redirect", pathname);
+    loginUrl.searchParams.set("expired", "true");
+    loginUrl.searchParams.set("reason", "api_401");
+    return NextResponse.redirect(loginUrl);
+  }
 
   if (allowedPaths.length === 0) {
     return NextResponse.redirect(new URL("/unauthorized", req.url));
@@ -100,10 +121,12 @@ export async function middleware(req: NextRequest) {
   const isAllowed = isPathAllowed(pathname, allowedPaths);
 
   if (!isAllowed) {
-    console.warn(`[AUDIT] ❌ User ${userId} DENIED access to ${pathname}`);
+    console.warn(`[RBAC] ❌ User ${userId} DENIED access to ${pathname}`);
+    console.warn(`[RBAC] Allowed paths:`, allowedPaths);
     return NextResponse.redirect(new URL("/unauthorized", req.url));
   }
 
+  console.log(`[RBAC] ✅ User ${userId} ALLOWED to access ${pathname}`);
   return NextResponse.next();
 }
 

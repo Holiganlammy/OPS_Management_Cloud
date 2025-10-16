@@ -14,13 +14,13 @@ class SessionRefreshService {
 
     this.isInitialized = true;
     this.updateFn = updateFunction;
-    console.log("✅ Session refresh service started (5 min)");
+    console.log("✅ Session refresh service started (2 seconds then every 15 minutes)");
 
-    // First refresh after 5 seconds
+    // First refresh after 2 seconds
     setTimeout(() => {
       console.log("🔄 Loading New Session");
       this.refresh();
-    }, 1000);
+    }, 2000);
 
     // Then every 5 minutes
     this.intervalId = setInterval(() => {
@@ -48,5 +48,5 @@ class SessionRefreshService {
   }
 }
 
-// ⭐ Export singleton instance
+//  Export singleton instance
 export const sessionRefreshService = new SessionRefreshService();

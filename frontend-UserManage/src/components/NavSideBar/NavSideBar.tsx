@@ -3,7 +3,7 @@ import Link from "next/link"
 import { 
   LockKeyholeOpen, 
   User, 
-  PanelLeft, // ⭐ เปลี่ยนเป็น PanelLeft
+  PanelLeft, // เปลี่ยนเป็น PanelLeft
   Settings as SettingsIcon,
   LogOut,
   ChevronsUpDown,
@@ -50,7 +50,7 @@ interface MenuItem {
   parent_id: number | null;
   order_no: number;
   children?: MenuItem[];
-  icon?: string; // ⭐ เพิ่ม icon field
+  icon?: string; //  เพิ่ม icon field
   name: string;
   path: string;
 }
@@ -59,7 +59,7 @@ interface SiteHeaderProps {
   children: React.ReactNode;
 }
 
-// ⭐ Icon mapping helper
+//  Icon mapping helper
 const getIcon = (menuName?: string) => {
   const icons: Record<string, JSX.Element> = {
     "dashboard": <BarChart3 className="h-4 w-4" />,
@@ -195,7 +195,7 @@ export default function SiteHeader({ children }: SiteHeaderProps) {
               </h2>
             )}
             <div className="space-y-1">
-              {/* ⭐ Home Link */}
+              {/*  Home Link */}
               <TooltipProvider delayDuration={200}>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -218,7 +218,7 @@ export default function SiteHeader({ children }: SiteHeaderProps) {
                   <TooltipContent 
                     side="right" 
                     className="bg-gray-900 text-white border-gray-800"
-                    // ⭐ แสดง Tooltip เฉพาะตอนพับ หรือลบ condition นี้ถ้าต้องการแสดงเสมอ
+                    //  แสดง Tooltip เฉพาะตอนพับ หรือลบ condition นี้ถ้าต้องการแสดงเสมอ
                   >
                     <p>Home</p>
                   </TooltipContent>
@@ -358,9 +358,9 @@ export default function SiteHeader({ children }: SiteHeaderProps) {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden h-full">
-        {/* Top Header - ⭐ ย้าย PanelLeft มาที่นี่ */}
+        {/* Top Header -  ย้าย PanelLeft มาที่นี่ */}
         <div className="h-[60px] border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 flex items-center px-6 shrink-0 gap-4">
-          {/* ⭐ Toggle Sidebar Button */}
+          {/*  Toggle Sidebar Button */}
           <Button
             variant="ghost"
             size="icon"
