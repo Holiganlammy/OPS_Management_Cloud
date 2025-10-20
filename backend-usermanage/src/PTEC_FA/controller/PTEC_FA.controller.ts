@@ -47,7 +47,7 @@ export class AppController {
 
   @Post('/FA_Control_Report_All_Counted_by_Description')
   async FA_Control_Report_All_Counted_by_Description(
-    @Body() body: { Description: string },
+    @Body() body: { PeriodID: number },
     @Res() res: Response,
   ) {
     try {

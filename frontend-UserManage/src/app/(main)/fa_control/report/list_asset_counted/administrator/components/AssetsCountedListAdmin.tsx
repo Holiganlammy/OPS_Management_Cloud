@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Download,
   RefreshCw,
-  ShieldAlert,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,7 +18,6 @@ import { getAutoDataAssetCounted, getAutoData } from "../../service/documentServ
 import UserTable from "../../AssetsCountedTable/AssetsCountedTable";
 import FilterForm from "../../components/AssetsCountedComponents/FilterForm";
 import { useSession } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
 import { exportToExcel } from "../../service/export";
 import { Check, ChevronsUpDown } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -38,22 +36,16 @@ import {
 } from "@/components/ui/popover"
 import { getAutoData as FetchData } from "@/app/(main)/fa_control/forms/service/faService";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function AssetsCountedListClient() {
   const { data: session, status } = useSession({
   required: false,
 });
-  const searchParams = useSearchParams();
-  const nac_type = searchParams.get("type") || "user";
-  const router = useRouter();
-  const ALLOWED_ROLES = [1, 3, 4, 6];
   const [isChecking, setIsChecking] = useState<boolean>(true);
   const [typeGroup, setTypeGroup] = useState<Assets_TypeGroup[]>([]);
   const [listDescription, setListDescription] = useState<PeriodDescription[]>([]);
   const [typeString, setTypeString] = useState<string | null>('PTEC');
   const [assetsFetch, setAssetsFetch] = useState<CountAssetRow[]>([]);
-  const [userFetch, setUserFetch] = useState<UserData[]>([]);
   const [newValue, setNewValue] = useState<string>('');
   const [open, setOpen] = useState(false)
   const [filters, setFilters] = useState(() => {
@@ -81,34 +73,16 @@ export default function AssetsCountedListClient() {
       filter: "",
     };
   });
-   // ตรวจสอบสิทธิ์
-  useEffect(() => {
-    if (status === "loading") return; // รอ loading
-
-    if (status === "unauthenticated") {
-      router.push("/login"); // ไม่ได้ login
-      return;
-    }
-
-    if (session?.user?.role_id && !ALLOWED_ROLES.includes(session.user.role_id)) {
-      router.push("/unauthorized"); // ไม่มีสิทธิ์
-    }
-  }, [session, status, router]);
 
 const fetchAssetsCounted = useCallback(async () => {
   if (session) {
     try {
-      const dataUser = await FetchData(session?.user.UserCode);
-      console.log("🔍 Debug dataUser:", dataUser);
-
+      const dataUser = await FetchData(session?.user.UserCode,session?.user.branchid);
       const myAssets = dataUser?.find((d) => d.key === "assets")?.data || [];
       console.log("✅ My assets:", myAssets);
-      setUserFetch(myAssets);
-
       const dataOther = await getAutoData();
       setTypeGroup(dataOther?.find((d) => d.key === "typeGroup")?.data || []);
-
-      const dataNAC: PeriodDescription[] = await getAutoDataAssetCounted(newValue);
+      const dataNAC: PeriodDescription[] = await getAutoDataAssetCounted(Number(newValue));
       setListDescription(dataNAC);
 
       setIsChecking(false);
@@ -117,12 +91,12 @@ const fetchAssetsCounted = useCallback(async () => {
       setIsChecking(false);
     }
   }
-}, [session, newValue]);
+}, []);
 
   useEffect(() => {
     setIsChecking(true);
     fetchAssetsCounted();
-  }, [nac_type]);       
+  }, []);
 
   const filteredAssets = useMemo(() => {
     return assetsFetch.filter((asset) => {
@@ -160,19 +134,7 @@ const fetchAssetsCounted = useCallback(async () => {
   if (isChecking) {
     return <PageLoading />;
   }
-  if (session?.user?.role_id && !ALLOWED_ROLES.includes(session.user.role_id)) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <Alert variant="destructive" className="max-w-md">
-          <ShieldAlert className="h-4 w-4" />
-          <AlertTitle>ไม่มีสิทธิ์เข้าถึง</AlertTitle>
-          <AlertDescription>
-            คุณไม่มีสิทธิ์ในการเข้าถึงหน้านี้ กรุณาติดต่อผู้ดูแลระบบ
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-12">
       <div className="container mx-auto px-4 py-8 space-y-8">
@@ -199,7 +161,7 @@ const fetchAssetsCounted = useCallback(async () => {
                       className="w-auto lg:w-[500px] justify-between"
                     >
                       {newValue
-                        ? listDescription.find((framework) => framework.Description === newValue)?.Description
+                        ? listDescription.find((value) => value.PeriodID === newValue)?.Description
                         : "ค้นหาคำอธิบายรอบตรวจนับ..."}
                       <ChevronsUpDown className="opacity-50" />
                     </Button>
@@ -213,16 +175,13 @@ const fetchAssetsCounted = useCallback(async () => {
                           {listDescription && listDescription.map((description) => (
                             <CommandItem
                               key={description.PeriodID}
-                              value={description.Description}
+                              value={description.PeriodID}
                               onSelect={async (currentValue) => {
-                                setNewValue(currentValue === newValue ? "" : currentValue)
-                                const dataNAC: CountAssetRow[] = await getAutoDataAssetCounted(currentValue);
-                                if (nac_type === "user") {
-                                  setAssetsFetch(dataNAC.filter(res => res.OwnerID === session?.user.UserCode) || []);
-                                } else {
-                                  setAssetsFetch(dataNAC || []);
-                                }
-                                setOpen(false)
+                                setNewValue(currentValue);
+                                const dataNAC: CountAssetRow[] = await getAutoDataAssetCounted(Number(currentValue));
+                                setAssetsFetch(dataNAC);
+                                setOpen(false);
+                                console.log("🆕 Selected PeriodID:", currentValue);
                               }}
                             >
                               {description.Description}

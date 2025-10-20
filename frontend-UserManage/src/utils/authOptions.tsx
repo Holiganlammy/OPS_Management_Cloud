@@ -114,11 +114,26 @@ export const authOptions: AuthOptions = {
         token.role_id = user.role_id;
         token.branchid = user.branchid;
         token.depid = user.depid;
-        // token.accessTokenExpires = Date.now() + 10 * 1000;
+        token.accessTokenExpires = Date.now() + 240 * 60 * 1000; // 4 ชั่วโมง
       }
 
-      //  เมื่อมีการเรียก update() จาก client
+      // ✅ ตรวจสอบ token expiry ก่อน
+      if (token.accessTokenExpires && Date.now() > (token.accessTokenExpires as number)) {
+        console.log("⚠️ Token expired, logging out...");
+        return null as any; // ⭐ เปลี่ยนจาก {} เป็น null
+      }
+
+      // ✅ เพิ่มเงื่อนไขป้องกันการ refresh บ่อยเกินไป
       if (trigger === "update" && token.UserCode) {
+        // ✅ เช็คว่า refresh ไปแล้วไม่เกิน 30 วินาที
+        const lastRefresh = token.lastRefresh as number | undefined;
+        const now = Date.now();
+        
+        if (lastRefresh && (now - lastRefresh) < 30000) {
+          console.log("⏭️ Skip refresh (too soon)");
+          return token;
+        }
+
         try {
           console.log("🔄 Refreshing user data from backend...");
           const response = await fetch(
@@ -132,13 +147,13 @@ export const authOptions: AuthOptions = {
               cache: 'no-store'
             }
           );
+          
           if (response.ok) {
             const result = await response.json();
             
             if (result.success && result.data && result.data.length > 0) {
               const userData = result.data[0];
               
-              // อัพเดตข้อมูลใน token
               token.fristName = userData.fristName;
               token.lastName = userData.lastName;
               token.Email = userData.Email;
@@ -146,20 +161,14 @@ export const authOptions: AuthOptions = {
               token.role_id = userData.role_id;
               token.branchid = userData.branchid;
               token.depid = userData.depid;
+              token.lastRefresh = now;
               
               console.log("✅ User data refreshed successfully");
             }
           }
         } catch (error) {
           console.error("❌ Error refreshing user data:", error);
-          // ไม่ throw error เพื่อไม่ให้ session หลุด
         }
-      }
-
-      // ตรวจสอบ token expiry
-      if (token.accessTokenExpires && Date.now() > (token.accessTokenExpires as number)) {
-        console.log("⚠️ Token expired, logging out...");
-        return {} as any; // Return empty object แทน null
       }
       
       return token;
@@ -198,7 +207,7 @@ export const authOptions: AuthOptions = {
 
   session: {
     strategy: 'jwt',
-    maxAge: 60 * 60, // 1 hours
+    maxAge: 30 * 60, // 30 minutes
   },
 
   secret: process.env.NEXTAUTH_SECRET,

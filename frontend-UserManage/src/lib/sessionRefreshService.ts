@@ -1,52 +1,43 @@
 // lib/sessionRefreshService.ts
-"use client";
-
+"use client"
 class SessionRefreshService {
   private intervalId: NodeJS.Timeout | null = null;
-  private isInitialized = false;
-  private updateFn: (() => Promise<void>) | null = null;
+  private isRefreshing: boolean = false;
+  private readonly REFRESH_INTERVAL = 5 * 60 * 1000; // ⭐ 5 นาที (ไม่ใช่ทุกวินาที)
 
-  start(updateFunction: () => Promise<void>) {
-    if (this.isInitialized) {
-      console.log("⏭️ Session refresh already running");
+  start(updateCallback: () => Promise<void>) {
+    if (this.intervalId) {
+      console.log("⚠️ Refresh service already running");
       return;
     }
 
-    this.isInitialized = true;
-    this.updateFn = updateFunction;
-    console.log("✅ Session refresh service started (2 seconds then every 15 minutes)");
+    this.intervalId = setInterval(async () => {
+      if (this.isRefreshing) {
+        console.log("⏭️ Already refreshing, skip");
+        return;
+      }
+      try {
+        this.isRefreshing = true;
+        console.log("🔄 Auto-refreshing session...");
+        await updateCallback();
+      } catch (error) {
+        console.error("❌ Failed to refresh session:", error);
+      } finally {
+        this.isRefreshing = false;
+      }
+    }, this.REFRESH_INTERVAL);
 
-    // First refresh after 2 seconds
-    setTimeout(() => {
-      console.log("🔄 Loading New Session");
-      this.refresh();
-    }, 2000);
-
-    // Then every 5 minutes
-    this.intervalId = setInterval(() => {
-      console.log("🔄 Auto-refresh");
-      this.refresh();
-    }, 15 * 60 * 1000);
-  }
-
-  private refresh() {
-    if (this.updateFn) {
-      this.updateFn().catch((error) => {
-        console.error("❌ Refresh failed:", error);
-      });
-    }
+    console.log("✅ Session refresh service started");
   }
 
   stop() {
-    console.log("🛑 Session refresh service stopped");
     if (this.intervalId) {
       clearInterval(this.intervalId);
       this.intervalId = null;
+      this.isRefreshing = false;
+      console.log("🛑 Session refresh service stopped");
     }
-    this.isInitialized = false;
-    this.updateFn = null;
   }
 }
 
-//  Export singleton instance
 export const sessionRefreshService = new SessionRefreshService();

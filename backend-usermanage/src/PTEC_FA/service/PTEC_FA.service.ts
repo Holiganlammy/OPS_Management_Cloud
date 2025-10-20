@@ -45,16 +45,16 @@ export class AppService {
   }
 
   async FA_Control_Report_All_Counted_by_Description(Report_All_Counted_by_Description: {
-    Description: string;
+    PeriodID: number;
   }) {
     try {
       return this.dbManager.executeStoredProcedure(
-        `${databaseConfig.database}.dbo.FA_Control_Report_All_Counted_by_Description`,
+        `${databaseConfig.database}.dbo.FA_Control_Report_All_Counted_by_Description_Cloud`,
         [
           {
-            name: 'Description',
-            type: sql.NVarChar(200),
-            value: Report_All_Counted_by_Description.Description,
+            name: 'PeriodID',
+            type: sql.Int(),
+            value: Report_All_Counted_by_Description.PeriodID,
           },
         ],
       );

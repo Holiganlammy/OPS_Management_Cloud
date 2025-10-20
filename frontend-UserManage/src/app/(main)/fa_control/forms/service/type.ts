@@ -59,3 +59,28 @@ interface FileItemType {
     create_by: string | null | undefined;
     create_date: string | null | undefined;
 }
+
+interface ReportAllCountAsset {
+    AssetID: string
+    BranchID: number
+    Code: string
+    Date: string
+    DepCode: string
+    EndDate_Success : string
+    ImagePath: string
+    ImagePath_2: string
+    Name: string
+    OwnerID: string
+    Position: string
+    Reference: string
+    RoundID: string
+    RowID: string
+    Status: boolean
+    UserBranch: number
+    UserID: string
+    comment: string
+    detail: string
+    personID: string
+    remarker: string
+    typeCode: string
+}

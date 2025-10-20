@@ -4,7 +4,7 @@ import dayjs from 'dayjs';
 import { redirect } from 'next/navigation';
 import Swal from 'sweetalert2';
 
-export async function getAutoData(usercode?: string) {
+export async function getAutoData(usercode?: string, branchid?: number) {
   const urls = {
     assets: '/AssetsAll_Control',
   };
@@ -15,7 +15,7 @@ export async function getAutoData(usercode?: string) {
         Object.entries(urls).map(async ([key, url]) => {
           const res = await client.post(
             dataConfig().http + url,
-            { BranchID: 901, usercode: usercode },
+            { BranchID: branchid, usercode: usercode },
             { headers: dataConfig().header }
           );
           return { key, data: res.data };

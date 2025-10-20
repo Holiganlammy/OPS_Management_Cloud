@@ -42,15 +42,12 @@ export default function AssetsCountedListClient() {
   const { data: session, status } = useSession({
   required: false,
 });
-  const searchParams = useSearchParams();
-  const nac_type = searchParams.get("type") || "user";
-
   const [isChecking, setIsChecking] = useState<boolean>(true);
   const [typeGroup, setTypeGroup] = useState<Assets_TypeGroup[]>([]);
   const [listDescription, setListDescription] = useState<PeriodDescription[]>([]);
   const [typeString, setTypeString] = useState<string | null>('PTEC');
   const [assetsFetch, setAssetsFetch] = useState<CountAssetRow[]>([]);
-  const [userFetch, setUserFetch] = useState<UserData[]>([]);
+  const [userFetch, setUserFetch] = useState<DataAsset[]>([]);
   const [newValue, setNewValue] = useState<string>('');
   const [open, setOpen] = useState(false)
   const [filters, setFilters] = useState(() => {
@@ -80,44 +77,33 @@ export default function AssetsCountedListClient() {
   });
 
 const fetchAssetsCounted = useCallback(async () => {
-  if (session && nac_type) {
+  if (session) {
     try {
-      const dataUser = await FetchData(session?.user.UserCode);
+      const dataUser = await FetchData(session?.user.UserCode,session?.user.branchid);
       console.log("🔍 Debug dataUser:", dataUser);
 
-      // ✅ ดึงสินทรัพย์ของ user คนนี้
       const myAssets = dataUser?.find((d) => d.key === "assets")?.data || [];
       console.log("✅ My assets:", myAssets);
       setUserFetch(myAssets);
 
-      // ✅ โหลด typeGroup ไว้ใช้ใน Tabs ด้านบน
       const dataOther = await getAutoData();
       setTypeGroup(dataOther?.find((d) => d.key === "typeGroup")?.data || []);
+      const dataNAC: PeriodDescription[] = await getAutoDataAssetCounted(Number(newValue));
+      // ------------------------------
+      // ✅ Filter รอบตรวจนับเฉพาะของตัวเอง
+      // ------------------------------
+      const filteredRounds = dataNAC.filter((round) => {
+        const branchMatch =
+          round.BranchID === session?.user.branchid ||
+          round.BranchID === myAssets[0]?.BranchID; // เผื่อ user ไม่มี branch ใน session
+        const personMatch =
+          round.personID === session?.user.UserCode ||
+          myAssets.some((a: { OwnerID: number | undefined; }) => a.OwnerID === session?.user.depid);
 
-      // ✅ โหลดรายการรอบตรวจนับทั้งหมด
-      const dataNAC: PeriodDescription[] = await getAutoDataAssetCounted(newValue);
-
-      if (nac_type === "user") {
-        // ------------------------------
-        // ✅ Filter รอบตรวจนับเฉพาะของตัวเอง
-        // ------------------------------
-        const filteredRounds = dataNAC.filter((round) => {
-          const branchMatch =
-            round.BranchID === session?.user.branchid ||
-            round.BranchID === myAssets[0]?.BranchID; // เผื่อ user ไม่มี branch ใน session
-          const personMatch =
-            round.personID === session?.user.UserCode ||
-            myAssets.some((a) => a.OwnerID === session?.user.depid); // เผื่อ user ไม่มี depid ใน session
-
-          return branchMatch || personMatch;
-        });
-        console.log("👤 User BranchID:", session?.user.branchid)
-        console.log(session?.user.depid)
-        console.log("🎯 Filtered rounds:", filteredRounds);
-        setListDescription(filteredRounds);
-      } else {
-        setListDescription(dataNAC);
-      }
+        return branchMatch || personMatch;
+      });
+      console.log("🎯 Filtered rounds:", filteredRounds);
+      setListDescription(filteredRounds);
 
       setIsChecking(false);
     } catch (error) {
@@ -125,12 +111,12 @@ const fetchAssetsCounted = useCallback(async () => {
       setIsChecking(false);
     }
   }
-}, [session, nac_type, newValue]);
+}, []);
 
   useEffect(() => {
     setIsChecking(true);
     fetchAssetsCounted();
-  }, [nac_type]);
+  }, []);
 
   const filteredAssets = useMemo(() => {
     return assetsFetch.filter((asset) => {
@@ -195,7 +181,7 @@ const fetchAssetsCounted = useCallback(async () => {
                       className="w-auto lg:w-[500px] justify-between"
                     >
                       {newValue
-                        ? listDescription.find((framework) => framework.Description === newValue)?.Description
+                        ? listDescription.find((value) => value.PeriodID === newValue)?.Description
                         : "ค้นหาคำอธิบายรอบตรวจนับ..."}
                       <ChevronsUpDown className="opacity-50" />
                     </Button>
@@ -206,19 +192,18 @@ const fetchAssetsCounted = useCallback(async () => {
                       <CommandList>
                         <CommandEmpty>No data.</CommandEmpty>
                         <CommandGroup>
-                          {listDescription && listDescription.map((description) => (
+                          {listDescription && listDescription.map((description, index) => (
                             <CommandItem
                               key={description.PeriodID}
-                              value={description.Description}
+                              value={description.PeriodID}
                               onSelect={async (currentValue) => {
-                                setNewValue(currentValue === newValue ? "" : currentValue)
-                                const dataNAC: CountAssetRow[] = await getAutoDataAssetCounted(currentValue);
-                                if (nac_type === "user") {
-                                  setAssetsFetch(dataNAC.filter(res => res.OwnerID === session?.user.UserCode) || []);
-                                } else {
-                                  setAssetsFetch(dataNAC || []);
-                                }
-                                setOpen(false)
+                                setNewValue(currentValue);
+                                const dataNAC: CountAssetRow[] = await getAutoDataAssetCounted(Number(currentValue));
+                                const myAssetIds = userFetch.map(asset => asset.Code);
+                                const filtered = dataNAC.filter(res => myAssetIds.includes(res.Code || ""));
+                                setAssetsFetch(filtered);
+                                setOpen(false);
+                                console.log("🆕 Selected PeriodID:", currentValue);
                               }}
                             >
                               {description.Description}

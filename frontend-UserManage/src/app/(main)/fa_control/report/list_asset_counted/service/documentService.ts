@@ -22,13 +22,13 @@ export async function getAutoData() {
   return fetchMultipleUrls(urls);
 }
 
-export async function getAutoDataAssetCounted(Description: string) {
+export async function getAutoDataAssetCounted(PeriodID: Number) {
   const url = '/FA_Control_Report_All_Counted_by_Description';
 
   try {
     const response = await client.post(
       dataConfig().http + url,
-      { Description },
+      { PeriodID },
       { method: 'POST', headers: dataConfig().header }
     );
     const data = await response.data;

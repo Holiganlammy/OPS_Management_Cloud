@@ -18,7 +18,6 @@ export default function AssetsCountedTable({ data, fetchAssetsCounted }: Props) 
   useEffect(() => {
     fetchAssetsCounted()
   }, [fetchAssetsCounted])
-  console.log("data in table", data);
 
   return (
     <div>
