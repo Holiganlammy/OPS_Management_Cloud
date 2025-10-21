@@ -13,6 +13,10 @@ export function useAutoRefreshSession() {
       sessionRefreshService.start(async () => {
         await update();
       });
+      setTimeout(() => {
+        document.body.style.pointerEvents = '';
+        document.body.removeAttribute('data-scroll-locked');
+      }, 100);
     }
 
     if (status === "unauthenticated") {

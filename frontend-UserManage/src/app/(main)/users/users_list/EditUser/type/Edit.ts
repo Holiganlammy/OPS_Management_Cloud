@@ -20,4 +20,5 @@ interface UserEdit {
   EmpUpper: string
   EmpUpperID: string
   password: string
+  role_id: number
 }

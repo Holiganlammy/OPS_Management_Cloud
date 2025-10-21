@@ -22,6 +22,7 @@ interface UserData {
   EmpUpper: string
   EmpUpperID: string
   password: string
+  role_id: number
 }
 
 interface Session {

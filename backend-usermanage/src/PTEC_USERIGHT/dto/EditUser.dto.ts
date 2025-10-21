@@ -43,4 +43,8 @@ export class EditUserDto {
   @IsString()
   @IsNotEmpty()
   password: string;
+
+  @IsString()
+  @IsNotEmpty()
+  role_id: string;
 }

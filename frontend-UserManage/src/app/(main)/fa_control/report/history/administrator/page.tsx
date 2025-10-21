@@ -1,15 +1,15 @@
 "use client";
 import { useSession } from "next-auth/react";
-import { fetchHistoryAssets } from "./service/fetchHistoryAssets"; // import function ใหม่
+import { fetchHistoryAssets } from "../service/fetchHistoryAssets";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import PageLoading from "@/components/PageLoading";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/breadcrumb";
 import { Download, RefreshCw } from "lucide-react";
-import HistoryAssetsTable from "./components/HistoryAssets/HistoryAssetsTable/AssetsTable";
-import HistoryFilterForm from "./components/HistoryAssets/HistoryFilterForm";
-import { getAutoData } from "../list_asset_counted/service/documentService";
+import HistoryAssetsTable from "../components/HistoryAssets/HistoryAssetsTable/AssetsTable";
+import HistoryFilterForm from "../components/HistoryAssets/HistoryFilterForm";
+import { getAutoData } from "../../list_asset_counted/service/documentService";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
@@ -18,7 +18,6 @@ export default function HistoryAssets() {
     required: false,
   });
   const searchParams = useSearchParams();
-
   const [isChecking, setIsChecking] = useState<boolean>(true);
   const [assets, setAssets] = useState<HistoryAssetType[]>([]);
   const [typeGroup, setTypeGroup] = useState<Assets_TypeGroup[]>([]);

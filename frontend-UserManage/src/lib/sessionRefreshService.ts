@@ -3,7 +3,7 @@
 class SessionRefreshService {
   private intervalId: NodeJS.Timeout | null = null;
   private isRefreshing: boolean = false;
-  private readonly REFRESH_INTERVAL = 5 * 60 * 1000; // ⭐ 5 นาที (ไม่ใช่ทุกวินาที)
+  private readonly REFRESH_INTERVAL = 10 * 60 * 1000;
 
   start(updateCallback: () => Promise<void>) {
     if (this.intervalId) {

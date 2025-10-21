@@ -82,6 +82,7 @@ export class AppService {
         { name: 'empupper', type: sql.NVarChar(10), value: req.empupper },
         { name: 'email', type: sql.NVarChar(100), value: req.email },
         { name: 'password', type: sql.NVarChar(50), value: req.password },
+        { name: 'role_id', type: sql.VarChar(50), value: req.role_id },
       ],
     );
   }
@@ -98,6 +99,7 @@ export class AppService {
       { name: 'positionid', type: sql.Int(), value: req.positionid },
       { name: 'empupper', type: sql.NVarChar(10), value: req.empupper },
       { name: 'email', type: sql.NVarChar(100), value: req.email },
+      { name: 'role_id', type: sql.VarChar(50), value: req.role_id },
     ];
 
     if (req.password) {

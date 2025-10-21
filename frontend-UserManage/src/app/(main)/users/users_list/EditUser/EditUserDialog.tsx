@@ -20,6 +20,7 @@ import SubmitSuccess from "@/components/SubmitAlert/AlertSubmitSuccess/SubmitSuc
 import SubmitFailed from "@/components/SubmitAlert/AlertSubmitFailed/SubmitFailed"
 import dataConfig from '@/config/config';
 import client from '@/lib/axios/interceptors';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 const editSchema = z.object({
   Firstname: z.string().min(2, "กรุณากรอกชื่อ"),
@@ -31,6 +32,7 @@ const editSchema = z.object({
   positionid: z.string().min(1, "กรุณาเลือกตำแหน่ง"),
   empupper: z.string().optional(),
   email: z.string().email("รูปแบบอีเมลไม่ถูกต้อง"),
+  role_id: z.string().min(1, "กรุณาเลือกบทบาทผู้ใช้"),
   password: z.string().optional().or(z.string().min(8, "รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร")
     .regex(/[!@#$%^&*(),.?":{}|<>]/, "รหัสผ่านต้องมีอักขระพิเศษอย่างน้อย 1 ตัว"))
 });
@@ -67,6 +69,7 @@ export default function EditUserDialog({ user, open, onOpenChange, onUserUpdated
       positionid: "",
       empupper: "",
       email: "",
+      role_id: "",
       password: ""
     }
   });
@@ -83,7 +86,8 @@ export default function EditUserDialog({ user, open, onOpenChange, onUserUpdated
         positionid: user.PositionID.toString(),
         empupper: user.EmpUpperID || "",
         email: user.Email,
-        password: ""
+        password: "",
+        role_id: user.role_id?.toString() ?? ""
       });
     }
   }, [user, open, form]);
@@ -296,6 +300,26 @@ export default function EditUserDialog({ user, open, onOpenChange, onUserUpdated
                     </FormItem>
                   )}
                 />
+
+                <div>
+                <FormLabel className="mb-2">บทบาทผู้ใช้</FormLabel>
+                  <FormField
+                    control={form.control}
+                    name="role_id"
+                    render={({ field }) => (
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger className="w-full flex">
+                        <SelectValue className="font-bold" placeholder="บทบาทผู้ใช้" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1">Admin</SelectItem>
+                        <SelectItem value="2">User</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    )}
+                  />
+                </div>
+
               </div>
               {/* Password */}
                 <FormField

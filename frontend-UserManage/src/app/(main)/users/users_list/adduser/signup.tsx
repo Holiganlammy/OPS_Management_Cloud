@@ -20,6 +20,8 @@ import SubmitFailed from "@/components/SubmitAlert/AlertSubmitFailed/SubmitFaile
 import SubmitSuccess from "@/components/SubmitAlert/AlertSubmitSuccess/SubmitSuccess"
 import dataConfig from "@/config/config"
 import client from "@/lib/axios/interceptors"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { ChevronsUpDown } from "lucide-react"
 
 const signupSchema = z.object({
   Firstname: z.string().min(2, "ชื่อ ต้องมีอย่างน้อย 2 ตัวอักษร"),
@@ -31,6 +33,7 @@ const signupSchema = z.object({
   positionid: z.string().min(1, "ต้องระบุตำแหน่ง"),
   empupper: z.string().optional(),
   email: z.string().email("รูปแบบอีเมลไม่ถูกต้อง"),
+  role_id: z.string().min(1, "กรุณาเลือกบทบาทผู้ใช้"),
   password: z.string()
     .min(8, "รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร")
     .regex(/[A-Z]/, "รหัสผ่านต้องมีอักษรตัวใหญ่อย่างน้อย 1 ตัว")
@@ -75,7 +78,8 @@ export default function Signup({
       positionid: "",
       empupper: "",
       email: "",
-      password: ""
+      password: "",
+      role_id: "",
     }
   });
 
@@ -104,7 +108,8 @@ export default function Signup({
           positionid: "",
           empupper: "",
           email: "",
-          password: ""
+          password: "",
+          role_id: ""
         });
 
         setTimeout(() => setShowSuccessAlert(false), 5000);
@@ -288,6 +293,26 @@ export default function Signup({
                     </FormItem>
                   )}
                 />
+
+               {/* role_id */}
+                <div>
+                <FormLabel className="mb-2">บทบาทผู้ใช้</FormLabel>
+                  <FormField
+                    control={form.control}
+                    name="role_id"
+                    render={({ field }) => (
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger className="w-full flex">
+                        <SelectValue className="font-bold" placeholder="บทบาทผู้ใช้" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1">Admin</SelectItem>
+                        <SelectItem value="2">User</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    )}
+                  />
+                </div>
               </div>
                 {/* Password */}
                 <FormField

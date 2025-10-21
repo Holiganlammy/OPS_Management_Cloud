@@ -27,9 +27,18 @@ export default function SupColumn({ user, onUserFetched, users, branches, depart
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [activateOpen, setActivateOpen] = useState(false)
+  const [dropdownOpen, setDropdownOpen] = useState(false) // เพิ่ม state นี้
+  
+  const handleEditClick = () => {
+    setDropdownOpen(false) // ปิด dropdown ก่อน
+    setTimeout(() => {
+      setEditOpen(true) // เปิด dialog
+    }, 100)
+  }
+  
   return (
     <>
-      <DropdownMenu>
+      <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="h-8 w-8 p-0">
             <span className="sr-only">Open menu</span>
@@ -50,13 +59,25 @@ export default function SupColumn({ user, onUserFetched, users, branches, depart
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem>ดูรายละเอียด</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setEditOpen(true)}>แก้ไขข้อมูล</DropdownMenuItem>
+          <DropdownMenuItem onClick={handleEditClick}>แก้ไขข้อมูล</DropdownMenuItem>
           {user.Actived === true ? (
-            <DropdownMenuItem className="text-red-600" onClick={() => setDeleteOpen(true)}>
+            <DropdownMenuItem 
+              className="text-red-600" 
+              onClick={() => {
+                setDropdownOpen(false)
+                setTimeout(() => setDeleteOpen(true), 100)
+              }}
+            >
               ปิดใช้งานผู้ใช้
             </DropdownMenuItem>
           ) : (
-            <DropdownMenuItem className="text-green-600" onClick={() => setActivateOpen(true)}>
+            <DropdownMenuItem 
+              className="text-green-600" 
+              onClick={() => {
+                setDropdownOpen(false)
+                setTimeout(() => setActivateOpen(true), 100)
+              }}
+            >
               เปิดใช้งานผู้ใช้
             </DropdownMenuItem>
           )}
@@ -65,7 +86,15 @@ export default function SupColumn({ user, onUserFetched, users, branches, depart
 
       <EditUserDialog
         open={editOpen}
-        onOpenChange={setEditOpen}
+        onOpenChange={(open) => {
+          setEditOpen(open)
+          if (!open) {
+            setTimeout(() => {
+              document.body.style.pointerEvents = '';
+              document.body.removeAttribute('data-scroll-locked');
+            }, 100);
+          }
+        }}
         user={user}
         users={users}
         branches={branches}
@@ -88,7 +117,6 @@ export default function SupColumn({ user, onUserFetched, users, branches, depart
         user={user}
         onUserDeleted={onUserFetched}
       />
-
     </>
   )
 }
