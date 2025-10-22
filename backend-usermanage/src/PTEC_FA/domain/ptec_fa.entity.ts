@@ -331,3 +331,7 @@ export interface FA_Control_Select_MyNAC_Entity {
   userid_approver: number | null;
   TypeCode: string;
 }
+
+// export interface FA_Control_Fetch_Assets {
+  
+// }

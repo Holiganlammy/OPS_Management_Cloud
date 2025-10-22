@@ -5,6 +5,9 @@ import type { User } from "next-auth";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
+// Global flag เพื่อป้องกัน callback loop
+let isTokenExpired = false;
+
 export const authOptions: AuthOptions = {
   providers: [
     CredentialsProvider({
@@ -40,6 +43,8 @@ export const authOptions: AuthOptions = {
             const user = parsedResponse.user;
             const token = parsedResponse.access_token;
 
+            isTokenExpired = false;
+
             return {
               id: user.userid?.toString() ?? "",
               UserID: parseInt(user.UserID),
@@ -52,7 +57,6 @@ export const authOptions: AuthOptions = {
               role_id: user.role_id,
               branchid: user.branchid,
               depid: user.depid,
-              // accessTokenExpires: Date.now() + 10 * 1000,
             };
           }
 
@@ -76,6 +80,7 @@ export const authOptions: AuthOptions = {
             const parsedResponse = JSON.parse(credentials.responseLogin) as ResponseLogin;
             const user = parsedResponse.user;
             const token = parsedResponse.access_token;
+            isTokenExpired = false;
 
             return {
               id: user.userid?.toString() ?? "",
@@ -102,7 +107,7 @@ export const authOptions: AuthOptions = {
   ],
 
   callbacks: {
-    async jwt({ token, user, trigger, session }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.UserID = user.UserID;
         token.UserCode = user.UserCode;
@@ -117,15 +122,19 @@ export const authOptions: AuthOptions = {
         token.accessTokenExpires = Date.now() + 240 * 60 * 1000; // 4 ชั่วโมง
       }
 
-      // ✅ ตรวจสอบ token expiry ก่อน
       if (token.accessTokenExpires && Date.now() > (token.accessTokenExpires as number)) {
-        console.log("⚠️ Token expired, logging out...");
-        return null as any; // ⭐ เปลี่ยนจาก {} เป็น null
+        if (!isTokenExpired) {
+          console.log("⚠️ Token expired in JWT callback");
+          isTokenExpired = true;
+        }
+        return {};
       }
 
-      // ✅ เพิ่มเงื่อนไขป้องกันการ refresh บ่อยเกินไป
-      if (trigger === "update" && token.UserCode) {
-        // ✅ เช็คว่า refresh ไปแล้วไม่เกิน 30 วินาที
+      if (isTokenExpired) {
+        return {};
+      }
+
+      if (trigger === "update" && token.UserCode) { //update trigger จาก useSession().update() (NEXTAUTH Module)
         const lastRefresh = token.lastRefresh as number | undefined;
         const now = Date.now();
         
@@ -136,6 +145,9 @@ export const authOptions: AuthOptions = {
 
         try {
           console.log("🔄 Refreshing user data from backend...");
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 5000);
+
           const response = await fetch(
             `${process.env.Localhost_API}/GetUserWithRoles?UserCode=${token.UserCode}`,
             {
@@ -144,9 +156,18 @@ export const authOptions: AuthOptions = {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${token.access_token}`,
               },
-              cache: 'no-store'
+              cache: 'no-store',
+              signal: controller.signal
             }
           );
+
+          clearTimeout(timeoutId);
+          
+          if (response.status === 401) {
+            console.log("❌ Token invalid (401)");
+            isTokenExpired = true;
+            return {};
+          }
           
           if (response.ok) {
             const result = await response.json();
@@ -176,7 +197,12 @@ export const authOptions: AuthOptions = {
 
     async session({ session, token }) {
       if (!token || Object.keys(token).length === 0) {
-        return session;
+        console.log("⚠️ Empty token in session callback");
+        return {
+          ...session,
+          user: undefined,
+          expires: new Date(0).toISOString(),
+        };
       }
 
       if (typeof token === 'object') {
@@ -202,12 +228,13 @@ export const authOptions: AuthOptions = {
   events: {
     async signOut(message) {
       console.log("User signed out:", message);
+      isTokenExpired = false;
     },
   },
 
   session: {
     strategy: 'jwt',
-    maxAge: 30 * 60, // 30 minutes
+    maxAge: 30 * 60, // 30 นาที
   },
 
   secret: process.env.NEXTAUTH_SECRET,

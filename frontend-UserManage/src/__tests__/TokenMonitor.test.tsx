@@ -1,7 +1,7 @@
 import { render, screen, waitFor, act } from '@testing-library/react'
 import { useSession } from 'next-auth/react'
 import { usePathname, useRouter } from 'next/navigation'
-import { TokenMonitor } from '../components/TokenManage/TokenMonitor'
+import { SessionMonitor } from '../components/SessionMonitor/SessionManagement'
 
 // Mock dependencies
 const mockUseSession = jest.fn()
@@ -20,7 +20,7 @@ jest.mock('next/navigation', () => ({
   useRouter: () => mockUseRouter(),
 }))
 
-describe('TokenMonitor Tests', () => {
+describe('SessionMonitor Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     jest.useFakeTimers()
@@ -52,7 +52,7 @@ describe('TokenMonitor Tests', () => {
         update: mockUpdate,
       })
 
-      render(<TokenMonitor />)
+      render(<SessionMonitor />)
 
       // Fast forward timers
       act(() => {
@@ -77,7 +77,7 @@ describe('TokenMonitor Tests', () => {
         update: mockUpdate,
       })
 
-      render(<TokenMonitor />)
+      render(<SessionMonitor />)
 
       act(() => {
         jest.advanceTimersByTime(15000)
@@ -109,7 +109,7 @@ describe('TokenMonitor Tests', () => {
         update: mockUpdate,
       })
 
-      render(<TokenMonitor />)
+      render(<SessionMonitor />)
 
       // Fast forward to trigger the warning
       act(() => {
@@ -146,7 +146,7 @@ describe('TokenMonitor Tests', () => {
         update: mockUpdate,
       })
 
-      render(<TokenMonitor />)
+      render(<SessionMonitor />)
 
       // Fast forward to trigger the check
       act(() => {
@@ -184,7 +184,7 @@ describe('TokenMonitor Tests', () => {
         update: mockUpdate,
       })
 
-      render(<TokenMonitor />)
+      render(<SessionMonitor />)
 
       act(() => {
         jest.advanceTimersByTime(11000)
@@ -219,7 +219,7 @@ describe('TokenMonitor Tests', () => {
         update: mockUpdate,
       })
 
-      render(<TokenMonitor />)
+      render(<SessionMonitor />)
 
       // Fast forward to show dialog
       act(() => {
@@ -262,7 +262,7 @@ describe('TokenMonitor Tests', () => {
         update: mockUpdate,
       })
 
-      render(<TokenMonitor />)
+      render(<SessionMonitor />)
 
       act(() => {
         jest.advanceTimersByTime(11000)
@@ -301,7 +301,7 @@ describe('TokenMonitor Tests', () => {
         update: mockUpdate,
       })
 
-      render(<TokenMonitor />)
+      render(<SessionMonitor />)
 
       // Trigger warning
       act(() => {
@@ -345,7 +345,7 @@ describe('TokenMonitor Tests', () => {
       })
 
       expect(() => {
-        render(<TokenMonitor />)
+        render(<SessionMonitor />)
         act(() => {
           jest.advanceTimersByTime(11000)
         })
@@ -374,7 +374,7 @@ describe('TokenMonitor Tests', () => {
       })
 
       expect(() => {
-        render(<TokenMonitor />)
+        render(<SessionMonitor />)
         act(() => {
           jest.advanceTimersByTime(11000)
         })

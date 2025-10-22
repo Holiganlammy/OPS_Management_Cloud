@@ -13,7 +13,7 @@ import Link from "next/link";
 import { signIn } from 'next-auth/react';
 import MfaDialog from "./MFAVerify/MFA";
 import dataConfig from "@/config/config";
-import client from "@/lib/axios/interceptors";
+import client, { isTokenExpiredAlertVisible, resetAxiosState } from "@/lib/axios/interceptors";
 
 export default function Login() {
   const router = useRouter();
@@ -25,6 +25,7 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [otpExpiresAt, setOtpExpiresAt] = useState<number | null>(null);
   const [disableSubmit, setDisableSubmit] = useState(false);
+  const [shouldShowSessionAlert, setShouldShowSessionAlert] = useState(false);
   const searchParams = useSearchParams();
   const redirectParam = searchParams.get('redirect');
   const isExpired = searchParams.get('expired') === 'true';
@@ -41,6 +42,17 @@ export default function Login() {
       return () => clearTimeout(timer);
     }
   }, [error])
+
+  useEffect(() => {
+    const checkTokenAlert = () => {
+      setShouldShowSessionAlert(isExpired && !isTokenExpiredAlertVisible());
+    };
+    
+    checkTokenAlert();
+    const interval = setInterval(checkTokenAlert, 100);
+    
+    return () => clearInterval(interval);
+  }, [isExpired]);
 
   const formSchema = z.object({
     loginname: z.string()
@@ -96,6 +108,8 @@ export default function Login() {
         }
         throw new Error('api fail');
       } else {
+        resetAxiosState();
+        
         router.push(redirectPath);
         setIsLoading(false);
         setDisableSubmit(false);
@@ -122,8 +136,8 @@ export default function Login() {
           </p>
         </div>
 
-        {/* Token Expired Alert */}
-        {isExpired && (
+        {/* Session Expired Alert */}
+        {shouldShowSessionAlert && (
           <Alert
             variant="destructive"
             className="mb-6 border-yellow-200 bg-yellow-50"

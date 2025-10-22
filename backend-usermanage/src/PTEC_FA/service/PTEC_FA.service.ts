@@ -89,11 +89,19 @@ export class AppService {
       throw error;
     }
   }
-  async FA_Control_Fetch_Assets(usercode: string) {
+  async FA_Control_Fetch_Assets(
+    usercode: string,
+    page: number = 1,
+    limit: number = 12,
+  ) {
     try {
       return this.dbManager.executeStoredProcedure(
-        `${databaseConfig.database}.dbo.FA_Control_Fetch_Assets`,
-        [{ name: 'usercode', type: sql.VarChar(10), value: usercode }],
+        `${databaseConfig.database}.dbo.FA_Control_Fetch_Assets_Cloud`,
+        [
+          { name: 'usercode', type: sql.VarChar(10), value: usercode },
+          { name: 'page', type: sql.Int(), value: page },
+          { name: 'limit', type: sql.Int(), value: limit },
+        ],
       );
     } catch (error) {
       console.error('Error in FA_Control_Fetch_Assets:', error);

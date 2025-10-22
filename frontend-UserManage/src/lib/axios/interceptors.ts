@@ -1,100 +1,184 @@
+// lib/axios/interceptors.ts
 import axios, { AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from "axios";
 import { getSession, signOut } from "next-auth/react";
 import { Toast } from "../alert/toast";
+import { showTokenExpiredAlert, cleanupGlobalAlert } from "../alert/globalAlertService";
 
 const http = process.env.NEXT_PUBLIC_API_URL;
 
-// ✅ เพิ่ม session cache เพื่อลด getSession() calls
+let isTokenExpired = false;
+let isSigningOut = false;
+let lastSignOutTime = 0;
+let isTokenExpiredAlertShowing = false;
+
+// Request deduplication
+const pendingRequests = new Map<string, boolean>();
+
+// Session cache
 let sessionCache: any = null;
 let sessionCacheTime = 0;
-const CACHE_DURATION = 5000; // 5 วินาที
+const CACHE_DURATION = 3000; // 3 วินาที
 
-export const error401 = () => {
-  sessionCache = null; 
-  signOut({ redirect: false });
+export const error401 = async () => {
+  const now = Date.now();
+  
+  // ป้องกัน multiple signOut calls
+  if (isSigningOut || (now - lastSignOutTime) < 3000) {
+    console.log("⏭️ SignOut already in progress");
+    return;
+  }
+
+  isSigningOut = true;
+  isTokenExpired = true;
+  isTokenExpiredAlertShowing = true;
+  lastSignOutTime = now;
+  
+  // Clear caches
+  sessionCache = null;
+  sessionCacheTime = 0;
+  pendingRequests.clear();
+
+  console.log("🚪 Token expired - showing alert...");
+  
+  // แสดง Alert Dialog แทน Toast
+  showTokenExpiredAlert(async () => {
+    try {
+      await signOut({ redirect: false });
+    } catch (err) {
+      console.error("SignOut error:", err);
+      // Force redirect แม้เกิด error
+      window.location.replace('/login');
+    } finally {
+      setTimeout(() => {
+        isSigningOut = false;
+        isTokenExpiredAlertShowing = false;
+      }, 2000);
+    }
+  });
 }
 
 export const error403 = () => {
-  window.location.href = 'https://localhost:3000/home';
+  window.location.href = '/home';
 }
+
+export const resetAxiosState = () => {
+  isTokenExpired = false;
+  isSigningOut = false;
+  lastSignOutTime = 0;
+  isTokenExpiredAlertShowing = false;
+  sessionCache = null;
+  sessionCacheTime = 0;
+  pendingRequests.clear();
+  cleanupGlobalAlert();
+  
+  console.log("✅ Axios state reset - ready for new session");
+}
+
+export const isTokenExpiredAlertVisible = () => isTokenExpiredAlertShowing;
 
 function handleError(err: any) {
   if (axios.isAxiosError(err)) {
-    if (err.response?.status === 400) {
-      const errorData = err.response.data;
-      const message = errorData?.message || "Bad Request";
-      let errorText = "Something went wrong.";
-      if (errorData?.error) {
-        const code = errorData.error.code || "ERROR";
-        const path = errorData.error.path?.[0] || "unknown_field";
-        errorText = `${code} : ${path}`;
-      }
+    const response = err.response;
+    const status = response?.status;
+    const errorData = response?.data;
 
+    if (status === 400) {
       Toast.fire({
         icon: "error",
-        title: message,
-        text: errorText
+        title: errorData?.message || "Bad Request",
+        text: errorData?.error ? `${errorData.error.code}: ${errorData.error.path?.[0]}` : "Invalid request"
       });
     }
-    else if (err.response?.status === 409 && err.response?.data?.duplicate === true) {
-      return;
-    }
-    else if (err.response?.status === 401) {
+    else if (status === 401) {
+      console.log("🔍 401 Error Data:", errorData);
+
+      // Case 1: Login credentials ผิด
+      if (errorData?.credentials === false) {
+        console.log("❌ Invalid credentials - handled by login component");
+        // ไม่ทำอะไร ให้ Login component จัดการเอง
+        return;
+      }
+
+      // Case 2: Token หมดอายุ
+      if (errorData?.tokenExpired === true) {
+        console.log("⏰ Token expired - redirecting to login");
+        error401();
+        return;
+      }
+
+      // Case 3: Token ไม่ถูกต้อง (signature ผิด, format ผิด)
+      if (errorData?.tokenInvalid === true) {
+        console.log("🔐 Invalid token - redirecting to login");
+        error401();
+        return;
+      }
+
+      // Case 4: ไม่มี Token
+      if (errorData?.noToken === true) {
+        console.log("📭 No token provided - redirecting to login");
+        error401();
+        return;
+      }
+
+      // Case 5: Token ยังไม่ active (NotBeforeError)
+      if (errorData?.tokenNotActive === true) {
+        console.log("⏳ Token not active yet - redirecting to login");
+        error401();
+        return;
+      }
+
+      // Fallback: ถ้าไม่ตรงกับ case ไหนเลย ให้ถือว่า token หมดอายุ
+      console.log("⚠️ Unknown 401 error - treating as token expired");
       error401();
     }
-    else if (err.response?.status === 500) {
+    else if (status === 403) {
+      error403();
+    }
+    else if (status === 409 && errorData?.duplicate === true) {
+      // Silent - duplicate entry
+      return;
+    }
+    else if (status === 500) {
       Toast.fire({
         icon: "error",
         title: "Server Error",
-        text: "Internal server error occurred. Please try again later."
+        text: "Please try again later."
       });
     }
-    else if (err.response?.status) {
+    else if (status) {
       Toast.fire({
         icon: "error", 
-        title: `Error ${err.response.status}`,
-        text: err.response.data?.message || "An error occurred"
+        title: `Error ${status}`,
+        text: errorData?.message || "An error occurred"
       });
     }
     else {
       Toast.fire({
         icon: "error",
         title: "Network Error",
-        text: "Please check your internet connection and try again."
+        text: "Check your connection and try again."
       });
     }
   } else {
-    console.error("Non-axios error:", err);
-    Toast.fire({
-      icon: "error",
-      title: "Unexpected Error", 
-      text: "Something went wrong. Please try again."
-    });
+    console.error("Unexpected error:", err);
   }
 }
 
-const CancelToken = axios.CancelToken;
-const source = CancelToken.source();
-
 const baseConfig: AxiosRequestConfig = {
   baseURL: http,
-  cancelToken: source.token,
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000,
+  timeout: 30000,
 };
 
-// ✅ ฟังก์ชันสำหรับ get session with cache
 const getCachedSession = async () => {
   const now = Date.now();
   
-  // ถ้า cache ยังใหม่อยู่ ใช้ cache
   if (sessionCache && (now - sessionCacheTime) < CACHE_DURATION) {
     return sessionCache;
   }
   
-  // ไม่งั้นดึง session ใหม่
   const session = await getSession();
   sessionCache = session;
   sessionCacheTime = now;
@@ -103,9 +187,40 @@ const getCachedSession = async () => {
 }
 
 const baseRequest = async (config: InternalAxiosRequestConfig) => {
-  // ✅ ใช้ cached session แทน getSession() โดยตรง
-  const session = await getCachedSession();
+  const url = config.url || '';
+  const method = config.method?.toUpperCase() || 'GET';
+  
+  // Skip deduplication สำหรับ NextAuth internal calls
+  if (url.includes('/api/auth/')) {
+    const session = await getCachedSession();
+    if (config.headers && session?.user?.access_token) {
+      config.headers.Authorization = `Bearer ${session.user.access_token}`;
+    }
+    return config;
+  }
 
+  // Request deduplication key
+  const requestKey = `${method}:${url}`;
+  
+  // if (pendingRequests.has(requestKey)) {
+  //   console.log(`⏭️ Duplicate request cancelled: ${requestKey}`);
+  //   const controller = new AbortController();
+  //   controller.abort("DUPLICATE_REQUEST");
+  //   config.signal = controller.signal;
+  //   return config;
+  // }
+
+  // Mark as pending
+  pendingRequests.set(requestKey, true);
+  
+  // Auto-cleanup หลัง 30 วินาที
+  setTimeout(() => {
+    pendingRequests.delete(requestKey);
+  }, 30000);
+
+  // Get session and attach token
+  const session = await getCachedSession();
+  
   if (config.headers && session?.user?.access_token) {
     config.headers.Authorization = `Bearer ${session.user.access_token}`;
   }
@@ -114,19 +229,31 @@ const baseRequest = async (config: InternalAxiosRequestConfig) => {
 }
 
 const baseResponse = (response: AxiosResponse) => {
+  const requestKey = `${response.config.method?.toUpperCase()}:${response.config.url}`;
+  pendingRequests.delete(requestKey);
+  
   return response;
 }
 
-let client = axios.create(baseConfig);
+const responseError = (error: any) => {
+  if (error.config) {
+    const requestKey = `${error.config.method?.toUpperCase()}:${error.config.url}`;
+    pendingRequests.delete(requestKey);
+  }
 
-client.interceptors.request.use(baseRequest, (error: any) => {
+  handleError(error);
+  return Promise.reject(error);
+}
+
+// Create axios instance
+const client = axios.create(baseConfig);
+
+// Apply interceptors
+client.interceptors.request.use(baseRequest, (error) => {
   handleError(error);
   return Promise.reject(error);
 });
 
-client.interceptors.response.use(baseResponse, (error: any) => {
-  handleError(error);
-  return Promise.reject(error);
-});
+client.interceptors.response.use(baseResponse, responseError);
 
 export default client;

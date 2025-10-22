@@ -37,6 +37,7 @@ export class AppService {
 
   signToken(user: User): string {
     const payload = {
+      sub: user.UserCode, // ✅ เพิ่ม sub field
       userId: user.UserID,
       username: user.UserCode,
       role: user.PositionCode,

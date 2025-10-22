@@ -7,6 +7,7 @@ import {
   HttpStatus,
   Res,
   Req,
+  Query,
 } from '@nestjs/common';
 import { AppService } from '../service/PTEC_FA.service';
 import { Response, Request as ExpressRequest } from 'express';
@@ -99,18 +100,62 @@ export class AppController {
     }
   }
 
-  @Post('/FA_Control_Fetch_Assets')
+  @Get('/FA_Control_Fetch_Assets')
   async FA_Control_Fetch_Assets(
-    @Body() body: { usercode: string },
+    @Query('usercode') usercode: string,
+    @Query('page') page: string = '1',
+    @Query('limit') limit: string = '12',
     @Res() res: Response,
   ) {
     try {
-      const result = await this.service.FA_Control_Fetch_Assets(body.usercode);
-      res.status(200).send({
-        message: 'Assets fetched successfully',
-        code: 200,
-        data: result,
-      });
+      const pageNum = parseInt(page);
+      const limitNum = parseInt(limit);
+      const result = await this.service.FA_Control_Fetch_Assets(
+        usercode,
+        pageNum,
+        limitNum,
+      );
+      console.log('Fetched assets:', result);
+
+      // ถ้ามีข้อมูล ดึง totalCount จากแถวแรก
+      if (result && result.length > 0) {
+        const totalCount = result[0].TotalCount;
+        const totalPages = Math.ceil(totalCount / limitNum);
+        // ลบ TotalCount ออกจากแต่ละแถว (เพราะเป็น metadata)
+        const data = result.map((item) => {
+          const { TotalCount, ...rest } = item;
+          return rest;
+        });
+
+        res.status(200).send({
+          message: 'Assets fetched successfully',
+          code: 200,
+          data,
+          pagination: {
+            page: pageNum,
+            limit: limitNum,
+            total: totalCount,
+            totalPages,
+            hasNext: pageNum < totalPages,
+            hasPrev: pageNum > 1,
+          },
+        });
+      } else {
+        // ไม่มีข้อมูล
+        res.status(200).send({
+          message: 'No assets found',
+          code: 200,
+          data: [],
+          pagination: {
+            page: pageNum,
+            limit: limitNum,
+            total: 0,
+            totalPages: 0,
+            hasNext: false,
+            hasPrev: false,
+          },
+        });
+      }
     } catch (error: unknown) {
       throw new HttpException(
         error instanceof Error ? error.message : 'Unknown error',

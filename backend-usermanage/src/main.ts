@@ -5,6 +5,7 @@ import { MainAppModule } from './main-app.module';
 import * as fileUpload from 'express-fileupload';
 import * as cookieParser from 'cookie-parser';
 import * as fs from 'fs';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter'; // ✅ เปลี่ยนเป็น AllExceptionsFilter
 
 async function bootstrap(): Promise<void> {
   try {
@@ -17,8 +18,11 @@ async function bootstrap(): Promise<void> {
       MainAppModule,
       {
         httpsOptions,
+        logger: ['error', 'warn', 'log', 'debug', 'verbose'], // ✅ เพิ่ม logger
       },
     );
+
+    app.useGlobalFilters(new AllExceptionsFilter());
 
     app.setGlobalPrefix('api');
 
@@ -39,13 +43,13 @@ async function bootstrap(): Promise<void> {
       fileUpload({
         useTempFiles: true,
         tempFileDir: '/tmp/',
-        limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
+        limits: { fileSize: 50 * 1024 * 1024 },
       }),
     );
 
     app.use(cookieParser());
 
-    const port = process.env.PORT ?? 3000;
+    const port = process.env.PORT ?? 7777;
     await app.listen(port);
 
     console.log(`🚀 HTTPS Server is running on: https://localhost:${port}`);
@@ -55,8 +59,14 @@ async function bootstrap(): Promise<void> {
 
     // Fallback to HTTP if HTTPS fails
     console.log('🔄 Falling back to HTTP server...');
-    const app = await NestFactory.create<NestExpressApplication>(MainAppModule);
+    const app = await NestFactory.create<NestExpressApplication>(
+      MainAppModule,
+      {
+        logger: ['error', 'warn', 'log', 'debug', 'verbose'], // ✅ เพิ่ม logger
+      },
+    );
 
+    app.useGlobalFilters(new AllExceptionsFilter());
     app.setGlobalPrefix('api');
     app.enableCors({
       origin: 'http://localhost:3000',

@@ -33,7 +33,7 @@ interface SessionToken {
   }
 }
 
-export function TokenMonitor() {
+export function SessionMonitor() {
   const { data: session, status } = useSession()
   const pathname = usePathname()
   const router = useRouter()
@@ -70,6 +70,7 @@ export function TokenMonitor() {
           console.log("[AUTH] ❌ Session expired, showing dialog...")
           setIsDialogOpen(true)
           clearInterval(checkInterval)
+          handleLogout()
         } 
         //  ถ้าเหลือเวลาน้อยกว่า 5 นาที → แสดงแจ้งเตือน
         else if (remainingSeconds < 5 * 60) {

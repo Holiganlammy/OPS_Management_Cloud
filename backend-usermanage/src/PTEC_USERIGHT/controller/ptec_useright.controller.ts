@@ -80,11 +80,13 @@ export class AppController {
       }
       const resultLogin = await this.appService.getUserLogin(loginDto);
       const user = resultLogin[0] as User;
-
+      console.log('User fetched on login:', user);
       if (!user || user.password !== 1) {
-        return res
-          .status(401)
-          .json({ success: false, message: 'Invalid credentials' });
+        return res.status(401).json({
+          success: false,
+          message: 'Invalid credentials',
+          credentials: false,
+        });
       }
 
       const cookies = req.cookies as Record<string, string> | undefined;
@@ -108,6 +110,7 @@ export class AppController {
 
         if (isTrusted === true) {
           const payload = {
+            sub: user.UserCode, // ✅ เพิ่ม sub field
             userId: user.UserID,
             username: user.UserCode,
             role: user.role_id, // 1.Admin 2.User 3.Moderator FA 4.Moderator SM 5.Guest 6.Moderrator Reservation Sys 7.Mockup User
@@ -230,6 +233,7 @@ export class AppController {
       await this.appService.getUsersFromProcedure(usercode);
     const user = resultLogin[0];
     const payload = {
+      sub: user.UserCode, // ✅ เพิ่ม sub field
       userId: user.UserID,
       username: user.UserCode,
       role: user.role_id,

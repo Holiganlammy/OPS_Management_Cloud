@@ -12,6 +12,7 @@ import PageLoading from "@/components/PageLoading";
 
 function AutoRefreshWrapper({ children }: { children: React.ReactNode }) {
   useAutoRefreshSession();
+  useRefreshOnNavigation();
   return <>{children}</>;
 }
 
