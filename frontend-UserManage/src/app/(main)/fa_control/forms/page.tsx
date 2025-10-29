@@ -261,7 +261,7 @@ export default function AssetCreatePage() {
         const users = data?.find((d) => d.key === "users")?.data || [];
         setUserFetch(users);
 
-        const dataAsset = await FetchAsset();
+        const dataAsset = await FetchAsset(undefined, session?.user?.branchid);
         const assets = dataAsset?.find((d) => d.key === "assets")?.data || [];
         setAssets(assets);
 

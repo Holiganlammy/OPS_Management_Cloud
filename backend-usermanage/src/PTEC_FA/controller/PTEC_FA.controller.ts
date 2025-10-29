@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { AppService } from '../service/PTEC_FA.service';
 import { Response, Request as ExpressRequest } from 'express';
+import { Public } from '../../auth/decorators/public.decorator';
 import {
   FA_Control_Create_Detail_NAC,
   FA_Control_New_Assets_Xlsx,
@@ -24,6 +25,10 @@ import {
   UpdateDtlAssetDto,
   updateReferenceDto,
 } from '../dto/FA_Control.dto';
+import {
+  FA_Control_Fetch_Assets,
+  FA_Control_Fetch_Assets_FilterOptions,
+} from '../domain/ptec_fa.entity';
 
 @Controller('')
 export class AppController {
@@ -99,30 +104,43 @@ export class AppController {
       );
     }
   }
-
+  @Public()
   @Get('/FA_Control_Fetch_Assets')
   async FA_Control_Fetch_Assets(
     @Query('usercode') usercode: string,
     @Query('page') page: string = '1',
     @Query('limit') limit: string = '12',
+    @Query('typeCode') typeCode: string,
+    @Query('code') code: string,
+    @Query('name') name: string,
+    @Query('owner') owner: string,
+    @Query('group') group: string,
+    @Query('location') location: string,
+    @Query('search') search: string,
     @Res() res: Response,
   ) {
     try {
       const pageNum = parseInt(page);
       const limitNum = parseInt(limit);
-      const result = await this.service.FA_Control_Fetch_Assets(
+      const result = (await this.service.FA_Control_Fetch_Assets(
         usercode,
         pageNum,
         limitNum,
-      );
-      console.log('Fetched assets:', result);
+        typeCode,
+        code,
+        name,
+        owner,
+        group,
+        location,
+        search,
+      )) as FA_Control_Fetch_Assets[];
 
-      // ถ้ามีข้อมูล ดึง totalCount จากแถวแรก
       if (result && result.length > 0) {
         const totalCount = result[0].TotalCount;
         const totalPages = Math.ceil(totalCount / limitNum);
         // ลบ TotalCount ออกจากแต่ละแถว (เพราะเป็น metadata)
         const data = result.map((item) => {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const { TotalCount, ...rest } = item;
           return rest;
         });
@@ -705,6 +723,32 @@ export class AppController {
       const result = await this.service.createPeriod(req);
       res.status(200).send(result);
     } catch (error: unknown) {
+      throw new HttpException(
+        error instanceof Error ? error.message : 'Unknown error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Public()
+  @Get('/FA_Control_Fetch_Assets_FilterOptions')
+  async FA_Control_Fetch_Assets_FilterOptions(@Res() res: Response) {
+    try {
+      // result เป็น array เช่น [ { JSON_F52E2B61-18A1-11d1-B105-00805F49916B: "{...}" } ]
+      const result = await this.service.FA_Control_Fetch_Assets_FilterOptions();
+
+      if (!Array.isArray(result) || result.length === 0) {
+        return res.status(404).json({ message: 'No data found' });
+      }
+      const raw = result[0] as Record<string, string>;
+      const jsonKey = Object.keys(raw)[0];
+      const parsed = JSON.parse(
+        raw[jsonKey],
+      ) as FA_Control_Fetch_Assets_FilterOptions;
+
+      return res.status(200).json(parsed);
+    } catch (error: unknown) {
+      console.error('Error in FA_Control_Fetch_Assets_FilterOptions:', error);
       throw new HttpException(
         error instanceof Error ? error.message : 'Unknown error',
         HttpStatus.INTERNAL_SERVER_ERROR,

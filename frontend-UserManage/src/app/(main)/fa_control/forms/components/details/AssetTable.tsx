@@ -2,7 +2,6 @@ import { FieldArrayWithId, UseFieldArrayAppend, UseFieldArrayRemove, UseFormRetu
 import { CombinedForm } from "@/app/(main)/fa_control/forms/schema/combinedSchema";
 import { Input } from "@/components/ui/input";
 import { useEffect, useMemo } from "react";
-import debounce from "lodash.debounce";
 import CustomSelect from "@/components/SelectSection/SelectSearch";
 import { FormField, FormItem, FormControl, FormMessage } from "@/components/ui/form";
 import { useSession } from "next-auth/react";
@@ -39,6 +38,7 @@ const loadOptionsForSelect = useMemo(() => {
     const filtered = input.trim() === ""
       ? assets
       : assets.filter((a) => a.Code.toLowerCase().includes(input.toLowerCase()));
+      console.log("🔍 Filtered results:", filtered.length);
     const result = filtered.map((a) => ({ value: a.Code, label: a.Code }));
 
     return result;
@@ -85,7 +85,7 @@ const loadOptionsForSelect = useMemo(() => {
       });
     });
   }, [form.watch("details")]);
-
+  console.log("fields", fields);
 
   return (
     <div className="overflow-x-auto w-full">

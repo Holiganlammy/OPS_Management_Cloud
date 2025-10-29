@@ -89,10 +89,18 @@ export class AppService {
       throw error;
     }
   }
+
   async FA_Control_Fetch_Assets(
     usercode: string,
     page: number = 1,
     limit: number = 12,
+    typeCode: string,
+    code: string,
+    name: string,
+    owner: string,
+    group: string,
+    location: string,
+    search: string,
   ) {
     try {
       return this.dbManager.executeStoredProcedure(
@@ -101,6 +109,13 @@ export class AppService {
           { name: 'usercode', type: sql.VarChar(10), value: usercode },
           { name: 'page', type: sql.Int(), value: page },
           { name: 'limit', type: sql.Int(), value: limit },
+          { name: 'typeCode', type: sql.NVarChar(50), value: typeCode },
+          { name: 'code', type: sql.NVarChar(50), value: code },
+          { name: 'name', type: sql.NVarChar(150), value: name },
+          { name: 'owner', type: sql.NVarChar(50), value: owner },
+          { name: 'group', type: sql.NVarChar(50), value: group },
+          { name: 'location', type: sql.NVarChar(100), value: location },
+          { name: 'search', type: sql.NVarChar(100), value: search },
         ],
       );
     } catch (error) {
@@ -1221,6 +1236,18 @@ export class AppService {
       );
     } catch (error) {
       console.error('Error in FA_Control_Fetch_Branch_Period:', error);
+      throw error;
+    }
+  }
+
+  async FA_Control_Fetch_Assets_FilterOptions() {
+    try {
+      return this.dbManager.executeStoredProcedure(
+        `${databaseConfig.database}.dbo.FA_Control_Fetch_Assets_FilterOptions_Cloud`,
+        [],
+      );
+    } catch (error) {
+      console.error('Error in FA_Control_Fetch_Assets_FilterOptions:', error);
       throw error;
     }
   }
